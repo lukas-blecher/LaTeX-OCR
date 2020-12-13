@@ -11,44 +11,34 @@ from PIL import Image
 
 class Latex:
     BASE = r'''
-\documentclass[fleqn]{article} 
-\usepackage{amssymb,amsmath,bm,color}
-\usepackage[latin1]{inputenc}
-%s
+\documentclass[varwidth]{standalone}
+\usepackage{fontspec,unicode-math}
+\usepackage[active,tightpage,displaymath,textmath]{preview}
+\setmathfont{%s}
 \begin{document}
 \thispagestyle{empty}
-\mathindent0cm
-\parindent0cm 
 %s
 \end{document}
 '''
 
-    INLINE = r"\usepackage[active,textmath]{preview}"
-    MATHSCR = r"\usepackage{mathrsfs}"
-
-    def __init__(self, doc, dpi=250):
-        self.doc = doc
+    def __init__(self, math, dpi=250):
+        '''takes list of math code. `returns each element as PNG with DPI=`dpi`'''
+        self.math = math
         self.dpi = dpi
 
-    def write(self):
-        inline = bool(re.match("^\$[^$]*\$$", self.doc)) and False
-        TEX = self.BASE % (
-            '\n'.join([(self.INLINE if inline else ""),
-                       (self.MATHSCR if r"\mathscr" in self.doc else "")]), r'%s'
-        )
-        # print(TEX)
-
+    def write(self, font='Latin Modern Math'):
+        # inline = bool(re.match('^\$[^$]*\$$', self.math)) and False
         try:
             workdir = tempfile.gettempdir()
-            fd, texfile = tempfile.mkstemp(".tex", "eq", workdir, True)
-            #print(TEX % self.doc, file=open('t.tex','w'))
-            with os.fdopen(fd, "w+") as f:
-                f.write(TEX % self.doc)
+            fd, texfile = tempfile.mkstemp('.tex', 'eq', workdir, True)
+            # print(self.BASE % (font, self.math))
+            with os.fdopen(fd, 'w+') as f:
+                document = self.BASE % (font, '\n'.join(self.math))
+                #print(document)
+                f.write(document)
 
-            png, depth = self.convert_file(texfile, workdir)
-            if not inline:
-                depth = 0
-            return png, depth
+            png=self.convert_file(texfile, workdir)
+            return png
 
         finally:
             if os.path.exists(texfile):
@@ -60,80 +50,75 @@ class Latex:
     def convert_file(self, infile, workdir):
 
         try:
-            # Generate the DVI file
-            cmd = "latex -halt-on-error -output-format dvi -output-directory %s %s" % (workdir, infile)
+            # Generate the PDF file
+            cmd='xelatex -halt-on-error -output-directory %s %s' % (workdir, infile)
 
-            p = subprocess.Popen(
+            p=subprocess.Popen(
                 cmd,
-                shell=True,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                shell = True,
+                stdin = subprocess.PIPE,
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE,
             )
-            sout, serr = p.communicate()
+            sout, serr=p.communicate()
             # Something bad happened, abort
             if p.returncode != 0:
-                raise Exception("latex error", serr, sout)
+                raise Exception('latex error', serr, sout)
 
-            # Convert the DVI file to PNG's
-            dvifile = infile.replace(".tex", ".dvi")
-            pngfile = os.path.join(workdir, infile.replace(".tex", ".png"))
+            # Convert the PDF file to PNG's
+            pdffile=infile.replace('.tex', '.pdf')
+            pngfile=os.path.join(workdir, infile.replace('.tex', '.png'))
 
-            cmd = "dvipng -T tight --depth -D %i -o %s %s" % (
+            cmd='magick convert -density %i -colorspace gray %s -quality 90 %s' % (
                 self.dpi,
+                pdffile,
                 pngfile,
-                dvifile,
             )  # -bg Transparent -z 9
-            p = subprocess.Popen(
+            p=subprocess.Popen(
                 cmd,
-                shell=True,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                shell = True,
+                stdin = subprocess.PIPE,
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE,
             )
 
-            sout, serr = p.communicate()
+            sout, serr=p.communicate()
             if p.returncode != 0:
-                raise Exception("dvipng error", serr)
+                raise Exception('PDFpng error', serr)
 
-            try:
-                depth = int(re.search(r"\[1 depth=(-?\d+)\]", sout).group(1))
-            except:
-                depth = 0
-
-            png = open(pngfile, "rb").read()
-            return png, depth
+            png=[open(pngfile.replace('.png', '')+'-%i.png' % i, 'rb').read() for i in range(len(self.math))]
+            return png
 
         finally:
             # Cleanup temporaries
-            basefile = infile.replace(".tex", "")
-            tempext = ".aux", ".dvi", ".log", ".png"
+            basefile=infile.replace('.tex', '')
+            tempext='.aux', '.pdf', '.log', '.png'
             for te in tempext:
-                tempfile = basefile + te
+                tempfile=basefile + te
                 if os.path.exists(tempfile):
                     os.remove(tempfile)
 
 
-__cache = {}
+__cache={}
 
 
 def tex2png(eq, **kwargs):
     if not eq in __cache:
-        __cache[eq] = Latex(eq, **kwargs).write()
+        __cache[eq]=Latex(eq, **kwargs).write()
     return __cache[eq]
 
 
 def tex2pil(tex, **kwargs):
-    d, s = Latex(tex, **kwargs).write()
-    image = Image.open(io.BytesIO(d))
-    return image
+    pngs=Latex(tex, **kwargs).write()
+    images=[Image.open(io.BytesIO(d)) for d in pngs]
+    return images
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) > 1:
-        src = sys.argv[1]
+        src=sys.argv[1]
     else:
-        src = r'\begin{equation}\mathcal{ L}\nonumber\end{equation}'
+        src=r'\begin{equation}\mathcal{ L}\nonumber\end{equation}'
 
-    print("Equation is: %s" % src)
+    print('Equation is: %s' % src)
     print(Latex(src).write())
