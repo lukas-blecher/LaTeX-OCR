@@ -44,9 +44,12 @@ def clean_matches(matches, min_chars=10):
     sub = [re.compile(template % s) for s in ['ref', 'label', 'caption']]
     faulty = []
     for i in range(len(matches)):
+        if 'tikz' in matches[i]:  # do not support tikz at the moment
+            faulty.append(i)
+            continue
         for s in sub:
             matches[i] = re.sub(s, '', matches[i])
-        matches[i] = matches[i].replace('\n', '')
+        matches[i] = matches[i].replace('\n', '').replace(r'\notag', '').replace(r'\nonumber', '')
         # brackets around _ and ^ vec sqrt
         # matches[i] = re.sub(r'(\^|\_|\\vec\ |\\sqrt\ )([a-zA-Z0-9\\])', r'\1{\2}', matches[i])
         matches[i] = re.sub(whitespace, '', matches[i])
@@ -56,6 +59,8 @@ def clean_matches(matches, min_chars=10):
         try:
             matches[i] = check_brackets(matches[i])
         except ValueError:
+            faulty.append(i)
+        if matches[i][-1] == '\\':
             faulty.append(i)
 
     matches = [m for i, m in enumerate(matches) if i not in faulty]

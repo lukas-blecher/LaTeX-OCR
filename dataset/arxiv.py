@@ -75,23 +75,23 @@ def parse_arxiv(id):
     text = read_paper(id, tempdir)
     linked = list(set([l for l in re.findall(arxiv_id, text)]))
     # remove comments
-    text = re.sub('r(?<!\\)%.+','', text)
+    text = re.sub('r(?<!\\)%.+', '', text)
     return find_math(text, wiki=False), linked
 
 
 if __name__ == '__main__':
-    skips=os.path.join(sys.path[0], 'dataset', 'data', 'visited_arxiv.txt')
+    skips = os.path.join(sys.path[0], 'dataset', 'data', 'visited_arxiv.txt')
     skip = open(skips, 'r', encoding='utf-8').read().split('\n')
     if len(sys.argv) > 2:
         url = sys.argv[1]
-        visited, math = recursive_search(parse_arxiv, url, skip=skip, unit='papers')
+        visited, math = recursive_search([parse_arxiv], url, skip=skip, unit='papers')
 
     else:
         url = 'https://arxiv.org/list/math/2012?skip=0&show=100'
-        ids=get_all_arxiv_ids(requests.get(url).text)
-        math,visited=[],ids
+        ids = get_all_arxiv_ids(requests.get(url).text)
+        math, visited = [], ids
         for id in tqdm(ids):
-            m,_=parse_arxiv(id)
+            m, _ = parse_arxiv(id)
             math.extend(m)
 
     for l, name in zip([visited, math], ['visited_arxiv.txt', 'math_arxiv.txt']):

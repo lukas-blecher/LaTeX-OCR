@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 from tqdm import tqdm
 import html
 import requests
@@ -8,7 +9,6 @@ import tempfile
 sys.path.insert(0, os.path.abspath('..' if os.path.dirname(sys.argv[0])=='' else '.'))
 from dataset.arxiv import *
 from dataset.extract_latex import *
-
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
 htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
@@ -27,14 +27,15 @@ def parse_wiki(url):
     return find_math(text, wiki=True), linked
 
 
-
 # recursive search
-def recursive_search(parser,  start, depth=2, skip=[], unit='links', base_url=None):
-    visited, links = set(skip), set([start])
+def recursive_search(parser,  seeds, depth=2, skip=[], unit='links', base_url=None):
+    visited, links = set(skip), set(seeds)
     math = []
     try:
         for i in range(int(depth)):
-            t_bar = tqdm(list(links), unit=unit)
+            link_list = list(links)
+            random.shuffle(link_list)
+            t_bar = tqdm(link_list, initial=len(visited), unit=unit)
             for link in t_bar:
                 if not link in visited:
                     t_bar.set_description('searching %s' % (link))
@@ -58,18 +59,20 @@ def recursive_search(parser,  start, depth=2, skip=[], unit='links', base_url=No
         return list(visited), list(set(math))
 
 # recursive wiki search
-def recursive_wiki(start, depth=2, skip=[]):
+
+
+def recursive_wiki(seeds, depth=4, skip=[]):
     '''Recursivley search wikipedia for math. Every link on the starting page `start` will be visited in the next round and so on, until there is no 
     math in the child page anymore. This will be repeated `depth` times.'''
-    start = start.split('/')[-1]
-    return recursive_search(parse_wiki, wiki_base, start, depth, skip, unit='links')
+    start = [s.split('/')[-1] for s in seeds]
+    return recursive_search(parse_wiki, start, depth, skip, base_url=wiki_base, unit='links')
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        url = sys.argv[1]
+        url = [sys.argv[1]]
     else:
-        url = 'https://en.wikipedia.org/wiki/Quantum_field_theory'
+        url = ['https://en.wikipedia.org/wiki/Mathematics', 'https://en.wikipedia.org/wiki/Physics']
     visited, math = recursive_wiki(url)
     for l, name in zip([visited, math], ['visited_wiki.txt', 'math_wiki.txt']):
         f = open(os.path.join(sys.path[0], 'dataset', 'data', name), 'a', encoding='utf-8')
