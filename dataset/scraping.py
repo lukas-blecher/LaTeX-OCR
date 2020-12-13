@@ -1,46 +1,79 @@
+import os
+import sys
+from tqdm import tqdm
 import html
 import requests
 import re
 import tempfile
+sys.path.insert(0, os.path.abspath('..' if os.path.dirname(sys.argv[0])=='' else '.'))
 from dataset.arxiv import *
 from dataset.extract_latex import *
 
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
+htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
 wiki_base = 'https://en.wikipedia.org/wiki/'
 
 
 def parse_url(url):
     r = requests.get(url)
     if r.ok:
-        return html.unescape(r.text)
+        return html.unescape(re.sub(htmltags, '', r.text))
 
 
 def parse_wiki(url):
-    text = parse_url(url)  # ['https://en.wikipedia.org/wiki/'+l for l in ]
+    text = parse_url(url)
     linked = list(set([l for l in re.findall(wikilinks, text) if not ':' in l]))
-    return find_math(text, html=True), linked
+    return find_math(text, wiki=True), linked
 
 
-# recursive wiki search
-def recursive_wiki(start, depth=1, skip=[]):
-    '''Recursivley search wikipedia for math. Every link on the starting page `start` will be visited in the next round and so on, until there is no 
-    math in the child page anymore. This will be repeated `depth` times. Be careful approximatley `depth=3` reaches the entirety of Wikipedia'''
-    start = start.split('/')[-1]
-    visited, links = set(skip), [start]
+
+# recursive search
+def recursive_search(parser,  start, depth=2, skip=[], unit='links', base_url=None):
+    visited, links = set(skip), set([start])
     math = []
     try:
         for i in range(int(depth)):
-            for link in links:
+            t_bar = tqdm(list(links), unit=unit)
+            for link in t_bar:
                 if not link in visited:
-                    print('%i searching %s' % (len(visited), wiki_base+link))
-                    m, l = parse_wiki(wiki_base+link)
+                    t_bar.set_description('searching %s' % (link))
+                    if base_url:
+                        m, l = parser(base_url+link)
+                    else:
+                        m, l = parser(link)
                     # check if we got any math from this wiki page and
                     # if not terminate the tree
                     if len(m) > 0:
-                        links.extend(l)
+                        for li in l:
+                            links.add(li)
+                        t_bar.total = len(links)
                         math.extend(m)
                     visited.add(link)
         return list(visited), list(set(math))
-    except:
+    except Exception as e:
+        raise(e)
         return list(visited), list(set(math))
+    except KeyboardInterrupt:
+        return list(visited), list(set(math))
+
+# recursive wiki search
+def recursive_wiki(start, depth=2, skip=[]):
+    '''Recursivley search wikipedia for math. Every link on the starting page `start` will be visited in the next round and so on, until there is no 
+    math in the child page anymore. This will be repeated `depth` times.'''
+    start = start.split('/')[-1]
+    return recursive_search(parse_wiki, wiki_base, start, depth, skip, unit='links')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 2:
+        url = sys.argv[1]
+    else:
+        url = 'https://en.wikipedia.org/wiki/Quantum_field_theory'
+    visited, math = recursive_wiki(url)
+    for l, name in zip([visited, math], ['visited_wiki.txt', 'math_wiki.txt']):
+        f = open(os.path.join(sys.path[0], 'dataset', 'data', name), 'a', encoding='utf-8')
+        for element in l:
+            f.write(element)
+            f.write('\n')
+        f.close()
