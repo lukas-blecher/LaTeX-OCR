@@ -1,18 +1,24 @@
-# taken from https://github.com/soskek/arxiv_leaks
+# modified from https://github.com/soskek/arxiv_leaks
 
 import argparse
 import json
 import os
+import glob
 import re
 import sys
+import subprocess
 import tarfile
 import tempfile
+import chardet
 import logging
 import requests
+import urllib.request
+from urllib.error import HTTPError
 sys.path.insert(0, os.path.abspath('..' if os.path.dirname(sys.argv[0])=='' else '.'))
 from dataset.extract_latex import *
 from dataset.scraping import *
 
+# logging.getLogger().setLevel(logging.INFO)
 arxiv_id = re.compile(r'(?<!\d)(\d{4}\.\d{5})(?!\d)')
 arxiv_base = 'https://arxiv.org/e-print/'
 
@@ -31,33 +37,38 @@ def download(url, dir_path='./'):
     file_path = os.path.join(dir_path, file_name)
     if os.path.exists(file_path):
         return file_path
-
-    r = requests.get(url)
     logging.info('\tdownload {}'.format(url) + '\n')
-    if r.ok:
-        with open(file_path, 'wb') as f:
-            f.write(r.content)
-        return file_path
-    else:
+    try:
+        r = urllib.request.urlretrieve(url, file_path)
+        return r[0]
+    except HTTPError:
+        logging.info('Could not download %s' % url)
         return 0
 
 
 def read_tex_files(file_path):
     tex = ''
     try:
-        with tarfile.open(file_path, 'r') as tf:
-            for ti in tf:
-                if ti.name.endswith('.tex'):
-                    with tf.extractfile(ti) as f:
-                        tex += f.read().decode('utf-8')
+        with tempfile.TemporaryDirectory() as tempdir:
+            tf = tarfile.open(file_path, 'r')
+            tf.extractall(tempdir)
+            tf.close()
+            texfiles = [os.path.abspath(x) for x in glob.glob(os.path.join(tempdir, '**', '*.tex'), recursive=True)]
+            # de-macro
+            ret = subprocess.run(['de-macro', *texfiles], cwd=tempdir)
+            if ret.returncode == 0:
+                texfiles = glob.glob(os.path.join(tempdir, '**', '*-clean.tex'), recursive=True)
+            for texfile in texfiles:
+                tex += open(texfile, 'r').read()
+
     except tarfile.ReadError:
         try:
-            tex += open(file_path, 'r').read().decode('utf-8')
-        except:
-            logging.info('could not read %s' % file_path)
+            tex += open(file_path, 'r', encoding=chardet.detect(open(file_path, 'br').readline())['encoding']).read()
+        except Exception as e:
+            logging.info('Could not read %s: %s' % (file_path, str(e)))
             pass
-
-    return tex
+    # remove comments
+    return re.sub(r'(?<!\\)%.*\n', '', tex)
 
 
 def read_paper(arxiv_id, dir_path='./'):
@@ -73,21 +84,24 @@ def read_paper(arxiv_id, dir_path='./'):
 def parse_arxiv(id):
     tempdir = tempfile.gettempdir()
     text = read_paper(id, tempdir)
-    linked = list(set([l for l in re.findall(arxiv_id, text)]))
-    # remove comments
-    text = re.sub('r(?<!\\)%.+', '', text)
-    return find_math(text, wiki=False), linked
+    #print(text, file=open('paper.tex', 'w'))
+    #linked = list(set([l for l in re.findall(arxiv_id, text)]))
+
+    return find_math(text, wiki=False), []
 
 
 if __name__ == '__main__':
     skips = os.path.join(sys.path[0], 'dataset', 'data', 'visited_arxiv.txt')
-    skip = open(skips, 'r', encoding='utf-8').read().split('\n')
-    if len(sys.argv) > 2:
-        url = sys.argv[1]
-        visited, math = recursive_search([parse_arxiv], url, skip=skip, unit='papers')
+    if os.path.exists(skips):
+        skip = open(skips, 'r', encoding='utf-8').read().split('\n')
+    else:
+        skip = []
+    if len(sys.argv) > 1:
+        arxiv_ids = sys.argv[1:]
+        visited, math = recursive_search(parse_arxiv, arxiv_ids, skip=skip, unit='paper')
 
     else:
-        url = 'https://arxiv.org/list/math/2012?skip=0&show=100'
+        url = 'https://arxiv.org/list/hep-th/2012?skip=0&show=100'  # https://arxiv.org/list/hep-th/2012?skip=0&show=100
         ids = get_all_arxiv_ids(requests.get(url).text)
         math, visited = [], ids
         for id in tqdm(ids):

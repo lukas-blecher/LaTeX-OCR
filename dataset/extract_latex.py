@@ -1,13 +1,14 @@
 import re
 import numpy as np
 
-max_chars = 3000
-dollar = re.compile(r'((?<!\$)\${1,2}(?!\$))(.{%i,%i}?)(?<!\\)(?<!\$)\1(?!\$)' % (1, max_chars))
-inline = re.compile(r'(\\\((.*?)(?<!\\)\\\))|(\\\[(.{%i,%i}?)(?<!\\)\\\])' % (1, max_chars))
-equation = re.compile(r'\\begin\{(equation|eqnarray|align|alignat|math|displaymath|gather)\*?\}(.{%i,%i}?)\\end\{\1\*?\}' % (1, max_chars), re.S)
-align = re.compile(r'(\\begin\{(align|alignat|flalign|eqnarray)\*?\}(.{%i,%i}?)\\end\{\2\*?\})' % (1, max_chars), re.S)
-displaymath = re.compile(r'(\\displaystyle)(.{%i,%i}?)(\}(?:<|"))' % (1, max_chars))
-whitespace = re.compile(
+MIN_CHARS = 20
+MAX_CHARS = 3000
+dollar = re.compile(r'((?<!\$)\${1,2}(?!\$))(.{%i,%i}?)(?<!\\)(?<!\$)\1(?!\$)' % (1, MAX_CHARS))
+inline = re.compile(r'(\\\((.*?)(?<!\\)\\\))|(\\\[(.{%i,%i}?)(?<!\\)\\\])' % (1, MAX_CHARS))
+equation = re.compile(r'\\begin\{(equation|eqnarray|align|alignat|math|displaymath|gather)\*?\}(.{%i,%i}?)\\end\{\1\*?\}' % (1, MAX_CHARS), re.S)
+align = re.compile(r'(\\begin\{(align|alignat|flalign|eqnarray)\*?\}(.{%i,%i}?)\\end\{\2\*?\})' % (1, MAX_CHARS), re.S)
+displaymath = re.compile(r'(\\displaystyle)(.{%i,%i}?)(\}(?:<|"))' % (1, MAX_CHARS))
+outer_whitespace = re.compile(
     r'\s{2,}?|^\s|\s$|^\\,|\\,$|^~|~$|^\\ |\\ $|^\\thinspace|\\thinspace$|^\\!|\\!$|^\\:|\\:$|^\\;|\\;$|^\\enspace|\\enspace$|^\\quad|\\quad$|^\\qquad|\\qquad$|^\\hspace{[a-zA-Z0-9]+}|\\hspace{[a-zA-Z0-9]+}$|^\\hfill|\\hfill$')
 
 
@@ -39,7 +40,7 @@ def check_brackets(s):
         return s
 
 
-def clean_matches(matches, min_chars=10):
+def clean_matches(matches, min_chars=MIN_CHARS):
     template = r'\\%s\{(.*?)\}'
     sub = [re.compile(template % s) for s in ['ref', 'label', 'caption']]
     faulty = []
@@ -50,16 +51,14 @@ def clean_matches(matches, min_chars=10):
         for s in sub:
             matches[i] = re.sub(s, '', matches[i])
         matches[i] = matches[i].replace('\n', '').replace(r'\notag', '').replace(r'\nonumber', '')
-        # brackets around _ and ^ vec sqrt
-        # matches[i] = re.sub(r'(\^|\_|\\vec\ |\\sqrt\ )([a-zA-Z0-9\\])', r'\1{\2}', matches[i])
-        matches[i] = re.sub(whitespace, '', matches[i])
+        matches[i] = re.sub(outer_whitespace, '', matches[i])
         if len(matches[i]) < min_chars:
             faulty.append(i)
             continue
-        try:
-            matches[i] = check_brackets(matches[i])
-        except ValueError:
-            faulty.append(i)
+        # try:
+        #     matches[i] = check_brackets(matches[i])
+        # except ValueError:
+        #     faulty.append(i)
         if matches[i][-1] == '\\':
             faulty.append(i)
 
