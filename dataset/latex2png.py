@@ -21,19 +21,20 @@ class Latex:
 \end{document}
 '''
 
-    def __init__(self, math, dpi=250):
+    def __init__(self, math, dpi=250, font='Latin Modern Math'):
         '''takes list of math code. `returns each element as PNG with DPI=`dpi`'''
         self.math = math
         self.dpi = dpi
+        self.font = font
 
-    def write(self, font='Latin Modern Math'):
+    def write(self):
         # inline = bool(re.match('^\$[^$]*\$$', self.math)) and False
         try:
             workdir = tempfile.gettempdir()
             fd, texfile = tempfile.mkstemp('.tex', 'eq', workdir, True)
-            # print(self.BASE % (font, self.math))
+            # print(self.BASE % (self.font, self.math))
             with os.fdopen(fd, 'w+') as f:
-                document = self.BASE % (font, '\n'.join(self.math))
+                document = self.BASE % (self.font, '\n'.join(self.math))
                 #print(document)
                 f.write(document)
 
