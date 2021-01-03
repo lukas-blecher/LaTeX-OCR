@@ -55,11 +55,14 @@ def read_tex_files(file_path):
             tf.close()
             texfiles = [os.path.abspath(x) for x in glob.glob(os.path.join(tempdir, '**', '*.tex'), recursive=True)]
             # de-macro
-            ret = subprocess.run(['de-macro', *texfiles], cwd=tempdir)
+            ret = subprocess.run(['de-macro', *texfiles], cwd=tempdir, capture_output=True)
             if ret.returncode == 0:
                 texfiles = glob.glob(os.path.join(tempdir, '**', '*-clean.tex'), recursive=True)
             for texfile in texfiles:
-                tex += open(texfile, 'r').read()
+                try:
+                    tex += open(texfile, 'r', encoding=chardet.detect(open(texfile, 'br').readline())['encoding']).read()
+                except UnicodeDecodeError:
+                    pass
 
     except tarfile.ReadError:
         try:

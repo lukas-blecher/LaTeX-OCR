@@ -41,8 +41,8 @@ def check_brackets(s):
 
 
 def clean_matches(matches, min_chars=MIN_CHARS):
-    template = r'\\%s\{(.*?)\}'
-    sub = [re.compile(template % s) for s in ['ref', 'label', 'caption']]
+    template = r'\\%s\s?\{(.*?)\}'
+    sub = [re.compile(template % s) for s in ['ref', 'cite', 'label', 'caption']]
     faulty = []
     for i in range(len(matches)):
         if 'tikz' in matches[i]:  # do not support tikz at the moment
