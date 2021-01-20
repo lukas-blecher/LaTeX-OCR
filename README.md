@@ -2,13 +2,14 @@
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code
 
 ## Data
-We need paired data for the network to learn. Luckly there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-100k](https://zenodo.org/record/56198#.V2px0jXT6eA) dataset.
+We need paired data for the network to learn. Luckly there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-170k](https://www.kaggle.com/rvente/im2latex170k) dataset.
 
 ### Fonts
 * Latin Modern Math
 * GFSNeohellenicMath.otf
 * Asana Math
 * XITS Math
+* Cambria Math
 
 ## Requirements
 ### Dataset

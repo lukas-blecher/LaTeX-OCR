@@ -14,9 +14,8 @@ import logging
 import requests
 import urllib.request
 from urllib.error import HTTPError
-sys.path.insert(0, os.path.abspath('..' if os.path.dirname(sys.argv[0])=='' else '.'))
-from dataset.extract_latex import *
-from dataset.scraping import *
+from extract_latex import *
+from scraping import *
 
 # logging.getLogger().setLevel(logging.INFO)
 arxiv_id = re.compile(r'(?<!\d)(\d{4}\.\d{5})(?!\d)')

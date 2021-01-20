@@ -6,9 +6,8 @@ import html
 import requests
 import re
 import tempfile
-sys.path.insert(0, os.path.abspath('..' if os.path.dirname(sys.argv[0])=='' else '.'))
-from dataset.arxiv import *
-from dataset.extract_latex import *
+from arxiv import *
+from extract_latex import *
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
 htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
