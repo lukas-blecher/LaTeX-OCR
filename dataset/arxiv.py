@@ -14,8 +14,12 @@ import logging
 import requests
 import urllib.request
 from urllib.error import HTTPError
-from extract_latex import *
-from scraping import *
+try:
+    from extract_latex import *
+    from scraping import *
+except:
+    from dataset.extract_latex import *
+    from dataset.scraping import *
 
 # logging.getLogger().setLevel(logging.INFO)
 arxiv_id = re.compile(r'(?<!\d)(\d{4}\.\d{5})(?!\d)')

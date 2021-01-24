@@ -1,4 +1,4 @@
-# tex2pix - LaTeX OCR
+# pix2tex - LaTeX OCR
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code
 
 ## Data
