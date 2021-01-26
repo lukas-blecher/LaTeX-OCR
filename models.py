@@ -6,7 +6,6 @@ from x_transformers import *
 from x_transformers.autoregressive_wrapper import AutoregressiveWrapper
 from einops import rearrange, repeat
 
-
 class ViTransformerWrapper(nn.Module):
     def __init__(
         self,
@@ -90,6 +89,9 @@ def get_model(args):
                 heads=args.heads,
                 cross_attend=True
             )),
-        pad_value=args.pad_token_id
+        pad_value=args.pad_token
     ).to(args.device)
+    if args.wandb:
+        import wandb
+        wandb.watch((encoder, decoder))
     return Model(encoder, decoder, args)

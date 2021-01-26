@@ -14,13 +14,15 @@ import wandb
 
 from dataset.dataset import Im2LatexDataset
 from models import get_model
+from utils import *
 
 
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
     dataloader.update(args)
     device = args.device
-    args.pad_token_id = dataloader.pad_token_id
+    os.makedirs(args.model_path, exist_ok=True)
+
     model = get_model(args)
     encoder, decoder = model.encoder, model.decoder
     opt = optim.Adam(model.parameters(), args.lr)
@@ -36,10 +38,18 @@ def train(args):
             torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             opt.step()
             dset.set_description('Loss: %.4f' % loss.item())
-            if i % 15 == 0:
-                print(''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([dataloader.bos_token_id]).to(
-                    device), args.max_seq_len, eos_token=dataloader.eos_token_id, context=encoded[:1])[:-1]).split(' ')).replace('Ġ', ' ').strip())
-                print(dataloader.pairs[dataloader.i][0][0])
+            if args.wandb:
+                wandb.log({'train/loss': loss.item()})
+            if i % args.sample_freq == 0:
+                pred = ''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([dataloader.bos_token_id]).to(
+                    device), args.max_seq_len, eos_token=dataloader.eos_token_id, context=encoded[:1])[:-1]).split(' ')).replace('Ġ', ' ').strip()
+                truth = dataloader.pairs[dataloader.i][0][0]
+                if args.wandb:
+                    table = wandb.Table(columns=["Truth", "Prediction"])
+                    table.add_data(tuth, pred)
+                    wandb.log({"test/examples": table})
+        if (e+1) % args.save_freq == 0:
+            torch.save(model.parameters(), os.path.join(args.model_path, '%s_e%02d' % (args.name, e+1)))
 
 
 if __name__ == '__main__':
@@ -54,6 +64,12 @@ if __name__ == '__main__':
     with parsed_args.config as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = Munch(params)
+    args.wandb = not parsed_args.debug and not args.debug
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
     args.device = torch.device('cuda' if torch.cuda.is_available() and not parsed_args.no_cuda else 'cpu')
+    seed_everything(args.seed)
+    if args.wandb:
+        if not parsed_args.resume:
+            args.id = wandb.util.generate_id()
+        wandb.init(config=dict(args), resume='allow', name=args.name, id=args.id)
     train(args)
