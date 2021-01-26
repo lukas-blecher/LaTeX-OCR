@@ -46,7 +46,7 @@ def train(args):
                 truth = dataloader.pairs[dataloader.i][0][0]
                 if args.wandb:
                     table = wandb.Table(columns=["Truth", "Prediction"])
-                    table.add_data(tuth, pred)
+                    table.add_data(truth, pred)
                     wandb.log({"test/examples": table})
         if (e+1) % args.save_freq == 0:
             torch.save(model.parameters(), os.path.join(args.model_path, '%s_e%02d' % (args.name, e+1)))
