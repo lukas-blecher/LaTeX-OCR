@@ -1,0 +1,31 @@
+# Input/Output/Name
+data: "dataset/data/dataset.pkl"
+output_path: "outputs"
+model_path: "checkpoints"
+name: "pix2tex"
+
+# Token ids
+pad_token: 0
+bos_token: 1
+eos_token: 2
+
+# Training parameters
+epochs: 10
+batchsize: 8
+
+# Optimizer configurations
+optimizer: "Adam"
+lr: 0.001
+betas: [.5, .9]
+
+# Parameters for model architectures
+max_width: 1024
+max_height: 512
+channels: 1
+patch_size: 32
+# Encoder / Decoder
+dim: 128
+num_layers: 4
+heads: 8
+num_tokens: 8000
+max_seq_len: 512

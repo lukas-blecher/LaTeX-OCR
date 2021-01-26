@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import io
+import glob
 import tempfile
 import subprocess
 from PIL import Image
@@ -90,7 +91,7 @@ class Latex:
                 if len(self.math) > 1:
                     png = [open(pngfile.replace('.png', '')+'-%i.png' % i, 'rb').read() for i in range(len(self.math))]
                 else:
-                    png = open(pngfile.replace('.png', '')+'.png', 'rb').read()
+                    png = [open(pngfile.replace('.png', '')+'.png', 'rb').read()]
                 return png
             else:
                 if len(self.math) > 1:
@@ -102,7 +103,9 @@ class Latex:
             basefile = infile.replace('.tex', '')
             tempext = ['.aux', '.pdf', '.log']
             if return_bytes:
-                tempext += '.png'
+                ims = glob.glob(basefile+'*.png')
+                for im in ims:
+                    os.remove(im)
             for te in tempext:
                 tempfile = basefile + te
                 if os.path.exists(tempfile):
