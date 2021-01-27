@@ -93,5 +93,5 @@ def get_model(args):
     ).to(args.device)
     if args.wandb:
         import wandb
-        wandb.watch((encoder.attn_layers, decoder.attn_layers))
+        wandb.watch((encoder.attn_layers, decoder.net.attn_layers))
     return Model(encoder, decoder, args)

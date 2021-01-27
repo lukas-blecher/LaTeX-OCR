@@ -26,10 +26,10 @@ def train(args):
     model = get_model(args)
     encoder, decoder = model.encoder, model.decoder
     opt = optim.Adam(model.parameters(), args.lr)
-    scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.05, steps_per_epoch=len(dataloader), epochs=args.epochs)
+    scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.002, steps_per_epoch=len(dataloader), epochs=args.epochs)
 
     for e in range(args.epochs):
-        dset = tqdm(dataloader)
+        dset = tqdm(iter(dataloader))
         for i, (seq, im) in enumerate(dset):
             opt.zero_grad()
             tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)

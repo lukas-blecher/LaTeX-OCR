@@ -79,6 +79,7 @@ class Im2LatexDataset:
             self.pairs = np.random.permutation(np.array(self.pairs, dtype=object))
         else:
             self.pairs = np.array(self.pairs, dtype=object)
+        self.size = len(self.pairs)
         return self
 
     def __next__(self):
