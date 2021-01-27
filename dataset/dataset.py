@@ -86,7 +86,7 @@ class Im2LatexDataset:
         if self.i >= self.size:
             raise StopIteration
         self.i += 1
-        return self.prepare_data(self.pairs[self.i])
+        return self.prepare_data(self.pairs[self.i-1])
 
     def prepare_data(self, batch):
         """loads images into memory
