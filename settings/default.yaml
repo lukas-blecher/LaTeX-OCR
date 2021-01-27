@@ -24,7 +24,7 @@ dim: 128
 num_layers: 4
 heads: 8
 num_tokens: 8000
-max_seq_len: 512
+max_seq_len: 1024
 
 # Other
 seed: 42

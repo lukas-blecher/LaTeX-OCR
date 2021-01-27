@@ -56,6 +56,7 @@ class Im2LatexDataset:
                 self.size += div  # + (1 if mod > 0 else 0)
 
             self.transform = transforms.Compose([transforms.PILToTensor()])  # , transforms.Normalize([200],[255/2]),transforms.RandomPerspective(fill=0)])
+            iter(self)
 
     def __len__(self):
         return self.size

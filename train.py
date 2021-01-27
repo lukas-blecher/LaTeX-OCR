@@ -26,6 +26,7 @@ def train(args):
     model = get_model(args)
     encoder, decoder = model.encoder, model.decoder
     opt = optim.Adam(model.parameters(), args.lr)
+    scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.05, steps_per_epoch=len(dataloader), epochs=args.epochs)
 
     for e in range(args.epochs):
         dset = tqdm(dataloader)
@@ -35,21 +36,26 @@ def train(args):
             encoded = encoder(im.to(device))
             loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
             opt.step()
+            scheduler.step()
+
             dset.set_description('Loss: %.4f' % loss.item())
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
             if i % args.sample_freq == 0:
-                pred = ''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([dataloader.bos_token_id]).to(
-                    device), args.max_seq_len, eos_token=dataloader.eos_token_id, context=encoded[:1])[:-1]).split(' ')).replace('Ġ', ' ').strip()
-                truth = dataloader.pairs[dataloader.i][0][0]
+                pred = ''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([args.bos_token]).to(
+                    device), args.max_seq_len, eos_token=args.eos_token, context=encoded[:1].detach())[:-1]).split(' ')).replace('Ġ', ' ').strip()
+                s = seq['input_ids'][0]
+                truth = ''.join(dataloader.tokenizer.decode(s[1:list(s).index(args.eos_token)]).split(' ')).replace('Ġ', ' ').strip()
                 if args.wandb:
                     table = wandb.Table(columns=["Truth", "Prediction"])
                     table.add_data(truth, pred)
                     wandb.log({"test/examples": table})
+                else:
+                    print('\n%s\n%s' % (truth, pred))
         if (e+1) % args.save_freq == 0:
-            torch.save(model.parameters(), os.path.join(args.model_path, '%s_e%02d' % (args.name, e+1)))
+            torch.save(model.state_dict(), os.path.join(args.model_path, '%s_e%02d' % (args.name, e+1)))
 
 
 if __name__ == '__main__':
