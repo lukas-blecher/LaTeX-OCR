@@ -6,6 +6,7 @@ from x_transformers import *
 from x_transformers.autoregressive_wrapper import AutoregressiveWrapper
 from einops import rearrange, repeat
 
+
 class ViTransformerWrapper(nn.Module):
     def __init__(
         self,
@@ -27,6 +28,8 @@ class ViTransformerWrapper(nn.Module):
         patch_dim = channels * patch_size ** 2
 
         self.patch_size = patch_size
+        self.max_width = max_width
+        self.max_height = max_height
 
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
         self.patch_to_embedding = nn.Linear(patch_dim, dim)
@@ -46,7 +49,10 @@ class ViTransformerWrapper(nn.Module):
 
         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
+        h, w = torch.tensor(img.shape[2:])//p
+        pos_emb_ind = repeat(torch.arange(h)*(self.max_width//p-w), 'n -> (n b)', b=w)+torch.arange(h*w)
+        pos_emb_ind = torch.cat((torch.zeros(1), pos_emb_ind+1), dim=0).long()
+        x += self.pos_embedding[:, pos_emb_ind]
         x = self.dropout(x)
 
         x = self.attn_layers(x, **kwargs)

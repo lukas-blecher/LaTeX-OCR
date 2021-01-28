@@ -26,7 +26,7 @@ def train(args):
     model = get_model(args)
     encoder, decoder = model.encoder, model.decoder
     opt = optim.Adam(model.parameters(), args.lr)
-    scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.002, steps_per_epoch=len(dataloader), epochs=args.epochs)
+    scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.005, steps_per_epoch=len(dataloader), epochs=args.epochs)
 
     for e in range(args.epochs):
         dset = tqdm(iter(dataloader))
@@ -43,7 +43,7 @@ def train(args):
             dset.set_description('Loss: %.4f' % loss.item())
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
-            if i % args.sample_freq == 0:
+            if (i-1) % args.sample_freq == 0:
                 pred = ''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([args.bos_token]).to(
                     device), args.max_seq_len, eos_token=args.eos_token, context=encoded[:1].detach())[:-1]).split(' ')).replace('Ġ', ' ').strip()
                 s = seq['input_ids'][0]
@@ -55,7 +55,8 @@ def train(args):
                 else:
                     print('\n%s\n%s' % (truth, pred))
         if (e+1) % args.save_freq == 0:
-            torch.save(model.state_dict(), os.path.join(args.model_path, '%s_e%02d' % (args.name, e+1)))
+            torch.save(model.state_dict(), os.path.join(args.model_path, '%s_e%02d.pth' % (args.name, e+1)))
+            yaml.dump(dict(args), open(os.path.join(args.model_path, 'config.yaml'), 'w+'))
 
 
 if __name__ == '__main__':
