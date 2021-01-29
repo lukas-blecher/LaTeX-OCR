@@ -50,7 +50,7 @@ class ViTransformerWrapper(nn.Module):
         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
         x = torch.cat((cls_tokens, x), dim=1)
         h, w = torch.tensor(img.shape[2:])//p
-        pos_emb_ind = repeat(torch.arange(h)*(self.max_width//p-w), 'n -> (n b)', b=w)+torch.arange(h*w)
+        pos_emb_ind = repeat(torch.arange(h)*(self.max_width//p-w), 'h -> (h w)', w=w)+torch.arange(h*w)
         pos_emb_ind = torch.cat((torch.zeros(1), pos_emb_ind+1), dim=0).long()
         x += self.pos_embedding[:, pos_emb_ind]
         x = self.dropout(x)

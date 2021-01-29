@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 import torch.utils.data as data
 from torchvision import transforms
@@ -42,6 +43,7 @@ class Im2LatexDataset:
             self.eos_token_id = 2
             self.shuffle = shuffle
             self.batchsize = batchsize
+            self.max_dimensions = max_dimensions
             self.data = defaultdict(lambda: [])
             # check the image dimension for every image and group them together
             for i, im in enumerate(self.images):
@@ -49,9 +51,8 @@ class Im2LatexDataset:
                 if width <= max_dimensions[0] and height <= max_dimensions[1]:
                     self.data[(width, height)].append((eqs[self.indices[i]], im))
             self.data = dict(self.data)
-            self.groups = list(self.data.keys())
             self.size = 0
-            for k in self.groups:
+            for k in self.data:
                 div, mod = divmod(len(self.data[k]), self.batchsize)
                 self.size += div  # + (1 if mod > 0 else 0)
 
@@ -65,7 +66,7 @@ class Im2LatexDataset:
         self.i = 0
         self.pairs = []
 
-        for k in self.groups:
+        for k in self.data:
             info = np.array(self.data[k], dtype=object)
             p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
             for i in range(0, len(info), self.batchsize):
@@ -106,8 +107,11 @@ class Im2LatexDataset:
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
             tok[k] = pad_sequence([torch.LongTensor([p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
-
-        return tok, torch.cat(images).float().unsqueeze(1)/255
+        images = torch.cat(images).float().unsqueeze(1)/255
+        if self.pad:
+            h, w = images.shape[2:]
+            images = F.pad(images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)
+        return tok, images
 
     def load(self, filename, args=[]):
         """returns a pickled version of a dataset
@@ -128,10 +132,17 @@ class Im2LatexDataset:
         with open(filename, 'wb') as file:
             pickle.dump(self, file)
 
-    def update(self, args):
-        for k in ['batchsize', 'shuffle']:
-            if k in args:
-                setattr(self, k, args[k])
+    def update(self, **kwargs):
+        for k in ['batchsize', 'shuffle', 'pad']:
+            if k in kwargs:
+                setattr(self, k, kwargs[k])
+        if 'max_dimensions' in kwargs:
+            self.max_dimensions = kwargs['max_dimensions']
+            temp = {}
+            for k in self.data:
+                if k[0] <= self.max_dimensions[0] and k[1] <= self.max_dimensions[1]:
+                    temp[k] = self.data[k]
+            self.data = temp
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ from utils import *
 
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
-    dataloader.update(args)
+    dataloader.update(**args)
     device = args.device
     os.makedirs(args.model_path, exist_ok=True)
 
@@ -28,7 +28,8 @@ def train(args):
     opt = optim.Adam(model.parameters(), args.lr)
     scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.005, steps_per_epoch=len(dataloader), epochs=args.epochs)
 
-    for e in range(args.epochs):
+    for e in range(args.epoch, args.epochs):
+        args.epoch = e
         dset = tqdm(iter(dataloader))
         for i, (seq, im) in enumerate(dset):
             opt.zero_grad()
@@ -43,7 +44,7 @@ def train(args):
             dset.set_description('Loss: %.4f' % loss.item())
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
-            if (i-1) % args.sample_freq == 0:
+            if (i+1) % args.sample_freq == 0:
                 pred = ''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([args.bos_token]).to(
                     device), args.max_seq_len, eos_token=args.eos_token, context=encoded[:1].detach())[:-1]).split(' ')).replace('Ġ', ' ').strip()
                 s = seq['input_ids'][0]
@@ -70,10 +71,9 @@ if __name__ == '__main__':
     parsed_args = parser.parse_args()
     with parsed_args.config as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
-    args = Munch(params)
-    args.wandb = not parsed_args.debug and not args.debug
+    args = parse_args(Munch(params))
+    
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
-    args.device = torch.device('cuda' if torch.cuda.is_available() and not parsed_args.no_cuda else 'cpu')
     seed_everything(args.seed)
     if args.wandb:
         if not parsed_args.resume:

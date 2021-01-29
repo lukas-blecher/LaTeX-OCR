@@ -31,6 +31,7 @@ seed: 42
 id: null
 sample_freq: 50
 debug: True
+pad: False
 
 # Token ids
 pad_token: 0
