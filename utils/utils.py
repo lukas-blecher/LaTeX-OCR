@@ -34,4 +34,13 @@ def parse_args(args, **kwargs):
     args.wandb = not kwargs.debug and not args.debug
     args.device = torch.device('cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu')
     args.max_dimensions = [args.max_width, args.max_height]
+    args.out_path = os.path.join(args.model_path, args.name)
+    os.makedirs(args.out_path, exist_ok=True)
     return args
+
+
+def token2str(tokens, tokenizer):
+    if len(tokens.shape) == 1:
+        tokens = tokens[None, :]
+    dec = [tokenizer.decode(tok) for tok in tokens]
+    return [''.join(detok.split(' ')).replace('Ġ', ' ').replace('[EOS]', '').replace('[BOS]', '').replace('[PAD]', '').strip() for detok in dec]

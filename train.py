@@ -21,7 +21,6 @@ def train(args):
     dataloader = Im2LatexDataset().load(args.data)
     dataloader.update(**args)
     device = args.device
-    os.makedirs(args.model_path, exist_ok=True)
 
     model = get_model(args)
     encoder, decoder = model.encoder, model.decoder
@@ -45,19 +44,21 @@ def train(args):
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
             if (i+1) % args.sample_freq == 0:
-                pred = ''.join(dataloader.tokenizer.decode(decoder.generate(torch.LongTensor([args.bos_token]).to(
-                    device), args.max_seq_len, eos_token=args.eos_token, context=encoded[:1].detach())[:-1]).split(' ')).replace('Ġ', ' ').strip()
-                s = seq['input_ids'][0]
-                truth = ''.join(dataloader.tokenizer.decode(s[1:list(s).index(args.eos_token)]).split(' ')).replace('Ġ', ' ').strip()
+                num_samples = 4
+                dec = decoder.generate(torch.LongTensor([args.bos_token]*len(encoded[:num_samples]))[:, None].to(device), args.max_seq_len,
+                                       eos_token=args.pad_token, context=encoded.detach()[:num_samples])
+                pred = token2str(dec[:num_samples], dataloader.tokenizer)
+                truth = token2str(seq['input_ids'], dataloader.tokenizer)
                 if args.wandb:
                     table = wandb.Table(columns=["Truth", "Prediction"])
-                    table.add_data(truth, pred)
+                    for k in range(min([len(pred), args.test_samples])):
+                        table.add_data(truth[k], pred[k])
                     wandb.log({"test/examples": table})
                 else:
                     print('\n%s\n%s' % (truth, pred))
         if (e+1) % args.save_freq == 0:
-            torch.save(model.state_dict(), os.path.join(args.model_path, '%s_e%02d.pth' % (args.name, e+1)))
-            yaml.dump(dict(args), open(os.path.join(args.model_path, 'config.yaml'), 'w+'))
+            torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
+            yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))
 
 
 if __name__ == '__main__':
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     with parsed_args.config as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params))
-    
+
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
     seed_everything(args.seed)
     if args.wandb:

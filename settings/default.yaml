@@ -15,8 +15,8 @@ lr: 0.001
 betas: [.5, .9]
 
 # Parameters for model architectures
-max_width: 1024
-max_height: 512
+max_width: 128
+max_height: 128
 channels: 1
 patch_size: 32
 # Encoder / Decoder
