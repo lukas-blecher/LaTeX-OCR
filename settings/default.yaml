@@ -21,6 +21,9 @@ channels: 1
 patch_size: 32
 # Encoder / Decoder
 dim: 128
+backbone_dim: 256
+backbone_depth: 4
+encoder_depth: 4
 num_layers: 4
 heads: 8
 num_tokens: 8000
