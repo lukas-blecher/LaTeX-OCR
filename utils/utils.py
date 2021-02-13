@@ -32,7 +32,7 @@ def parse_args(args, **kwargs):
     args = Munch({'epoch': 0}, **args)
     kwargs = Munch({'no_cuda': False, 'debug': False}, **kwargs)
     args.wandb = not kwargs.debug and not args.debug
-    args.device = torch.device('cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu')
+    args.device = 'cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu'
     args.max_dimensions = [args.max_width, args.max_height]
     args.out_path = os.path.join(args.model_path, args.name)
     os.makedirs(args.out_path, exist_ok=True)
@@ -44,3 +44,11 @@ def token2str(tokens, tokenizer):
         tokens = tokens[None, :]
     dec = [tokenizer.decode(tok) for tok in tokens]
     return [''.join(detok.split(' ')).replace('Ġ', ' ').replace('[EOS]', '').replace('[BOS]', '').replace('[PAD]', '').strip() for detok in dec]
+
+
+def get_optimizer(optimizer):
+    return getattr(torch.optim, optimizer)
+
+
+def get_scheduler(scheduler):
+    return getattr(torch.optim.lr_scheduler, scheduler)

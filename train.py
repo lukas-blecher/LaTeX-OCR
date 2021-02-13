@@ -23,9 +23,11 @@ def train(args):
     device = args.device
 
     model = get_model(args)
+    if args.load_chkpt is not None:
+        model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
-    opt = optim.Adam(model.parameters(), args.lr)
-    scheduler = optim.lr_scheduler.OneCycleLR(opt, max_lr=0.005, steps_per_epoch=len(dataloader), epochs=args.epochs)
+    opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
+    scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader), epochs=args.epochs)
 
     for e in range(args.epoch, args.epochs):
         args.epoch = e
@@ -44,10 +46,9 @@ def train(args):
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
             if (i+1) % args.sample_freq == 0:
-                num_samples = 4
-                dec = decoder.generate(torch.LongTensor([args.bos_token]*len(encoded[:num_samples]))[:, None].to(device), args.max_seq_len,
-                                       eos_token=args.pad_token, context=encoded.detach()[:num_samples])
-                pred = token2str(dec[:num_samples], dataloader.tokenizer)
+                dec = decoder.generate(torch.LongTensor([args.bos_token]*len(encoded[:args.test_samples]))[:, None].to(device), args.max_seq_len,
+                                       eos_token=args.pad_token, context=encoded.detach()[:args.test_samples])
+                pred = token2str(dec[:args.test_samples], dataloader.tokenizer)
                 truth = token2str(seq['input_ids'], dataloader.tokenizer)
                 if args.wandb:
                     table = wandb.Table(columns=["Truth", "Prediction"])

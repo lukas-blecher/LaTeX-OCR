@@ -47,23 +47,8 @@ class CustomVisionTransformer(VisionTransformer):
         return x
 
 
-class CNNBackbone(nn.Module):
-    def __init__(self, feature_dim=512, channels=1, out_dim=128, depth=5, kernel_size=3, stride=1, padding=1, **kwargs):
-        super().__init__()
-        dims = [channels]+[feature_dim]*(depth-1)+[out_dim]
-        layers = []
-        for i in range(depth):
-            layers.append(nn.Conv2d(dims[i], dims[i+1], kernel_size=kernel_size, stride=stride, padding=padding))
-            layers.append(nn.ReLU())
-
-        self.model = nn.Sequential(*layers[:-1])
-
-    def forward(self, x):
-        return self.model(x)
-
 
 def get_model(args):
-    #backbone = CNNBackbone(args.backbone_dim, depth=args.backbone_depth, channels=args.channels)
     backbone = ResNetV2(
         layers=(3, 4, 9), num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
@@ -91,5 +76,5 @@ def get_model(args):
     ).to(args.device)
     if args.wandb:
         import wandb
-        wandb.watch((encoder.attn_layers, decoder.net.attn_layers))
+        wandb.watch((encoder, decoder.net.attn_layers))
     return Model(encoder, decoder, args)

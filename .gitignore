@@ -132,3 +132,4 @@ notebooks/
 .ipynb_checkpoints/
 dataset/data
 wandb/
+checkpoints/
