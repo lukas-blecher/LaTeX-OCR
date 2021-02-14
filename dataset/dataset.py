@@ -51,10 +51,7 @@ class Im2LatexDataset:
                 if width <= max_dimensions[0] and height <= max_dimensions[1]:
                     self.data[(width, height)].append((eqs[self.indices[i]], im))
             self.data = dict(self.data)
-            self.size = 0
-            for k in self.data:
-                div, mod = divmod(len(self.data[k]), self.batchsize)
-                self.size += div  # + (1 if mod > 0 else 0)
+            self._get_size()
 
             self.transform = transforms.Compose([transforms.PILToTensor()])  # , transforms.Normalize([200],[255/2]),transforms.RandomPerspective(fill=0)])
             iter(self)
@@ -113,6 +110,12 @@ class Im2LatexDataset:
             images = F.pad(images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)
         return tok, images
 
+    def _get_size(self):
+        self.size = 0
+        for k in self.data:
+            div, mod = divmod(len(self.data[k]), self.batchsize)
+            self.size += div  # + (1 if mod > 0 else 0)
+
     def load(self, filename, args=[]):
         """returns a pickled version of a dataset
 
@@ -143,7 +146,8 @@ class Im2LatexDataset:
                 if k[0] <= self.max_dimensions[0] and k[1] <= self.max_dimensions[1]:
                     temp[k] = self.data[k]
             self.data = temp
-
+        self._get_size()
+        iter(self)
 
 if __name__ == '__main__':
     import argparse
