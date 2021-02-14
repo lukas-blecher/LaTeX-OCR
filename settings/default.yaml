@@ -2,6 +2,7 @@
 data: "dataset/data/dataset.pkl"
 output_path: "outputs"
 model_path: "checkpoints"
+load_chkpt: null
 save_freq: 5 # save every nth epoch
 name: "pix2tex"
 
@@ -11,8 +12,10 @@ batchsize: 8
 
 # Optimizer configurations
 optimizer: "Adam"
+scheduler: "OneCycleLR"
 lr: 0.001
-betas: [.5, .9]
+max_lr: 0.005
+betas: [0.9, 0.999]
 
 # Parameters for model architectures
 max_width: 128
@@ -21,6 +24,9 @@ channels: 1
 patch_size: 32
 # Encoder / Decoder
 dim: 128
+backbone_dim: 256
+backbone_depth: 4
+encoder_depth: 4
 num_layers: 4
 heads: 8
 num_tokens: 8000
@@ -30,6 +36,7 @@ max_seq_len: 1024
 seed: 42
 id: null
 sample_freq: 50
+test_samples: 5
 debug: True
 pad: False
 

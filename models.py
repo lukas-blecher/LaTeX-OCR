@@ -4,61 +4,10 @@ import torch.nn.functional as F
 
 from x_transformers import *
 from x_transformers.autoregressive_wrapper import AutoregressiveWrapper
+from timm.models.vision_transformer import VisionTransformer
+from timm.models.resnetv2 import ResNetV2
+from timm.models.layers import StdConv2dSame
 from einops import rearrange, repeat
-
-
-class ViTransformerWrapper(nn.Module):
-    def __init__(
-        self,
-        *,
-        max_width,
-        max_height,
-        patch_size,
-        attn_layers,
-        channels=1,
-        num_classes=None,
-        dropout=0.,
-        emb_dropout=0.
-    ):
-        super().__init__()
-        assert isinstance(attn_layers, Encoder), 'attention layers must be an Encoder'
-        assert max_width % patch_size == 0 and max_height % patch_size == 0, 'image dimensions must be divisible by the patch size'
-        dim = attn_layers.dim
-        num_patches = (max_width // patch_size)*(max_height // patch_size)
-        patch_dim = channels * patch_size ** 2
-
-        self.patch_size = patch_size
-        self.max_width = max_width
-        self.max_height = max_height
-
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
-        self.patch_to_embedding = nn.Linear(patch_dim, dim)
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
-        self.dropout = nn.Dropout(emb_dropout)
-
-        self.attn_layers = attn_layers
-        self.norm = nn.LayerNorm(dim)
-        #self.mlp_head = FeedForward(dim, dim_out = num_classes, dropout = dropout) if exists(num_classes) else None
-
-    def forward(self, img, **kwargs):
-        p = self.patch_size
-
-        x = rearrange(img, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p)
-        x = self.patch_to_embedding(x)
-        b, n, _ = x.shape
-
-        cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
-        x = torch.cat((cls_tokens, x), dim=1)
-        h, w = torch.tensor(img.shape[2:])//p
-        pos_emb_ind = repeat(torch.arange(h)*(self.max_width//p-w), 'h -> (h w)', w=w)+torch.arange(h*w)
-        pos_emb_ind = torch.cat((torch.zeros(1), pos_emb_ind+1), dim=0).long()
-        x += self.pos_embedding[:, pos_emb_ind]
-        x = self.dropout(x)
-
-        x = self.attn_layers(x, **kwargs)
-        x = self.norm(x)
-
-        return x
 
 
 class Model(nn.Module):
@@ -72,18 +21,46 @@ class Model(nn.Module):
         return self.decoder.generate(torch.LongTensor([self.args.bos_token]*len(x)).to(x.device), self.args.max_seq_len, eos_token=self.args.eos_token, context=self.encoder(x))
 
 
+class CustomVisionTransformer(VisionTransformer):
+    def __init__(self, img_size=224, *args, **kwargs):
+        super(CustomVisionTransformer, self).__init__(img_size=img_size, *args, **kwargs)
+        self.height, self.width = img_size
+        self.patch_size = 16
+
+    def forward_features(self, x):
+        B, c, h, w = x.shape
+        x = self.patch_embed(x)
+
+        cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+        x = torch.cat((cls_tokens, x), dim=1)
+        h, w = h//self.patch_size, w//self.patch_size
+        pos_emb_ind = repeat(torch.arange(h)*(self.width//self.patch_size-w), 'h -> (h w)', w=w)+torch.arange(h*w)
+        pos_emb_ind = torch.cat((torch.zeros(1), pos_emb_ind+1), dim=0).long()
+        x += self.pos_embed[:, pos_emb_ind]
+        #x = x + self.pos_embed
+        x = self.pos_drop(x)
+
+        for blk in self.blocks:
+            x = blk(x)
+
+        x = self.norm(x)
+        return x
+
+
+
 def get_model(args):
-    encoder = ViTransformerWrapper(
-        max_width=args.max_width,
-        max_height=args.max_height,
-        channels=args.channels,
-        patch_size=args.patch_size,
-        attn_layers=Encoder(
-            dim=args.dim,
-            depth=args.num_layers,
-            heads=args.heads,
-        )
-    ).to(args.device)
+    backbone = ResNetV2(
+        layers=(3, 4, 9), num_classes=0, global_pool='', in_chans=args.channels,
+        preact=False, stem_type='same', conv_layer=StdConv2dSame)
+    encoder = CustomVisionTransformer(img_size=(args.max_height, args.max_width),
+                                      patch_size=args.patch_size,
+                                      in_chans=args.channels,
+                                      num_classes=0,
+                                      embed_dim=args.dim,
+                                      depth=args.encoder_depth,
+                                      num_heads=args.heads,
+                                      hybrid_backbone=backbone
+                                      ).to(args.device)
 
     decoder = AutoregressiveWrapper(
         TransformerWrapper(
@@ -99,5 +76,5 @@ def get_model(args):
     ).to(args.device)
     if args.wandb:
         import wandb
-        wandb.watch((encoder.attn_layers, decoder.net.attn_layers))
+        wandb.watch((encoder, decoder.net.attn_layers))
     return Model(encoder, decoder, args)
