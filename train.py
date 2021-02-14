@@ -27,7 +27,7 @@ def train(args):
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
-    scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader), epochs=args.epochs)
+    scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader)*2, epochs=args.epochs) # scheduler steps are weird.
 
     for e in range(args.epoch, args.epochs):
         args.epoch = e
@@ -46,6 +46,7 @@ def train(args):
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
             if (i+1) % args.sample_freq == 0:
+                model.eval()
                 dec = decoder.generate(torch.LongTensor([args.bos_token]*len(encoded[:args.test_samples]))[:, None].to(device), args.max_seq_len,
                                        eos_token=args.pad_token, context=encoded.detach()[:args.test_samples])
                 pred = token2str(dec[:args.test_samples], dataloader.tokenizer)
@@ -57,6 +58,7 @@ def train(args):
                     wandb.log({"test/examples": table})
                 else:
                     print('\n%s\n%s' % (truth, pred))
+                model.train()
         if (e+1) % args.save_freq == 0:
             torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
             yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))

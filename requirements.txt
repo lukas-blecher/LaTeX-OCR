@@ -12,3 +12,4 @@ transformers==4.2.2
 numpy==1.19.5
 Pillow==8.1.0
 PyYAML==5.4.1
+timm==0.4.3
