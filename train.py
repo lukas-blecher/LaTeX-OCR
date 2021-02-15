@@ -13,6 +13,7 @@ from tqdm.auto import tqdm
 import wandb
 
 from dataset.dataset import Im2LatexDataset
+from eval import evaluate
 from models import get_model
 from utils import *
 
@@ -20,6 +21,10 @@ from utils import *
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
     dataloader.update(**args)
+    valdataloader = Im2LatexDataset().load(args.valdata)
+    valargs = args.copy()
+    valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True)
+    valdataloader.update(**valargs)
     device = args.device
 
     model = get_model(args)
@@ -27,7 +32,7 @@ def train(args):
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
-    scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader)*2, epochs=args.epochs) # scheduler steps are weird.
+    scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader)*2, epochs=args.epochs)  # scheduler steps are weird.
 
     for e in range(args.epoch, args.epochs):
         args.epoch = e
@@ -46,19 +51,7 @@ def train(args):
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
             if (i+1) % args.sample_freq == 0:
-                model.eval()
-                dec = decoder.generate(torch.LongTensor([args.bos_token]*len(encoded[:args.test_samples]))[:, None].to(device), args.max_seq_len,
-                                       eos_token=args.pad_token, context=encoded.detach()[:args.test_samples])
-                pred = token2str(dec[:args.test_samples], dataloader.tokenizer)
-                truth = token2str(seq['input_ids'], dataloader.tokenizer)
-                if args.wandb:
-                    table = wandb.Table(columns=["Truth", "Prediction"])
-                    for k in range(min([len(pred), args.test_samples])):
-                        table.add_data(truth[k], pred[k])
-                    wandb.log({"test/examples": table})
-                else:
-                    print('\n%s\n%s' % (truth, pred))
-                model.train()
+                evaluate(model, valdataloader, args, name='val')
         if (e+1) % args.save_freq == 0:
             torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
             yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))

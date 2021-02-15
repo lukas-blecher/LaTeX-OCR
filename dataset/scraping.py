@@ -18,9 +18,11 @@ htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
 wiki_base = 'https://en.wikipedia.org/wiki/'
 
 
-def parse_url(url):
+def parse_url(url, encoding=None):
     r = requests.get(url)
     if r.ok:
+        if encoding:
+            r.encoding = encoding
         return html.unescape(re.sub(htmltags, '', r.text))
 
 

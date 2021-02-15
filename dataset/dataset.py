@@ -16,7 +16,18 @@ from transformers import PreTrainedTokenizerFast
 
 
 class Im2LatexDataset:
-    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_dimensions=(1024, 512)):
+    keep_smaller_batches = False
+    shuffle = True
+    batchsize = 16
+    max_dimensions = (1024, 512)
+    pad_token = "[PAD]"
+    bos_token = "[BOS]"
+    eos_token = "[EOS]"
+    pad_token_id = 0
+    bos_token_id = 1
+    eos_token_id = 2
+
+    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_dimensions=(1024, 512), keep_smaller_batches=False):
         """Generates a torch dataset from pairs of `equations` and `images`.
 
         Args:
@@ -26,24 +37,20 @@ class Im2LatexDataset:
             shuffle (bool, opitonal): Defaults to True. 
             batchsize (int, optional): Defaults to 16.
             max_dimensions (tuple(int, int), optional): Maximal dimensions the model can handle
+            keep_smaller_batches (bool): Whether to also return batches with smaller size than `batchsize`. Defaults to False.
         """
 
         if images is not None and equations is not None:
             assert tokenizer is not None
-            self.images = glob.glob(join(images, '*.png'))
+            self.images = [path.replace('\\', '/') for path in glob.glob(join(images, '*.png'))] 
             self.sample_size = len(self.images)
             eqs = open(equations, 'r').read().split('\n')
             self.indices = [int(os.path.basename(img).split('.')[0]) for img in self.images]
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer)
-            self.pad_token = "[PAD]"
-            self.bos_token = "[BOS]"
-            self.eos_token = "[EOS]"
-            self.pad_token_id = 0
-            self.bos_token_id = 1
-            self.eos_token_id = 2
             self.shuffle = shuffle
             self.batchsize = batchsize
             self.max_dimensions = max_dimensions
+            self.keep_smaller_batches = keep_smaller_batches
             self.data = defaultdict(lambda: [])
             # check the image dimension for every image and group them together
             for i, im in enumerate(self.images):
@@ -62,7 +69,6 @@ class Im2LatexDataset:
     def __iter__(self):
         self.i = 0
         self.pairs = []
-
         for k in self.data:
             info = np.array(self.data[k], dtype=object)
             p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
@@ -70,7 +76,7 @@ class Im2LatexDataset:
                 batch = info[p[i:i+self.batchsize]]
                 if len(batch.shape) == 1:
                     batch = batch[None, :]
-                if len(batch) < self.batchsize:
+                if len(batch) < self.batchsize and not self.keep_smaller_batches:
                     continue
                 self.pairs.append(batch)
         if self.shuffle:
@@ -136,7 +142,7 @@ class Im2LatexDataset:
             pickle.dump(self, file)
 
     def update(self, **kwargs):
-        for k in ['batchsize', 'shuffle', 'pad']:
+        for k in ['batchsize', 'shuffle', 'pad', 'keep_smaller_batches']:
             if k in kwargs:
                 setattr(self, k, kwargs[k])
         if 'max_dimensions' in kwargs:
@@ -148,6 +154,7 @@ class Im2LatexDataset:
             self.data = temp
         self._get_size()
         iter(self)
+
 
 if __name__ == '__main__':
     import argparse
