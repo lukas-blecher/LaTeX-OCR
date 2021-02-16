@@ -15,6 +15,7 @@ from munch import Munch
 from transformers import PreTrainedTokenizerFast
 
 from dataset.dataset import Im2LatexDataset
+from dataset.latex2png import tex2pil
 from models import get_model
 from utils import *
 
@@ -54,13 +55,25 @@ def main(arguments):
     print(pred)
     df = pd.DataFrame([pred])
     df.to_clipboard(index=False, header=False)
+    if args.show:
+        try:
+            tex2pil([f'$${pred}$$'])[0].show()
+        except Exception as e:
+            print(e)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Use model', add_help=False)
     parser.add_argument('-t', '--temperature', type=float, default=.4, help='Softmax sampling frequency')
-    parser.add_argument('-c', '--config', type=str, default='D:/ML/pix2tex/checkpoints/hybrid/config.yaml')
-    parser.add_argument('-m', '--checkpoint', type=str, default='D:/ML/pix2tex/checkpoints/hybrid/pix2tex_cont2_e15.pth')
+    parser.add_argument('-c', '--config', type=str, default='checkpoints/hybrid_config.yaml')
+    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/hybrid_weights.pth')
+    parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     args = parser.parse_args()
+    logging.getLogger().setLevel(logging.FATAL)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    latexocr_path = os.path.dirname(sys.argv[0])
+    if latexocr_path != '':
+        sys.path.insert(0, latexocr_path)
+        os.chdir(latexocr_path)
     main(args)

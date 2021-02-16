@@ -130,6 +130,7 @@ dmypy.json
 
 notebooks/
 .ipynb_checkpoints/
-dataset/data
+dataset/data/**
 wandb/
-checkpoints/
+checkpoints/**
+!**/.gitkeep
