@@ -58,7 +58,7 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, name
     if args.wandb:
         table = wandb.Table(columns=["Truth", "Prediction"])
         for k in range(min([len(pred), args.test_samples])):
-            table.add_data(truth[k], pred[k])
+            table.add_data(post_process(truth[k]), post_process(pred[k]))
         wandb.log({name+'/examples': table, name+'/bleu': bleu_score})
     else:
         print('\n%s\n%s' % (truth, pred))

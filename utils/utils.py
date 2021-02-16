@@ -1,5 +1,8 @@
 import random
 import os
+import cv2
+import re
+from PIL import Image
 import numpy as np
 import torch
 from munch import Munch
@@ -44,6 +47,43 @@ def token2str(tokens, tokenizer):
         tokens = tokens[None, :]
     dec = [tokenizer.decode(tok) for tok in tokens]
     return [''.join(detok.split(' ')).replace('Ġ', ' ').replace('[EOS]', '').replace('[BOS]', '').replace('[PAD]', '').strip() for detok in dec]
+
+
+def pad(img, divable=32):
+    '''PIL Image padding'''
+    data = np.asarray(img.convert('LA'))
+    gray = 255*(data[..., 0] < 128).astype(np.uint8)  # To invert the text to white
+    coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
+    a, b, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
+    rect = data[b:b+h, a:a+w]
+    if rect[..., -1].var() == 0:
+        im = Image.fromarray((rect[..., 0]).astype(np.uint8)).convert('L')
+    else:
+        im = Image.fromarray((255-rect[..., -1]).astype(np.uint8)).convert('L')
+    dims = []
+    for x in [w, h]:
+        div, mod = divmod(x, divable)
+        dims.append(divable*(div + (1 if mod > 0 else 0)))
+    padded = Image.new('L', dims, 255)
+    padded.paste(im, im.getbbox())
+    return padded
+
+
+def post_process(s):
+    text_reg = r'(\\(operatorname|mathrm|text|mathbf) {.*?})'
+    letter = '[a-zA-Z]'
+    noletter = '[\W_\d]'
+    names = [x[0].replace(' ', '') for x in re.findall(text_reg, s)]
+    s = re.sub(text_reg, lambda match: str(names.pop(0)), s)
+    news = s
+    while True:
+        s = news
+        news = re.sub(r'(%s)\s+?(%s)' % (noletter, noletter), r'\1\2', s)
+        news = re.sub(r'(%s)\s+?(%s)' % (noletter, letter), r'\1\2', news)
+        news = re.sub(r'(%s)\s+?(%s)' % (letter, noletter), r'\1\2', news)
+        if news == s:
+            break
+    return s
 
 
 def get_optimizer(optimizer):
