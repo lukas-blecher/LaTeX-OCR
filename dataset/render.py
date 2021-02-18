@@ -29,7 +29,7 @@ def render_dataset(dataset: np.ndarray, names: np.ndarray, args):
     math_mode = '$$'if args.mode == 'equation' else '$'
     os.makedirs(args.out, exist_ok=True)
     indices = np.array([int(os.path.basename(img).split('.')[0]) for img in glob.glob(os.path.join(args.out, '*.png'))])
-    
+
     valid = [i for i, j in enumerate(names) if j not in indices]
     dataset = dataset[valid]
     names = names[valid]
@@ -57,13 +57,14 @@ def render_dataset(dataset: np.ndarray, names: np.ndarray, args):
                 else:
                     pngs = Latex(math, dpi=dpi, font=font).write(return_bytes=False)
             except Exception as e:
-                print(e)
+                #print(e)
+                #print(math)
                 #raise e
                 faulty.extend(list(names[order[i:i+args.batchsize]]))
                 continue
 
             for j, k in enumerate(range(i, i+len(pngs))):
-                outpath = os.path.join(args.out, '%06d.png' % names[order[k]])
+                outpath = os.path.join(args.out, '%07d.png' % names[order[k]])
                 if args.preprocess:
                     try:
                         data = np.asarray(pngs[j])
@@ -98,8 +99,8 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--font', nargs='+', type=str, default=['Latin Modern Math', 'GFSNeohellenicMath.otf', 'Asana Math', 'XITS Math',
                                                                       'Cambria Math', 'Latin Modern Math', 'Latin Modern Math', 'Latin Modern Math'], help='font to use. default = Latin Modern Math')
     parser.add_argument('-m', '--mode', choices=['inline', 'equation'], default='equation', help='render as inline or equation')
-    parser.add_argument('--dpi', type=int, default=[100, 150], nargs='+', help='dpi range to render in')
-    parser.add_argument('-p', '--preprocess', default=True, action='store_false', help='crop, remove alpha channel, padding')
+    parser.add_argument('--dpi', type=int, default=[110, 170], nargs='+', help='dpi range to render in')
+    parser.add_argument('-p', '--no-preprocess', dest='preprocess', default=True, action='store_false', help='crop, remove alpha channel, padding')
     parser.add_argument('-d', '--divable', type=int, default=32, help='To what factor to pad the images')
     parser.add_argument('-s', '--shuffle', action='store_true', help='Whether to shuffle the equations in the first iteration')
     args = parser.parse_args(sys.argv[1:])
@@ -107,14 +108,14 @@ if __name__ == '__main__':
     dataset = np.array(open(args.data, 'r').read().split('\n'), dtype=object)
     names = np.arange(len(dataset))
     prev_names = None
-    for i in range(20):
+    for i in range(12):
         if len(names) == 0:
             break
         prev_names = names
         names = render_dataset(dataset[names], names, args)
         same = names == prev_names
-        if (type(same) == bool and same) or (type(same) == np.ndarray and same.all()):
+        if (type(same) == bool and same) or (type(same) == np.ndarray and same.all()) or (args.batchsize == 1):
             break
-        if len(names) < 5*args.batchsize:
+        if len(names) < 50*args.batchsize:
             args.batchsize = max([1, args.batchsize//2])
         args.shuffle = True

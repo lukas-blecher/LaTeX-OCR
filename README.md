@@ -11,7 +11,7 @@ The goal of this project is to create a learning based system that takes an imag
 The `pix2tex.py` file offers a fast way to get the model prediction of an image. First you need to copy the formula image into the clipboard memory for example by using a snipping tool (on Windows built in `Win`+`Shift`+`S`). Next just call the script with `python pix2tex.py`. It will print out the predicted Latex code for that image and also copy it into your clipboard.
 
 ## Data
-We need paired data for the network to learn. Luckily there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-170k](https://www.kaggle.com/rvente/im2latex170k) dataset.
+We need paired data for the network to learn. Luckily there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-100k](https://zenodo.org/record/56198#.V2px0jXT6eA) dataset.
 
 ### Fonts
 Latin Modern Math, GFSNeohellenicMath.otf, Asana Math, XITS Math, Cambria Math

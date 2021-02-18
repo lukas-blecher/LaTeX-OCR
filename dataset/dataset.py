@@ -12,7 +12,49 @@ from os.path import join
 from collections import defaultdict
 import pickle
 from PIL import Image
+import cv2
 from transformers import PreTrainedTokenizerFast
+from tqdm.auto import tqdm
+import albumentations as alb
+from albumentations.pytorch import ToTensorV2
+
+
+class AugWrap:
+    def __init__(self, aug):
+        self.aug = aug
+
+    def __call__(self, image):
+        return self.aug(image=image)['image'][:1]  # /255
+
+
+train_transform = AugWrap(
+    alb.Compose(
+        [
+            alb.Compose(
+                [alb.ShiftScaleRotate(shift_limit=0, scale_limit=(-.15, 0), rotate_limit=1, border_mode=0, interpolation=3,
+                                      value=[255, 255, 255], p=1),
+                 alb.GridDistortion(distort_limit=0.1, border_mode=0, interpolation=3, value=[255, 255, 255], p=.5)], p=.15),
+            alb.InvertImg(p=.15),
+            alb.RGBShift(r_shift_limit=15, g_shift_limit=15,
+                         b_shift_limit=15, p=0.3),
+            alb.GaussNoise(10, p=.2),
+            alb.RandomBrightnessContrast(.05, (-.2, 0), True, p=0.2),
+            alb.JpegCompression(95, p=.5),
+            alb.ToGray(always_apply=True),
+            alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
+            # alb.Sharpen()
+            ToTensorV2(),
+        ]
+    ))
+test_transform = AugWrap(
+    alb.Compose(
+        [
+            alb.ToGray(always_apply=True),
+            alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
+            # alb.Sharpen()
+            ToTensorV2(),
+        ]
+    ))
 
 
 class Im2LatexDataset:
@@ -26,8 +68,9 @@ class Im2LatexDataset:
     pad_token_id = 0
     bos_token_id = 1
     eos_token_id = 2
+    transform = train_transform
 
-    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_dimensions=(1024, 512), keep_smaller_batches=False):
+    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_dimensions=(1024, 512), pad=False, keep_smaller_batches=False, test=False):
         """Generates a torch dataset from pairs of `equations` and `images`.
 
         Args:
@@ -37,12 +80,14 @@ class Im2LatexDataset:
             shuffle (bool, opitonal): Defaults to True. 
             batchsize (int, optional): Defaults to 16.
             max_dimensions (tuple(int, int), optional): Maximal dimensions the model can handle
+            pad (bool): Pad the images to `max_dimensions`. Defaults to False.
             keep_smaller_batches (bool): Whether to also return batches with smaller size than `batchsize`. Defaults to False.
+            test (bool): Whether to use the test transformation or not. Defaults to False.
         """
 
         if images is not None and equations is not None:
             assert tokenizer is not None
-            self.images = [path.replace('\\', '/') for path in glob.glob(join(images, '*.png'))] 
+            self.images = [path.replace('\\', '/') for path in glob.glob(join(images, '*.png'))]
             self.sample_size = len(self.images)
             eqs = open(equations, 'r').read().split('\n')
             self.indices = [int(os.path.basename(img).split('.')[0]) for img in self.images]
@@ -50,17 +95,18 @@ class Im2LatexDataset:
             self.shuffle = shuffle
             self.batchsize = batchsize
             self.max_dimensions = max_dimensions
+            self.pad = pad
             self.keep_smaller_batches = keep_smaller_batches
+            self.test = test
             self.data = defaultdict(lambda: [])
             # check the image dimension for every image and group them together
-            for i, im in enumerate(self.images):
+            for i, im in tqdm(enumerate(self.images), total=len(self.images)):
                 width, height = imagesize.get(im)
                 if width <= max_dimensions[0] and height <= max_dimensions[1]:
                     self.data[(width, height)].append((eqs[self.indices[i]], im))
             self.data = dict(self.data)
             self._get_size()
 
-            self.transform = transforms.Compose([transforms.PILToTensor()])  # , transforms.Normalize([200],[255/2]),transforms.RandomPerspective(fill=0)])
             iter(self)
 
     def __len__(self):
@@ -68,6 +114,7 @@ class Im2LatexDataset:
 
     def __iter__(self):
         self.i = 0
+        self.transform = test_transform if self.test else train_transform
         self.pairs = []
         for k in self.data:
             info = np.array(self.data[k], dtype=object)
@@ -105,12 +152,17 @@ class Im2LatexDataset:
         eqs, ims = batch.T
         images = []
         for path in list(ims):
-            images.append(self.transform(Image.open(path)))
+            im = cv2.imread(path)
+            if im is None:
+                print(path, 'not found!')
+                continue
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            images.append(self.transform(im))
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
             tok[k] = pad_sequence([torch.LongTensor([p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
-        images = torch.cat(images).float().unsqueeze(1)/255
+        images = torch.cat(images).float().unsqueeze(1)
         if self.pad:
             h, w = images.shape[2:]
             images = F.pad(images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)
@@ -142,7 +194,7 @@ class Im2LatexDataset:
             pickle.dump(self, file)
 
     def update(self, **kwargs):
-        for k in ['batchsize', 'shuffle', 'pad', 'keep_smaller_batches']:
+        for k in ['batchsize', 'shuffle', 'pad', 'keep_smaller_batches', 'test']:
             if k in kwargs:
                 setattr(self, k, kwargs[k])
         if 'max_dimensions' in kwargs:

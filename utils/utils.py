@@ -8,6 +8,9 @@ import torch
 from munch import Munch
 from inspect import isfunction
 
+operators = '|'.join(['arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth', 'csc', 'deg', 'det', 'dim', 'exp', 'gcd', 'hom', 'inf',
+                      'injlim', 'ker', 'lg', 'lim', 'liminf', 'limsup', 'ln', 'log', 'max', 'min', 'Pr', 'projlim', 'sec', 'sin', 'sinh', 'sup', 'tan', 'tanh'])
+ops = re.compile(r'\\operatorname{(%s)}' % operators)
 # helper functions from lucidrains
 
 
@@ -72,7 +75,7 @@ def pad(img, divable=32):
 def post_process(s):
     text_reg = r'(\\(operatorname|mathrm|text|mathbf) {.*?})'
     letter = '[a-zA-Z]'
-    noletter = '[\W_\d]'
+    noletter = '[\W_^\d]'
     names = [x[0].replace(' ', '') for x in re.findall(text_reg, s)]
     s = re.sub(text_reg, lambda match: str(names.pop(0)), s)
     news = s
@@ -84,6 +87,16 @@ def post_process(s):
         if news == s:
             break
     return s
+
+
+def alternatives(s):
+    #TODO takes list of list of tokens
+    # alts = [s]
+    # names = ['\\'+x for x in re.findall(ops, s)]
+    # alts.append(re.sub(ops, lambda match: str(names.pop(0)), s))
+
+    # return alts
+    return [s]
 
 
 def get_optimizer(optimizer):

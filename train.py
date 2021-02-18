@@ -20,10 +20,10 @@ from utils import *
 
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
-    dataloader.update(**args)
+    dataloader.update(**args, test=False)
     valdataloader = Im2LatexDataset().load(args.valdata)
     valargs = args.copy()
-    valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True)
+    valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     valdataloader.update(**valargs)
     device = args.device
 

@@ -5,8 +5,8 @@ MIN_CHARS = 20
 MAX_CHARS = 3000
 dollar = re.compile(r'((?<!\$)\${1,2}(?!\$))(.{%i,%i}?)(?<!\\)(?<!\$)\1(?!\$)' % (1, MAX_CHARS))
 inline = re.compile(r'(\\\((.*?)(?<!\\)\\\))|(\\\[(.{%i,%i}?)(?<!\\)\\\])' % (1, MAX_CHARS))
-equation = re.compile(r'\\begin\{(equation|eqnarray|align|alignat|math|displaymath|gather)\*?\}(.{%i,%i}?)\\end\{\1\*?\}' % (1, MAX_CHARS), re.S)
-align = re.compile(r'(\\begin\{(align|alignat|flalign|eqnarray|aligned)\*?\}(.{%i,%i}?)\\end\{\2\*?\})' % (1, MAX_CHARS), re.S)
+equation = re.compile(r'\\begin\{(equation|math|displaymath)\*?\}(.{%i,%i}?)\\end\{\1\*?\}' % (1, MAX_CHARS), re.S)
+align = re.compile(r'(\\begin\{(align|alignedat|alignat|flalign|eqnarray|aligned|split|gather)\*?\}(.{%i,%i}?)\\end\{\2\*?\})' % (1, MAX_CHARS), re.S)
 displaymath = re.compile(r'(\\displaystyle)(.{%i,%i}?)(\}(?:<|"))' % (1, MAX_CHARS))
 outer_whitespace = re.compile(
     r'^\\,|\\,$|^~|~$|^\\ |\\ $|^\\thinspace|\\thinspace$|^\\!|\\!$|^\\:|\\:$|^\\;|\\;$|^\\enspace|\\enspace$|^\\quad|\\quad$|^\\qquad|\\qquad$|^\\hspace{[a-zA-Z0-9]+}|\\hspace{[a-zA-Z0-9]+}$|^\\hfill|\\hfill$')
@@ -59,7 +59,7 @@ def clean_matches(matches, min_chars=MIN_CHARS):
         #     matches[i] = check_brackets(matches[i])
         # except ValueError:
         #     faulty.append(i)
-        if matches[i][-1] == '\\':
+        if matches[i][-1] == '\\' or 'newcommand' in matches[i][-1]:
             faulty.append(i)
 
     matches = [m.strip() for i, m in enumerate(matches) if i not in faulty]

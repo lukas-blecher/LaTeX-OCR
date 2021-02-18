@@ -42,7 +42,8 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, name
     assert len(dataset) > 0
     device = args.device
     bleus = []
-    for i, (seq, im) in tqdm(enumerate(iter(dataset)), total=len(dataset)):
+    pbar = tqdm(enumerate(iter(dataset)), total=len(dataset))
+    for i, (seq, im) in pbar:
         tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
         encoded = model.encoder(im.to(device))
         #loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
@@ -50,7 +51,8 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, name
                                      eos_token=args.pad_token, context=encoded)
         pred = detokenize(dec, dataset.tokenizer)
         truth = detokenize(seq['input_ids'], dataset.tokenizer)
-        bleus.append(metrics.bleu_score(pred, [[x] for x in truth]))
+        bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
+        pbar.set_description('BLEU: %.2f' % (np.mean(bleus)))
     bleu_score = np.mean(bleus)
     # samples
     pred = token2str(dec, dataset.tokenizer)
@@ -71,14 +73,16 @@ if __name__ == '__main__':
     parser.add_argument('--config', default='settings/default.yaml', help='path to yaml config file', type=argparse.FileType('r'))
     parser.add_argument('-c', '--checkpoint', default=None, type=str, help='path to model checkpoint')
     parser.add_argument('-d', '--data', default='dataset/data/val.pkl', type=str, help='Path to Dataset pkl file')
-    parser.add_argument('--no_cuda', action='store_true', help='Use CPU')
+    parser.add_argument('--no-cuda', action='store_true', help='Use CPU')
+    parser.add_argument('-b', '--batchsize', type=int, default=None, help='Batch size')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
-    parser.add_argument('--resume', help='path to checkpoint folder', action='store_true')
 
     parsed_args = parser.parse_args()
     with parsed_args.config as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params))
+    if parsed_args.batchsize is not None:
+        args.testbatchsize = parsed_args.batchsize
     args.wandb = False
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
     seed_everything(args.seed)

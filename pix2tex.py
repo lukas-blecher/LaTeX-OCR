@@ -33,7 +33,7 @@ def main(arguments):
     model.load_state_dict(torch.load(args.checkpoint))
     model.to(args.device)
     encoder, decoder = model.encoder, model.decoder
-    transform = transforms.Compose([transforms.PILToTensor()])
+    transform = transforms.Compose([transforms.ToTensor()])
     tokenizer = PreTrainedTokenizerFast(tokenizer_file=args.tokenizer)
     img = ImageGrab.grabclipboard()
     if img is None:
@@ -42,7 +42,7 @@ def main(arguments):
     if any([r > 1 for r in ratios]):
         size = np.array(img.size)//max(ratios)
         img = img.resize(size.astype(int))
-    t = transform(pad(img, args.patch_size)).unsqueeze(0)/255
+    t = transform(np.array(pad(img, args.patch_size))).unsqueeze(0)/255
     im = t.to(args.device)
 
     with torch.no_grad():
