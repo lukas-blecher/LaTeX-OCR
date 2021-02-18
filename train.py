@@ -60,7 +60,7 @@ def train(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train model')
     parser.add_argument('--config', default='settings/default.yaml', help='path to yaml config file', type=argparse.FileType('r'))
-    parser.add_argument('-d', '--data', default='dataset/data/dataset.pkl', type=str, help='Path to Dataset pkl file')
+    parser.add_argument('-d', '--data', default='dataset/data/train.pkl', type=str, help='Path to Dataset pkl file')
     parser.add_argument('--no_cuda', action='store_true', help='Use CPU')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
     parser.add_argument('--resume', help='path to checkpoint folder', action='store_true')

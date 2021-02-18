@@ -70,8 +70,8 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, name
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test model')
-    parser.add_argument('--config', default='settings/default.yaml', help='path to yaml config file', type=argparse.FileType('r'))
-    parser.add_argument('-c', '--checkpoint', default=None, type=str, help='path to model checkpoint')
+    parser.add_argument('--config', default='checkpoints/hybrid_config.yaml', help='path to yaml config file', type=argparse.FileType('r'))
+    parser.add_argument('-c', '--checkpoint', default='checkpoints/hybrid_weights.pth', type=str, help='path to model checkpoint')
     parser.add_argument('-d', '--data', default='dataset/data/val.pkl', type=str, help='Path to Dataset pkl file')
     parser.add_argument('--no-cuda', action='store_true', help='Use CPU')
     parser.add_argument('-b', '--batchsize', type=int, default=None, help='Batch size')
@@ -91,6 +91,6 @@ if __name__ == '__main__':
         model.load_state_dict(torch.load(parsed_args.checkpoint, args.device))
     dataset = Im2LatexDataset().load(parsed_args.data)
     valargs = args.copy()
-    valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True)
+    valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     dataset.update(**valargs)
     evaluate(model, dataset, args)

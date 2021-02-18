@@ -19,42 +19,32 @@ import albumentations as alb
 from albumentations.pytorch import ToTensorV2
 
 
-class AugWrap:
-    def __init__(self, aug):
-        self.aug = aug
-
-    def __call__(self, image):
-        return self.aug(image=image)['image'][:1]  # /255
-
-
-train_transform = AugWrap(
-    alb.Compose(
-        [
-            alb.Compose(
-                [alb.ShiftScaleRotate(shift_limit=0, scale_limit=(-.15, 0), rotate_limit=1, border_mode=0, interpolation=3,
-                                      value=[255, 255, 255], p=1),
-                 alb.GridDistortion(distort_limit=0.1, border_mode=0, interpolation=3, value=[255, 255, 255], p=.5)], p=.15),
-            alb.InvertImg(p=.15),
-            alb.RGBShift(r_shift_limit=15, g_shift_limit=15,
-                         b_shift_limit=15, p=0.3),
-            alb.GaussNoise(10, p=.2),
-            alb.RandomBrightnessContrast(.05, (-.2, 0), True, p=0.2),
-            alb.JpegCompression(95, p=.5),
-            alb.ToGray(always_apply=True),
-            alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
-            # alb.Sharpen()
-            ToTensorV2(),
-        ]
-    ))
-test_transform = AugWrap(
-    alb.Compose(
-        [
-            alb.ToGray(always_apply=True),
-            alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
-            # alb.Sharpen()
-            ToTensorV2(),
-        ]
-    ))
+train_transform = alb.Compose(
+    [
+        alb.Compose(
+            [alb.ShiftScaleRotate(shift_limit=0, scale_limit=(-.15, 0), rotate_limit=1, border_mode=0, interpolation=3,
+                                  value=[255, 255, 255], p=1),
+             alb.GridDistortion(distort_limit=0.1, border_mode=0, interpolation=3, value=[255, 255, 255], p=.5)], p=.15),
+        alb.InvertImg(p=.15),
+        alb.RGBShift(r_shift_limit=15, g_shift_limit=15,
+                     b_shift_limit=15, p=0.3),
+        alb.GaussNoise(10, p=.2),
+        alb.RandomBrightnessContrast(.05, (-.2, 0), True, p=0.2),
+        alb.JpegCompression(95, p=.5),
+        alb.ToGray(always_apply=True),
+        alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
+        # alb.Sharpen()
+        ToTensorV2(),
+    ]
+)
+test_transform = alb.Compose(
+    [
+        alb.ToGray(always_apply=True),
+        alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
+        # alb.Sharpen()
+        ToTensorV2(),
+    ]
+)
 
 
 class Im2LatexDataset:
@@ -157,7 +147,7 @@ class Im2LatexDataset:
                 print(path, 'not found!')
                 continue
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-            images.append(self.transform(im))
+            images.append(self.transform(image=im)['image'][:1])
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
@@ -208,12 +198,31 @@ class Im2LatexDataset:
         iter(self)
 
 
+def generate_tokenizer(equations, output, vocab_size):
+    from tokenizers import Tokenizer, pre_tokenizers
+    from tokenizers.models import BPE
+    from tokenizers.trainers import BpeTrainer
+    tokenizer = Tokenizer(BPE())
+    tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+    trainer = BpeTrainer(special_tokens=["[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
+    tokenizer.train(trainer, [equations])
+    tokenizer.save(path=output, pretty=False)
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Train model', add_help=False)
-    parser.add_argument('-i', '--images', type=str, required=True, help='Image folder')
-    parser.add_argument('-e', '--equations', type=str, required=True, help='equations text file')
+    parser.add_argument('-i', '--images', type=str, default=None, help='Image folder')
+    parser.add_argument('-e', '--equations', type=str, default=None, help='equations text file')
     parser.add_argument('-t', '--tokenizer', default=None, help='Pretrained tokenizer file')
-    parser.add_argument('-o', '--out', default='dataset.pkl', help='output dataset')
+    parser.add_argument('-o', '--out', required=True, help='output file')
+    parser.add_argument('-s', '--vocab-size', default=8000, help='vocabulary size when training a tokenizer')
     args = parser.parse_args()
-    Im2LatexDataset(args.equations, args.images, args.tokenizer).save(args.out)
+    if args.images is None and args.equations is not None and args.tokenizer is None:
+        print('Generate tokenizer')
+        generate_tokenizer(args.equations, args.out, args.vocab_size)
+    elif args.images is not None and args.equations is not None and args.tokenizer is not None:
+        print('Generate dataset')
+        Im2LatexDataset(args.equations, args.images, args.tokenizer).save(args.out)
+    else:
+        print('Not defined')

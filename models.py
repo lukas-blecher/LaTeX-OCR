@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from x_transformers import *
-from x_transformers.autoregressive_wrapper import AutoregressiveWrapper
+from x_transformers.autoregressive_wrapper import *
 from timm.models.vision_transformer import VisionTransformer
 from timm.models.resnetv2 import ResNetV2
 from timm.models.layers import StdConv2dSame
@@ -19,6 +19,57 @@ class Model(nn.Module):
 
     def forward(self, x: torch.Tensor):
         return self.decoder.generate(torch.LongTensor([self.args.bos_token]*len(x)).to(x.device), self.args.max_seq_len, eos_token=self.args.eos_token, context=self.encoder(x))
+
+
+class CustomARWrapper(AutoregressiveWrapper):
+    def __init__(self, *args, **kwargs):
+        super(CustomARWrapper, self).__init__(*args, **kwargs)
+
+    @torch.no_grad()
+    def generate(self, start_tokens, seq_len, eos_token=None, temperature=1., filter_logits_fn=top_k, filter_thres=0.9, **kwargs):
+        device = start_tokens.device
+        was_training = self.net.training
+        num_dims = len(start_tokens.shape)
+
+        if num_dims == 1:
+            start_tokens = start_tokens[None, :]
+
+        b, t = start_tokens.shape
+
+        self.net.eval()
+        out = start_tokens
+        mask = kwargs.pop('mask', None)
+        if mask is None:
+            mask = torch.full_like(out, True, dtype=torch.bool, device=out.device)
+
+        for _ in range(seq_len):
+            x = out[:, -self.max_seq_len:]
+            mask = mask[:, -self.max_seq_len:]
+            # print('arw:',out.shape)
+            logits = self.net(x, mask=mask, **kwargs)[:, -1, :]
+
+            if filter_logits_fn in {top_k, top_p}:
+                filtered_logits = filter_logits_fn(logits, thres=filter_thres)
+                probs = F.softmax(filtered_logits / temperature, dim=-1)
+
+            elif filter_logits_fn is entmax:
+                probs = entmax(logits / temperature, alpha=ENTMAX_ALPHA, dim=-1)
+
+            sample = torch.multinomial(probs, 1)
+
+            out = torch.cat((out, sample), dim=-1)
+            mask = F.pad(mask, (0, 1), value=True)
+
+            if eos_token is not None and (torch.cumsum(out == eos_token, 1)[:, -1] >= 1).all():
+                break
+
+        out = out[:, t:]
+
+        if num_dims == 1:
+            out = out.squeeze(0)
+
+        self.net.train(was_training)
+        return out
 
 
 class CustomVisionTransformer(VisionTransformer):
@@ -45,7 +96,6 @@ class CustomVisionTransformer(VisionTransformer):
 
         x = self.norm(x)
         return x
-
 
 
 def get_model(args):
