@@ -8,6 +8,7 @@ import torch.utils.data as data
 from torchvision import transforms
 import numpy as np
 import imagesize
+import logging
 import glob
 import os
 from os.path import join
