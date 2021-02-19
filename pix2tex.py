@@ -3,6 +3,7 @@ import pandas as pd
 from PIL import ImageGrab
 from PIL import Image
 import os
+from dataset.dataset import Im2LatexDataset
 import sys
 import argparse
 import logging
@@ -14,7 +15,7 @@ from torchvision import transforms
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
 
-from dataset.dataset import Im2LatexDataset
+
 from dataset.latex2png import tex2pil
 from models import get_model
 from utils import *

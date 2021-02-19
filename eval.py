@@ -1,3 +1,4 @@
+from dataset.dataset import Im2LatexDataset
 import os
 import sys
 import argparse
@@ -11,7 +12,6 @@ from munch import Munch
 from tqdm.auto import tqdm
 import wandb
 
-from dataset.dataset import Im2LatexDataset
 from models import get_model
 from utils import *
 
