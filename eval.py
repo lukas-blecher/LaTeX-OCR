@@ -60,19 +60,20 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, num_
         pbar.set_description('BLEU: %.2f' % (np.mean(bleus)))
         if num_batches is not None and i >= num_batches:
             break
-    bleu_score = np.mean(bleus)
-    # samples
-    pred = token2str(dec, dataset.tokenizer)
-    truth = token2str(seq['input_ids'], dataset.tokenizer)
-    if args.wandb:
-        table = wandb.Table(columns=["Truth", "Prediction"])
-        for k in range(min([len(pred), args.test_samples])):
-            table.add_data(post_process(truth[k]), post_process(pred[k]))
-        wandb.log({name+'/examples': table, name+'/bleu': bleu_score})
-    else:
-        print('\n%s\n%s' % (truth, pred))
-        print('BLEU: %.2f' % bleu_score)
-    return bleu_score
+    if len(bleus) > 0:
+        bleu_score = np.mean(bleus)
+        # samples
+        pred = token2str(dec, dataset.tokenizer)
+        truth = token2str(seq['input_ids'], dataset.tokenizer)
+        if args.wandb:
+            table = wandb.Table(columns=["Truth", "Prediction"])
+            for k in range(min([len(pred), args.test_samples])):
+                table.add_data(post_process(truth[k]), post_process(pred[k]))
+            wandb.log({name+'/examples': table, name+'/bleu': bleu_score})
+        else:
+            print('\n%s\n%s' % (truth, pred))
+            print('BLEU: %.2f' % bleu_score)
+        return bleu_score
 
 
 if __name__ == '__main__':

@@ -42,20 +42,19 @@ def train(args):
             args.epoch = e
             dset = tqdm(iter(dataloader))
             for i, (seq, im) in enumerate(dset):
-                if seq is None or im is None:
-                    continue
-                opt.zero_grad()
-                tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
-                encoded = encoder(im.to(device))
-                loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
-                opt.step()
-                scheduler.step()
+                if seq is not None and im is not None:
+                    opt.zero_grad()
+                    tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
+                    encoded = encoder(im.to(device))
+                    loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                    opt.step()
+                    scheduler.step()
 
-                dset.set_description('Loss: %.4f' % loss.item())
-                if args.wandb:
-                    wandb.log({'train/loss': loss.item()})
+                    dset.set_description('Loss: %.4f' % loss.item())
+                    if args.wandb:
+                        wandb.log({'train/loss': loss.item()})
                 if (i+1) % args.sample_freq == 0:
                     evaluate(model, valdataloader, args, num_batches=args.valbatches, name='val')
             if (e+1) % args.save_freq == 0:
