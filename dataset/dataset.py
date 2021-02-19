@@ -196,7 +196,7 @@ class Im2LatexDataset:
             self.max_dimensions = kwargs['max_dimensions']
             temp = {}
             for k in self.data:
-                if k[0] <= self.max_dimensions[0] and k[1] <= self.max_dimensions[1]:
+                if 0 < k[0] <= self.max_dimensions[0] and 0 < k[1] <= self.max_dimensions[1]:
                     temp[k] = self.data[k]
             self.data = temp
         self._get_size()
