@@ -152,7 +152,11 @@ class Im2LatexDataset:
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
             tok[k] = pad_sequence([torch.LongTensor([p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
-        images = torch.cat(images).float().unsqueeze(1)
+        try:
+            images = torch.cat(images).float().unsqueeze(1)
+        except RuntimeError:
+            logging.critical('Images not working: %s' % (' '.join(list(ims))))
+            return None, None
         if self.pad:
             h, w = images.shape[2:]
             images = F.pad(images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)

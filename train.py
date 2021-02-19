@@ -42,6 +42,8 @@ def train(args):
             args.epoch = e
             dset = tqdm(iter(dataloader))
             for i, (seq, im) in enumerate(dset):
+                if seq is None or im is None:
+                    continue
                 opt.zero_grad()
                 tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
                 encoded = encoder(im.to(device))
