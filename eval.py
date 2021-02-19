@@ -27,13 +27,14 @@ def detokenize(tokens, tokenizer):
 
 
 @torch.no_grad()
-def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, name: str = 'test'):
+def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, num_batches: int = None, name: str = 'test'):
     """evaluates the model. Returns bleu score on the dataset
 
     Args:
         model (torch.nn.Module): the model
         dataset (Im2LatexDataset): test dataset
         args (Munch): arguments
+        num_batches (int): How many batches to evaluate on. Defaults to None (all batches).
         name (str, optional): name of the test e.g. val or test for wandb. Defaults to 'test'.
 
     Returns:
@@ -53,6 +54,8 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, name
         truth = detokenize(seq['input_ids'], dataset.tokenizer)
         bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
         pbar.set_description('BLEU: %.2f' % (np.mean(bleus)))
+        if num_batches is not None and i >= num_batches:
+            break
     bleu_score = np.mean(bleus)
     # samples
     pred = token2str(dec, dataset.tokenizer)

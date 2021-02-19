@@ -51,7 +51,7 @@ def train(args):
             if args.wandb:
                 wandb.log({'train/loss': loss.item()})
             if (i+1) % args.sample_freq == 0:
-                evaluate(model, valdataloader, args, name='val')
+                evaluate(model, valdataloader, args, num_batches=args.valbatches, name='val')
         if (e+1) % args.save_freq == 0:
             torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
             yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))

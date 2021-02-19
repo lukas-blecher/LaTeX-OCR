@@ -1,3 +1,5 @@
+import albumentations as alb
+from albumentations.pytorch import ToTensorV2
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,8 +17,6 @@ from PIL import Image
 import cv2
 from transformers import PreTrainedTokenizerFast
 from tqdm.auto import tqdm
-import albumentations as alb
-from albumentations.pytorch import ToTensorV2
 
 
 train_transform = alb.Compose(

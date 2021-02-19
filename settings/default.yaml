@@ -12,6 +12,7 @@ name: "pix2tex"
 epochs: 10
 batchsize: 8
 testbatchsize: 20
+valbatches: 100
 
 # Optimizer configurations
 optimizer: "Adam"
