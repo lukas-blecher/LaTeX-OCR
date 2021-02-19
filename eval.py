@@ -20,6 +20,8 @@ def detokenize(tokens, tokenizer):
     toks = [tokenizer.convert_ids_to_tokens(tok) for tok in tokens]
     for b in range(len(toks)):
         for i in reversed(range(len(toks[b]))):
+            if toks[b][i] is None:
+                toks[b][i] = ''
             toks[b][i] = toks[b][i].replace('Ġ', ' ').strip()
             if toks[b][i] in (['[BOS]', '[EOS]', '[PAD]']):
                 del toks[b][i]
