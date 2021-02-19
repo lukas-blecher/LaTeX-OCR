@@ -26,35 +26,44 @@ def train(args):
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     valdataloader.update(**valargs)
     device = args.device
-
     model = get_model(args)
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
+
+    def save_models(e):
+        torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
+        yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))
+
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
     scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader)*2, epochs=args.epochs)  # scheduler steps are weird.
+    try:
+        for e in range(args.epoch, args.epochs):
+            args.epoch = e
+            dset = tqdm(iter(dataloader))
+            for i, (seq, im) in enumerate(dset):
+                opt.zero_grad()
+                tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
+                encoded = encoder(im.to(device))
+                loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                opt.step()
+                scheduler.step()
 
-    for e in range(args.epoch, args.epochs):
-        args.epoch = e
-        dset = tqdm(iter(dataloader))
-        for i, (seq, im) in enumerate(dset):
-            opt.zero_grad()
-            tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
-            encoded = encoder(im.to(device))
-            loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
-            opt.step()
-            scheduler.step()
-
-            dset.set_description('Loss: %.4f' % loss.item())
+                dset.set_description('Loss: %.4f' % loss.item())
+                if args.wandb:
+                    wandb.log({'train/loss': loss.item()})
+                if (i+1) % args.sample_freq == 0:
+                    evaluate(model, valdataloader, args, num_batches=args.valbatches, name='val')
+            if (e+1) % args.save_freq == 0:
+                save_models(e)
             if args.wandb:
-                wandb.log({'train/loss': loss.item()})
-            if (i+1) % args.sample_freq == 0:
-                evaluate(model, valdataloader, args, num_batches=args.valbatches, name='val')
-        if (e+1) % args.save_freq == 0:
-            torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
-            yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))
+                wandb.log({'train/epoch': e+1})
+    except KeyboardInterrupt:
+        if e > 2:
+            save_models(e)
+        raise KeyboardInterrupt
 
 
 if __name__ == '__main__':
