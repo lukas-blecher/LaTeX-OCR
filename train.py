@@ -62,9 +62,10 @@ def train(args):
             if args.wandb:
                 wandb.log({'train/epoch': e+1})
     except KeyboardInterrupt:
-        if e > 2:
+        if e >= 2:
             save_models(e)
         raise KeyboardInterrupt
+    save_models(e)
 
 
 if __name__ == '__main__':

@@ -21,8 +21,7 @@ from models import get_model
 from utils import *
 
 
-def main(arguments):
-
+def initialize(arguments):
     with open(arguments.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = Munch(params)
@@ -33,11 +32,16 @@ def main(arguments):
     model = get_model(args)
     model.load_state_dict(torch.load(args.checkpoint))
     model.to(args.device)
-    encoder, decoder = model.encoder, model.decoder
     tokenizer = PreTrainedTokenizerFast(tokenizer_file=args.tokenizer)
+    return args, model, tokenizer
+
+
+def call_model(args, model, tokenizer):
+    encoder, decoder = model.encoder, model.decoder
     img = ImageGrab.grabclipboard()
     if img is None:
-        raise ValueError('copy an image into the clipboard.')
+        print('Copy an image into the clipboard.')
+        return
     ratios = [a/b for a, b in zip(img.size, args.max_dimensions)]
     if any([r > 1 for r in ratios]):
         size = np.array(img.size)//max(ratios)
@@ -53,7 +57,7 @@ def main(arguments):
         dec = decoder.generate(torch.LongTensor([args.bos_token])[:, None].to(device), args.max_seq_len,
                                eos_token=args.eos_token, context=encoded.detach(), temperature=args.temperature)
         pred = post_process(token2str(dec, tokenizer)[0])
-    print(pred)
+    print(pred, '\n')
     df = pd.DataFrame([pred])
     df.to_clipboard(index=False, header=False)
     if args.show:
@@ -65,7 +69,7 @@ def main(arguments):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Use model', add_help=False)
-    parser.add_argument('-t', '--temperature', type=float, default=.4, help='Softmax sampling frequency')
+    parser.add_argument('-t', '--temperature', type=float, default=1, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
     parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
@@ -77,4 +81,10 @@ if __name__ == "__main__":
     if latexocr_path != '':
         sys.path.insert(0, latexocr_path)
         os.chdir(latexocr_path)
-    main(args)
+
+    args, model, tokenizer = initialize(args)
+    while True:
+        instructions = input('Press ENTER to predict the LaTeX code for the image in the memory. Type "x" to stop the program. ')
+        if instructions.strip().lower() == 'x':
+            break
+        call_model(args, model, tokenizer)
