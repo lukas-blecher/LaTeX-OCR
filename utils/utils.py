@@ -11,6 +11,15 @@ from inspect import isfunction
 operators = '|'.join(['arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth', 'csc', 'deg', 'det', 'dim', 'exp', 'gcd', 'hom', 'inf',
                       'injlim', 'ker', 'lg', 'lim', 'liminf', 'limsup', 'ln', 'log', 'max', 'min', 'Pr', 'projlim', 'sec', 'sin', 'sinh', 'sup', 'tan', 'tanh'])
 ops = re.compile(r'\\operatorname{(%s)}' % operators)
+
+
+class EmptyStepper:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def step(self, *args, **kwargs):
+        pass
+
 # helper functions from lucidrains
 
 
@@ -110,4 +119,6 @@ def get_optimizer(optimizer):
 
 
 def get_scheduler(scheduler):
+    if scheduler is None:
+        return EmptyStepper
     return getattr(torch.optim.lr_scheduler, scheduler)
