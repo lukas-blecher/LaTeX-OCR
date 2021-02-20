@@ -54,8 +54,13 @@ def token2str(tokens, tokenizer):
 
 def pad(img, divable=32):
     '''PIL Image padding'''
-    data = np.asarray(img.convert('LA'))
-    gray = 255*(data[..., 0] < 128).astype(np.uint8)  # To invert the text to white
+    data = np.array(img.convert('LA'))
+    if data[..., 0].mean() > 128:
+        gray = 255*(data[..., 0] < 128).astype(np.uint8)  # To invert the text to white
+    else:
+        gray = 255*(data[..., 0] > 128).astype(np.uint8)
+        data[..., 0] = 255-data[..., 0]
+
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
     a, b, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
     rect = data[b:b+h, a:a+w]
@@ -81,7 +86,7 @@ def post_process(s):
     news = s
     while True:
         s = news
-        news = re.sub(r'(%s)\s+?(%s)' % (noletter, noletter), r'\1\2', s)
+        news = re.sub(r'(?!\\ )(%s)\s+?(%s)' % (noletter, noletter), r'\1\2', s)
         news = re.sub(r'(%s)\s+?(%s)' % (noletter, letter), r'\1\2', news)
         news = re.sub(r'(%s)\s+?(%s)' % (letter, noletter), r'\1\2', news)
         if news == s:
@@ -90,7 +95,8 @@ def post_process(s):
 
 
 def alternatives(s):
-    #TODO takes list of list of tokens
+    # TODO takes list of list of tokens
+    # try to generate equivalent code eg \ne \neq or \to \rightarrow
     # alts = [s]
     # names = ['\\'+x for x in re.findall(ops, s)]
     # alts.append(re.sub(ops, lambda match: str(names.pop(0)), s))

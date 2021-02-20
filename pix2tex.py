@@ -1,9 +1,9 @@
+from dataset.dataset import test_transform
 import cv2
 import pandas as pd
 from PIL import ImageGrab
 from PIL import Image
 import os
-from dataset.dataset import Im2LatexDataset
 import sys
 import argparse
 import logging
@@ -34,16 +34,16 @@ def main(arguments):
     model.load_state_dict(torch.load(args.checkpoint))
     model.to(args.device)
     encoder, decoder = model.encoder, model.decoder
-    transform = transforms.Compose([transforms.ToTensor()])
     tokenizer = PreTrainedTokenizerFast(tokenizer_file=args.tokenizer)
     img = ImageGrab.grabclipboard()
     if img is None:
-        raise ValueError('copy an imagae into the clipboard.')
+        raise ValueError('copy an image into the clipboard.')
     ratios = [a/b for a, b in zip(img.size, args.max_dimensions)]
     if any([r > 1 for r in ratios]):
         size = np.array(img.size)//max(ratios)
-        img = img.resize(size.astype(int))
-    t = transform(np.array(pad(img, args.patch_size))).unsqueeze(0)/255
+        img = img.resize(size.astype(int), Image.BILINEAR)
+    img = np.array(pad(img, args.patch_size).convert('RGB'))
+    t = test_transform(image=img)['image'][:1].unsqueeze(0)
     im = t.to(args.device)
 
     with torch.no_grad():
@@ -66,8 +66,8 @@ def main(arguments):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Use model', add_help=False)
     parser.add_argument('-t', '--temperature', type=float, default=.4, help='Softmax sampling frequency')
-    parser.add_argument('-c', '--config', type=str, default='checkpoints/hybrid_config.yaml')
-    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/hybrid_weights.pth')
+    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
+    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
     parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     args = parser.parse_args()
