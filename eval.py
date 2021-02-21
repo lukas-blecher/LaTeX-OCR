@@ -82,18 +82,17 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--checkpoint', default='checkpoints/weights.pth', type=str, help='path to model checkpoint')
     parser.add_argument('-d', '--data', default='dataset/data/val.pkl', type=str, help='Path to Dataset pkl file')
     parser.add_argument('--no-cuda', action='store_true', help='Use CPU')
-    parser.add_argument('-b', '--batchsize', type=int, default=None, help='Batch size')
+    parser.add_argument('-b', '--batchsize', type=int, default=10, help='Batch size')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
 
     parsed_args = parser.parse_args()
     with parsed_args.config as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params))
-    if parsed_args.batchsize is not None:
-        args.testbatchsize = parsed_args.batchsize
+    args.testbatchsize = parsed_args.batchsize
     args.wandb = False
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
-    seed_everything(args.seed)
+    seed_everything(args.seed if 'seed' in args else 42)
     model = get_model(args)
     if parsed_args.checkpoint is not None:
         model.load_state_dict(torch.load(parsed_args.checkpoint, args.device))
