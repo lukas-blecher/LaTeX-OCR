@@ -87,7 +87,7 @@ def pad(img, divable=32):
 
 
 def post_process(s):
-    text_reg = r'(\\(operatorname|mathrm|text|mathbf) {.*?})'
+    text_reg = r'(\\(operatorname|mathrm|text|mathbf)\s?\*? {.*?})'
     letter = '[a-zA-Z]'
     noletter = '[\W_^\d]'
     names = [x[0].replace(' ', '') for x in re.findall(text_reg, s)]
