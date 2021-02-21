@@ -1,7 +1,7 @@
 # Input/Output/Name
 data: "dataset/data/dataset.pkl"
 valdata: "dataset/data/val.pkl"
-tokenizer: "dataset/data/tokenizer.json"
+tokenizer: "dataset/tokenizer.json"
 output_path: "outputs"
 model_path: "checkpoints"
 load_chkpt: null

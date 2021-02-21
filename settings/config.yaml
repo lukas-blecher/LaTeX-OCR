@@ -1,0 +1,20 @@
+batchsize: 10
+bos_token: 1
+channels: 1
+device: cuda
+dim: 256
+encoder_depth: 4
+eos_token: 2
+heads: 8
+max_dimensions:
+- 672
+- 192
+max_height: 192
+max_seq_len: 1024
+max_width: 672
+num_layers: 4
+num_tokens: 8000
+pad: false
+pad_token: 0
+patch_size: 16
+tokenizer: dataset/tokenizer.json

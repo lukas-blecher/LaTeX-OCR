@@ -69,7 +69,7 @@ def call_model(args, model, tokenizer):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Use model', add_help=False)
-    parser.add_argument('-t', '--temperature', type=float, default=1, help='Softmax sampling frequency')
+    parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
     parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')

@@ -57,7 +57,7 @@ def evaluate(model: torch.nn.Module, dataset: Im2LatexDataset, args: Munch, num_
         pred = detokenize(dec, dataset.tokenizer)
         truth = detokenize(seq['input_ids'], dataset.tokenizer)
         bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
-        pbar.set_description('BLEU: %.2f' % (np.mean(bleus)))
+        pbar.set_description('BLEU: %.2f +/- %.2e' % (np.mean(bleus), np.std(bleus)))
         if num_batches is not None and i >= num_batches:
             break
     if len(bleus) > 0:

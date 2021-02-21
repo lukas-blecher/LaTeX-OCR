@@ -1,15 +1,14 @@
 # pix2tex - LaTeX OCR
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code. As a physics student I often find myself writing down Latex code from a reference image. I wanted to streamline my workflow and began looking into solutions, but besides the Freemium [Mathpix](https://mathpix.com/) I could not find anything ready-to-use that runs locally. That's why I decided to create it myself.
-
+![example](https://user-images.githubusercontent.com/55287601/108625777-02033300-744d-11eb-88a9-22e64cf82b72.png) 
 
 ## Using the model
 1. Download/Clone this repository
 2. For now you need to install the Python dependencies specified in `requirements.txt` (look [further down](https://github.com/lukas-blecher/LaTeX-OCR#Requirements))
-3. Download the `weights.pth` file and the `config.yaml` file from my [Google Drive](https://drive.google.com/drive/folders/1cgmyiaT5uwQJY2pB0ngebuTcK5ivKXIb) and place them in the `checkpoints` and `settings` directory respectively
-4. Download the `tokenizer.json` from my Google Drive and place it in the `dataset/data` directory 
+3. Download the `weights.pth` file from my [Google Drive](https://drive.google.com/drive/folders/1cgmyiaT5uwQJY2pB0ngebuTcK5ivKXIb) and place it in the `checkpoints` directory
 
 The `pix2tex.py` file offers a quick way to get the model prediction of an image. First you need to copy the formula image into the clipboard memory for example by using a snipping tool (on Windows built in `Win`+`Shift`+`S`). Next just call the script with `python pix2tex.py`. It will print out the predicted Latex code for that image and also copy it into your clipboard.
-
+**Note:** As of right now it works best with fairly small images. Don't zoom in all the way before taking a picture. Also multiline equations are not working properly as they are underrepresented in the training data.
 ## Data
 We need paired data for the network to learn. Luckily there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-100k](https://zenodo.org/record/56198#.V2px0jXT6eA) dataset.
 
