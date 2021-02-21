@@ -11,14 +11,22 @@ from einops import rearrange, repeat
 
 
 class Model(nn.Module):
-    def __init__(self, encoder: Encoder, decoder: AutoregressiveWrapper, args):
+    def __init__(self, encoder: Encoder, decoder: AutoregressiveWrapper, args, temp: float = .333):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.args = args
+        self.bos_token = args.bos_token
+        self.eos_token = args.eos_token
+        self.max_seq_len = args.max_seq_len
+        self.temperature = temp
 
+    @torch.no_grad()
     def forward(self, x: torch.Tensor):
-        return self.decoder.generate(torch.LongTensor([self.args.bos_token]*len(x)).to(x.device), self.args.max_seq_len, eos_token=self.args.eos_token, context=self.encoder(x))
+        device = x.device
+        encoded = self.encoder(x.to(device))
+        dec = self.decoder.generate(torch.LongTensor([self.bos_token]*len(x))[:, None].to(device), self.max_seq_len,
+                                    eos_token=self.eos_token, context=encoded, temperature=self.temperature)
+        return dec
 
 
 class CustomARWrapper(AutoregressiveWrapper):
@@ -124,7 +132,7 @@ def get_model(args):
             )),
         pad_value=args.pad_token
     ).to(args.device)
-    if args.wandb:
+    if 'wandb' in args and args.wandb:
         import wandb
         wandb.watch((encoder, decoder.net.attn_layers))
     return Model(encoder, decoder, args)

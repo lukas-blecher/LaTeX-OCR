@@ -1,6 +1,6 @@
 # pix2tex - LaTeX OCR
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code. As a physics student I often find myself writing down Latex code from a reference image. I wanted to streamline my workflow and began looking into solutions, but besides the Freemium [Mathpix](https://mathpix.com/) I could not find anything ready-to-use that runs locally. That's why I decided to create it myself.
-![example](https://user-images.githubusercontent.com/55287601/108625777-02033300-744d-11eb-88a9-22e64cf82b72.png) 
+![example](https://user-images.githubusercontent.com/55287601/108627023-a9836400-7453-11eb-94fd-f2a5a593fc5a.png)
 
 ## Using the model
 1. Download/Clone this repository
