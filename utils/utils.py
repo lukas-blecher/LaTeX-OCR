@@ -65,6 +65,7 @@ def token2str(tokens, tokenizer):
 def pad(img, divable=32):
     '''PIL Image padding'''
     data = np.array(img.convert('LA'))
+    data = (data-data.min())/(data.max()-data.min())*255
     if data[..., 0].mean() > 128:
         gray = 255*(data[..., 0] < 128).astype(np.uint8)  # To invert the text to white
     else:
@@ -123,3 +124,7 @@ def get_scheduler(scheduler):
     if scheduler is None:
         return EmptyStepper
     return getattr(torch.optim.lr_scheduler, scheduler)
+
+
+def num_model_params(model):
+    return sum([p.numel() for p in model.parameters()])
