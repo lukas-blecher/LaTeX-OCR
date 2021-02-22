@@ -108,7 +108,7 @@ class CustomVisionTransformer(VisionTransformer):
 
 def get_model(args):
     backbone = ResNetV2(
-        layers=(3, 4, 9), num_classes=0, global_pool='', in_chans=args.channels,
+        layers=args.backbone_layers, num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
     encoder = CustomVisionTransformer(img_size=(args.max_height, args.max_width),
                                       patch_size=args.patch_size,
@@ -120,7 +120,7 @@ def get_model(args):
                                       hybrid_backbone=backbone
                                       ).to(args.device)
 
-    decoder = AutoregressiveWrapper(
+    decoder = CustomARWrapper(
         TransformerWrapper(
             num_tokens=args.num_tokens,
             max_seq_len=args.max_seq_len,

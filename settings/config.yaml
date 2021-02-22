@@ -7,6 +7,10 @@ dim: 256
 encoder_depth: 4
 eos_token: 2
 heads: 8
+backbone_layers: 
+  - 3
+  - 4
+  - 9
 max_dimensions:
 - 672
 - 192
