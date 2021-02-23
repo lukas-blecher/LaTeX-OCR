@@ -11,8 +11,11 @@ name: "pix2tex"
 # Training parameters
 epochs: 10
 batchsize: 8
+
+# Testing parameters
 testbatchsize: 20
 valbatches: 100
+temperature: 0.2
 
 # Optimizer configurations
 optimizer: "Adam"
