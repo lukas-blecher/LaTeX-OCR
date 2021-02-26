@@ -1,11 +1,11 @@
 # pix2tex - LaTeX OCR
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code. As a physics student I often find myself writing down Latex code from a reference image. I wanted to streamline my workflow and began looking into solutions, but besides the Freemium [Mathpix](https://mathpix.com/) I could not find anything ready-to-use that runs locally. That's why I decided to create it myself.
 
-![example](https://user-images.githubusercontent.com/55287601/108632920-9ed7c780-7471-11eb-9666-c5891a4303d0.png)
+![header](https://user-images.githubusercontent.com/55287601/109183599-69431f00-778e-11eb-9809-d42b9451e018.png)
 
 ## Using the model
 1. Download/Clone this repository
-2. For now you need to install the Python dependencies specified in `requirements.txt` (look [further down](https://github.com/lukas-blecher/LaTeX-OCR#Requirements))
+2. For now you need to install the Python dependencies specified in `requirements.txt` (look [further down](#Requirements))
 3. Download the `weights.pth` file from my [Google Drive](https://drive.google.com/drive/folders/1cgmyiaT5uwQJY2pB0ngebuTcK5ivKXIb) and place it in the `checkpoints` directory
 
 The `pix2tex.py` file offers a quick way to get the model prediction of an image. First you need to copy the formula image into the clipboard memory for example by using a snipping tool (on Windows built in `Win`+`Shift`+`S`). Next just call the script with `python pix2tex.py`. It will print out the predicted Latex code for that image and also copy it into your clipboard.
@@ -13,7 +13,10 @@ The `pix2tex.py` file offers a quick way to get the model prediction of an image
 **Note:** As of right now it works best with images of smaller resolution. Don't zoom in all the way before taking a picture. Double check the result carefully. You can try to redo the prediction with an other resolution if the answer was wrong.
 
 ## Model
-The model consist of a ViT [[1](/README.md#References)] encoder with a ResNet backbone and a Transformer [[2](/README.md#References)] decoder.
+The model consist of a ViT [[1](#References)] encoder with a ResNet backbone and a Transformer [[2](#References)] decoder.
+
+### Performance
+BLEU score: 0.87
 
 ## Data
 We need paired data for the network to learn. Luckily there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-100k](https://zenodo.org/record/56198#.V2px0jXT6eA) dataset.

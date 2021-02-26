@@ -57,7 +57,7 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
         pred = detokenize(dec, dataset.tokenizer)
         truth = detokenize(seq['input_ids'], dataset.tokenizer)
         bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
-        pbar.set_description('BLEU: %.2f +/- %.2e' % (np.mean(bleus), np.std(bleus)))
+        pbar.set_description('BLEU: %.3f +/- %.3f' % (np.mean(bleus), np.std(bleus)))
         if num_batches is not None and i >= num_batches:
             break
     if len(bleus) > 0:
@@ -85,6 +85,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--batchsize', type=int, default=10, help='Batch size')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
     parser.add_argument('-t', '--temperature', type=float, default=.333, help='sampling emperature')
+    parser.add_argument('-n', '--num-batches', type=int, default=None, help='how many batches to evaluate on. Defaults to None (all)')
 
     parsed_args = parser.parse_args()
     with parsed_args.config as f:
@@ -102,4 +103,4 @@ if __name__ == '__main__':
     valargs = args.copy()
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     dataset.update(**valargs)
-    evaluate(model, dataset, args)
+    evaluate(model, dataset, args, num_batches=parsed_args.num_batches)

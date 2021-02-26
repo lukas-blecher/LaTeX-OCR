@@ -34,6 +34,11 @@ def default(val, d):
 
 
 def seed_everything(seed: int):
+    """Seed all RNGs
+
+    Args:
+        seed (int): seed
+    """
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
@@ -62,8 +67,16 @@ def token2str(tokens, tokenizer):
     return [''.join(detok.split(' ')).replace('Ġ', ' ').replace('[EOS]', '').replace('[BOS]', '').replace('[PAD]', '').strip() for detok in dec]
 
 
-def pad(img, divable=32):
-    '''PIL Image padding'''
+def pad(img: Image, divable=32):
+    """Pad an Image to the next full divisible value of `divable`. Also normalizes the image and invert if needed.
+
+    Args:
+        img (PIL.Image): input image
+        divable (int, optional): . Defaults to 32.
+
+    Returns:
+        PIL.Image
+    """
     data = np.array(img.convert('LA'))
     data = (data-data.min())/(data.max()-data.min())*255
     if data[..., 0].mean() > 128:
@@ -88,7 +101,15 @@ def pad(img, divable=32):
     return padded
 
 
-def post_process(s):
+def post_process(s: str):
+    """Remove unnecessary whitespace from LaTeX code.
+
+    Args:
+        s (str): Input string
+
+    Returns:
+        str: Processed image
+    """
     text_reg = r'(\\(operatorname|mathrm|text|mathbf)\s?\*? {.*?})'
     letter = '[a-zA-Z]'
     noletter = '[\W_^\d]'
