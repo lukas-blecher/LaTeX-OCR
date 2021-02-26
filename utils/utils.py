@@ -119,7 +119,7 @@ def post_process(s: str):
     while True:
         s = news
         news = re.sub(r'(?!\\ )(%s)\s+?(%s)' % (noletter, noletter), r'\1\2', s)
-        news = re.sub(r'(%s)\s+?(%s)' % (noletter, letter), r'\1\2', news)
+        news = re.sub(r'(?!\\ )(%s)\s+?(%s)' % (noletter, letter), r'\1\2', news)
         news = re.sub(r'(%s)\s+?(%s)' % (letter, noletter), r'\1\2', news)
         if news == s:
             break
