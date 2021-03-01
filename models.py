@@ -129,7 +129,7 @@ def get_model(args):
                 dim=args.dim,
                 depth=args.num_layers,
                 heads=args.heads,
-                cross_attend=True
+                **args.decoder_args
             )),
         pad_value=args.pad_token
     ).to(args.device)

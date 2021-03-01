@@ -54,6 +54,8 @@ def parse_args(args, **kwargs):
     args.wandb = not kwargs.debug and not args.debug
     args.device = 'cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu'
     args.max_dimensions = [args.max_width, args.max_height]
+    if 'decoder_args' not in args or args.decoder_args is None:
+        args.decoder_args = {}
     if 'model_path' in args:
         args.out_path = os.path.join(args.model_path, args.name)
         os.makedirs(args.out_path, exist_ok=True)

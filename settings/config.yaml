@@ -2,6 +2,8 @@ batchsize: 10
 bos_token: 1
 channels: 1
 debug: false
+decoder_args: 
+  cross_attend: true
 device: cuda
 dim: 256
 encoder_depth: 4

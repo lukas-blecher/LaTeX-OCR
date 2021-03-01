@@ -37,6 +37,12 @@ backbone_layers:
   - 9
 encoder_depth: 4
 num_layers: 4
+decoder_args: 
+  cross_attend: true
+  ff_glu: true
+  attn_on_attn: false
+  use_scalenorm: true
+  rel_pos_bias: false
 heads: 8
 num_tokens: 8000
 max_seq_len: 1024
