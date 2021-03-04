@@ -1,8 +1,16 @@
 <template>
   <v-app dark>
     <v-app-bar :clipped-left="clipped" fixed app>
-      <v-spacer></v-spacer>
-      <v-btn icon> <v-icon large>mdi-github</v-icon></v-btn>
+      <v-app-bar-title class="mx-3">LaTeX-OCR</v-app-bar-title>
+      <v-spacer />
+      <v-btn tile :ripple="false" class="mx-1">Download</v-btn>
+      <v-btn
+        icon
+        href="https://github.com/lukas-blecher/LaTeX-OCR"
+        class="mx-1"
+      >
+        <v-icon large>mdi-github</v-icon>
+      </v-btn>
     </v-app-bar>
     <v-main>
       <v-container>
