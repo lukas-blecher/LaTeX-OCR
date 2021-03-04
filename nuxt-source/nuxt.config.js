@@ -6,8 +6,8 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    titleTemplate: '%s - nuxt-source',
-    title: 'nuxt-source',
+    titleTemplate: '%s',
+    title: 'LaTeX OCR',
     htmlAttrs: {
       lang: 'en',
     },

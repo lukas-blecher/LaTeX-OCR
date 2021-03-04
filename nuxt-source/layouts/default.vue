@@ -1,9 +1,16 @@
 <template>
   <v-app dark>
     <v-app-bar :clipped-left="clipped" fixed app>
-      <v-app-bar-title class="mx-3">LaTeX-OCR</v-app-bar-title>
+      <v-app-bar-title class="mx-3">
+        LaTeX <v-icon large class="my-auto">mdi-ocr</v-icon>
+      </v-app-bar-title>
       <v-spacer />
-      <v-btn tile :ripple="false" class="mx-1">Download</v-btn>
+      <v-btn
+        :ripple="false"
+        class="mx-1"
+        href="https://github.com/lukas-blecher/LaTeX-OCR/releases/latest"
+        >Download</v-btn
+      >
       <v-btn
         icon
         href="https://github.com/lukas-blecher/LaTeX-OCR"
@@ -18,7 +25,7 @@
       </v-container>
     </v-main>
     <v-footer :absolute="!fixed" app>
-      <span>&copy; {{ new Date().getFullYear() }}</span>
+      <span>&copy; {{ new Date().getFullYear() }} Lukas Blecher</span>
     </v-footer>
   </v-app>
 </template>
@@ -29,18 +36,6 @@ export default {
     return {
       clipped: false,
       fixed: false,
-      items: [
-        {
-          icon: 'mdi-apps',
-          title: 'Welcome',
-          to: '/',
-        },
-        {
-          icon: 'mdi-chart-bubble',
-          title: 'Inspire',
-          to: '/inspire',
-        },
-      ],
     }
   },
 }

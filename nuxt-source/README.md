@@ -1,4 +1,4 @@
-# nuxt-source
+# LaTeX OCR nuxt source
 
 ## Build Setup
 
