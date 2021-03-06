@@ -8,7 +8,6 @@
       contain
       :aspect-ratio="649 / 319"
     ></v-img>
-    <v-card-title>Features</v-card-title>
     Convert an image containing a formula to corresponding LaTeX code.
     <v-card-title>Download</v-card-title>
     As of right now you have to use a Python environment with
@@ -29,9 +28,46 @@
     <a href="https://github.com/lukas-blecher/LaTeX-OCR/issues?q=is%3Aissue"
       >issues</a
     >-tab. If not open a new issue.
+    <v-card-title>Contributing</v-card-title>
+    I would love some help for further development of the project. If you want
+    to contribute, there are many areas that need to be improved.
+    <v-list flat>
+      <v-list-item v-for="(item, i) in items" :key="i">
+        <v-list-item-icon>
+          <v-icon v-text="item.icon"></v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title v-text="item.text"></v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+    </v-list>
+    If you want to help with any of the above or any other point, feel free to
+    fork the repository and submit a pull request.
   </v-sheet>
 </template>
 
 <script>
-export default {}
+export default {
+  data: () => ({
+    items: [
+      { text: 'Handwritten formulae', icon: 'mdi-checkbox-blank-outline' },
+      {
+        text: 'Find better hyperparameters',
+        icon: 'mdi-checkbox-blank-outline',
+      },
+      {
+        text: 'Tweak model structure (attention tricks, backbone model etc.)',
+        icon: 'mdi-checkbox-blank-outline',
+      },
+      {
+        text: 'Trace model (torchscript or ONNX)',
+        icon: 'mdi-checkbox-blank-outline',
+      },
+      {
+        text: 'Desktop application (Never done anything with Qt. Help wanted!)',
+        icon: 'mdi-checkbox-blank-outline',
+      },
+    ],
+  }),
+}
 </script>
