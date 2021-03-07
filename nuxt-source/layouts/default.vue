@@ -1,23 +1,28 @@
 <template>
   <v-app dark>
     <v-app-bar :clipped-left="clipped" fixed app>
-      <v-app-bar-title class="mx-3">
-        LaTeX <v-icon large class="my-auto">mdi-ocr</v-icon>
-      </v-app-bar-title>
+      <v-app-bar-title class="mx-3"> LaTeX OCR </v-app-bar-title>
       <v-spacer />
-      <v-btn
-        :ripple="false"
-        class="mx-1"
-        href="https://github.com/lukas-blecher/LaTeX-OCR/releases/latest"
-        >Download</v-btn
-      >
-      <v-btn
-        icon
-        href="https://github.com/lukas-blecher/LaTeX-OCR"
-        class="mx-1"
-      >
-        <v-icon large>mdi-github</v-icon>
-      </v-btn>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            :ripple="false"
+            class="mx-1"
+            href="https://github.com/lukas-blecher/LaTeX-OCR/releases/latest"
+            v-bind="attrs"
+            v-on="on"
+            >Download</v-btn
+          >
+          <v-btn
+            icon
+            href="https://github.com/lukas-blecher/LaTeX-OCR"
+            class="mx-1"
+          >
+            <v-icon large>mdi-github</v-icon>
+          </v-btn>
+        </template>
+        <span>Coming soon</span>
+      </v-tooltip>
     </v-app-bar>
     <v-main>
       <v-container>
