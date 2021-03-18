@@ -1,10 +1,11 @@
 # Input/Output/Name
-data: "dataset/data/train.pkl"
+data: "dataset/data/dataset.pkl"
 valdata: "dataset/data/val.pkl"
-tokenizer: "dataset/data/tokenizer.json"
+tokenizer: "dataset/tokenizer.json"
 output_path: "outputs"
 model_path: "checkpoints"
-load_chkpt: null # continue training
+load_chkpt: null
+save_freq: 5 # save every nth epoch
 name: "pix2tex"
 
 # Training parameters
@@ -24,20 +25,23 @@ max_lr: 0.005
 betas: [0.9, 0.999]
 
 # Parameters for model architectures
-max_width: 672
-max_height: 192
+max_width: 128
+max_height: 128
 channels: 1
-patch_size: 16
+patch_size: 32
 # Encoder / Decoder
-dim: 256
-backbone_layers: [3,4,9]
+dim: 128
+backbone_layers: 
+  - 3
+  - 4
+  - 9
 encoder_depth: 4
 num_layers: 4
 decoder_args: 
   cross_attend: true
-  ff_glu: false
+  ff_glu: true
   attn_on_attn: false
-  use_scalenorm: false
+  use_scalenorm: true
   rel_pos_bias: false
 heads: 8
 num_tokens: 8000
@@ -46,10 +50,9 @@ max_seq_len: 1024
 # Other
 seed: 42
 id: null
-sample_freq: 3000
+sample_freq: 50
 test_samples: 5
-save_freq: 5 # save every nth epoch
-debug: False
+debug: True
 pad: False
 
 # Token ids
