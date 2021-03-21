@@ -30,7 +30,7 @@ def initialize(arguments):
     args.device = 'cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu'
 
     model = get_model(args)
-    model.load_state_dict(torch.load(args.checkpoint))
+    model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
     tokenizer = PreTrainedTokenizerFast(tokenizer_file=args.tokenizer)
     return args, model, tokenizer
 
