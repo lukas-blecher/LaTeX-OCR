@@ -14,3 +14,4 @@ Pillow>=8.1.0
 PyYAML>=5.4.1
 torchtext>=0.6.0
 albumentations>=0.5.2
+pandas>=1.0.0
