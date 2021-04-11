@@ -10,7 +10,7 @@ The goal of this project is to create a learning based system that takes an imag
   ```
   pip install -r requirements.txt
   ```
-  install `timm` directly `pip install -U git+https://github.com/rwightman/pytorch-image-models.git`
+  install `timm` directly `pip install -U git+https://github.com/rwightman/pytorch-image-models.git@ca9b078ac7b5058d6d8d3db0fa6b30916b8fa113`
 ### Dataset
 In order to render the math in many different fonts we use  XeLaTeX, generate a PDF and finally convert it to a PNG. For the last step we need to use some third party tools: 
 * [XeLaTeX](https://www.ctan.org/pkg/xetex)
