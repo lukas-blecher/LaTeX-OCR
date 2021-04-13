@@ -10,7 +10,6 @@ The goal of this project is to create a learning based system that takes an imag
   ```
   pip install -r requirements.txt
   ```
-  install `timm` directly `pip install -U git+https://github.com/rwightman/pytorch-image-models.git@ca9b078ac7b5058d6d8d3db0fa6b30916b8fa113`
 ### Dataset
 In order to render the math in many different fonts we use  XeLaTeX, generate a PDF and finally convert it to a PNG. For the last step we need to use some third party tools: 
 * [XeLaTeX](https://www.ctan.org/pkg/xetex)
@@ -21,7 +20,7 @@ In order to render the math in many different fonts we use  XeLaTeX, generate a 
 
 ## Using the model
 1. Download/Clone this repository
-2. For now you need to install the Python dependencies specified in `requirements.txt` (look [further down](#Requirements))
+2. For now you need to install the Python dependencies specified in `requirements.txt` (look [above](#Requirements))
 3. Download the `weights.pth` file from my [Google Drive](https://drive.google.com/drive/folders/1cgmyiaT5uwQJY2pB0ngebuTcK5ivKXIb) and place it in the `checkpoints` directory
 
 The `pix2tex.py` file offers a quick way to get the model prediction of an image. First you need to copy the formula image into the clipboard memory for example by using a snipping tool (on Windows built in `Win`+`Shift`+`S`). Next just call the script with `python pix2tex.py`. It will print out the predicted Latex code for that image and also copy it into your clipboard.
