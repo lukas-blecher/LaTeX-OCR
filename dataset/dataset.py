@@ -91,10 +91,13 @@ class Im2LatexDataset:
             self.test = test
             self.data = defaultdict(lambda: [])
             # check the image dimension for every image and group them together
-            for i, im in tqdm(enumerate(self.images), total=len(self.images)):
-                width, height = imagesize.get(im)
-                if width <= max_dimensions[0] and height <= max_dimensions[1]:
-                    self.data[(width, height)].append((eqs[self.indices[i]], im))
+            try:
+                for i, im in tqdm(enumerate(self.images), total=len(self.images)):
+                    width, height = imagesize.get(im)
+                    if width <= max_dimensions[0] and height <= max_dimensions[1]:
+                        self.data[(width, height)].append((eqs[self.indices[i]], im))
+            except KeyboardInterrupt:
+                pass
             self.data = dict(self.data)
             self._get_size()
 
