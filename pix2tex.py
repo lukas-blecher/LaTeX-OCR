@@ -41,7 +41,7 @@ def initialize(arguments):
     model = get_model(args)
     model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
 
-    if 'image_resizer.pth' in os.listdir(os.path.dirname(args.checkpoint)):
+    if 'image_resizer.pth' in os.listdir(os.path.dirname(args.checkpoint)) and not arguments.no_resize:
         image_resizer = ResNetV2(layers=[2, 3, 3], num_classes=22, global_pool='avg', in_chans=1, drop_rate=.05,
                                  preact=True, stem_type='same', conv_layer=StdConv2dSame).to(args.device)
         image_resizer.load_state_dict(torch.load(os.path.join(os.path.dirname(args.checkpoint), 'image_resizer.pth'), map_location=args.device))
@@ -100,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
     parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
+    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
     args = parser.parse_args()
     logging.getLogger().setLevel(logging.FATAL)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
