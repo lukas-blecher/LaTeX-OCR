@@ -14,11 +14,20 @@ import torch
 from torchvision import transforms
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
-
+from timm.models.resnetv2 import ResNetV2
+from timm.models.layers import StdConv2dSame
 
 from dataset.latex2png import tex2pil
 from models import get_model
 from utils import *
+
+
+def minmax_size(img, max_dimensions):
+    ratios = [a/b for a, b in zip(img.size, max_dimensions)]
+    if any([r > 1 for r in ratios]):
+        size = np.array(img.size)//max(ratios)
+        img = img.resize(size.astype(int), Image.BILINEAR)
+    return img
 
 
 def initialize(arguments):
@@ -31,22 +40,40 @@ def initialize(arguments):
 
     model = get_model(args)
     model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
+
+    if 'image_resizer.pth' in os.listdir(os.path.dirname(args.checkpoint)):
+        image_resizer = ResNetV2(layers=[2, 3, 3], num_classes=22, global_pool='avg', in_chans=1, drop_rate=.05,
+                                 preact=True, stem_type='same', conv_layer=StdConv2dSame).to(args.device)
+        image_resizer.load_state_dict(torch.load(os.path.join(os.path.dirname(args.checkpoint), 'image_resizer.pth'), map_location=args.device))
+        image_resizer.eval()
+    else:
+        image_resizer = None
     tokenizer = PreTrainedTokenizerFast(tokenizer_file=args.tokenizer)
-    return args, model, tokenizer
+    return args, model, image_resizer, tokenizer
 
 
-def call_model(args, model, tokenizer):
+def call_model(args, model, image_resizer, tokenizer):
     encoder, decoder = model.encoder, model.decoder
-    img = ImageGrab.grabclipboard()
+    img = pad(ImageGrab.grabclipboard())
     if img is None:
         print('Copy an image into the clipboard.')
         return
-    ratios = [a/b for a, b in zip(img.size, args.max_dimensions)]
-    if any([r > 1 for r in ratios]):
-        size = np.array(img.size)//max(ratios)
-        img = img.resize(size.astype(int), Image.BILINEAR)
-    img = np.array(pad(img, args.patch_size).convert('RGB'))
-    t = test_transform(image=img)['image'][:1].unsqueeze(0)
+    img = minmax_size(img, args.max_dimensions)
+    if image_resizer is not None:
+        with torch.no_grad():
+            input_image = pad(img, args.patch_size).convert('RGB').copy()
+            r, w = 1, img.size[0]
+            for i in range(10):
+                img = minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions)
+                t = test_transform(image=np.array(pad(img).convert('RGB')))['image'][:1].unsqueeze(0)
+                w = image_resizer(t.to(args.device)).argmax(-1).item()*32
+                if (w/img.size[0] == 1):
+                    break
+                r *= w/img.size[0]
+    else:
+        img = np.array(pad(img, args.patch_size).convert('RGB'))
+        t = test_transform(image=img)['image'][:1].unsqueeze(0)
+
     im = t.to(args.device)
 
     with torch.no_grad():
@@ -81,9 +108,12 @@ if __name__ == "__main__":
         sys.path.insert(0, latexocr_path)
         os.chdir(latexocr_path)
 
-    args, model, tokenizer = initialize(args)
+    args, *objs = initialize(args)
     while True:
         instructions = input('Press ENTER to predict the LaTeX code for the image in the memory. Type "x" to stop the program. ')
         if instructions.strip().lower() == 'x':
             break
-        call_model(args, model, tokenizer)
+        try:
+            call_model(args, *objs)
+        except KeyboardInterrupt:
+            pass
