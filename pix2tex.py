@@ -54,7 +54,10 @@ def initialize(arguments):
 
 def call_model(args, model, image_resizer, tokenizer):
     encoder, decoder = model.encoder, model.decoder
-    img = pad(ImageGrab.grabclipboard())
+    if args.file:
+        img = Image.open(args.file)
+    else:
+        img = pad(ImageGrab.grabclipboard())
     if img is None:
         print('Copy an image into the clipboard.')
         return
@@ -99,6 +102,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
     parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
+    parser.add_argument('-f', '--file', type=str, default=None, help='Predict LaTeX code from image file instead of clipboard')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
     args = parser.parse_args()
@@ -110,11 +114,14 @@ if __name__ == "__main__":
         os.chdir(latexocr_path)
 
     args, *objs = initialize(args)
-    while True:
-        instructions = input('Press ENTER to predict the LaTeX code for the image in the memory. Type "x" to stop the program. ')
-        if instructions.strip().lower() == 'x':
-            break
-        try:
-            call_model(args, *objs)
-        except KeyboardInterrupt:
-            pass
+    if args.file:
+        call_model(args, *objs)
+    else:
+        while True:
+            instructions = input('Press ENTER to predict the LaTeX code for the image in the memory. Type "x" to stop the program. ')
+            if instructions.strip().lower() == 'x':
+                break
+            try:
+                call_model(args, *objs)
+            except KeyboardInterrupt:
+                pass
