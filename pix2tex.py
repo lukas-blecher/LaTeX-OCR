@@ -8,6 +8,7 @@ import sys
 import argparse
 import logging
 import yaml
+import re
 
 import numpy as np
 import torch
@@ -20,6 +21,8 @@ from timm.models.layers import StdConv2dSame
 from dataset.latex2png import tex2pil
 from models import get_model
 from utils import *
+
+last_pic = None
 
 
 def minmax_size(img, max_dimensions):
@@ -53,18 +56,24 @@ def initialize(arguments):
 
 
 def call_model(args, model, image_resizer, tokenizer):
+    global last_pic
     encoder, decoder = model.encoder, model.decoder
     if args.file:
         img = Image.open(args.file)
     else:
-        img = pad(ImageGrab.grabclipboard())
+        img = ImageGrab.grabclipboard()
     if img is None:
-        print('Copy an image into the clipboard.')
-        return
-    img = minmax_size(img, args.max_dimensions)
-    if image_resizer is not None:
+        if last_pic is None:
+            print('Copy an image into the clipboard.')
+            return
+        else:
+            img = last_pic
+    else:
+        last_pic = img.copy()
+    img = minmax_size(pad(img), args.max_dimensions)
+    if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
-            input_image = pad(img, args.patch_size).convert('RGB').copy()
+            input_image = pad(img).convert('RGB').copy()
             r, w = 1, img.size[0]
             for i in range(10):
                 img = minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions)
@@ -74,7 +83,7 @@ def call_model(args, model, image_resizer, tokenizer):
                     break
                 r *= w/img.size[0]
     else:
-        img = np.array(pad(img, args.patch_size).convert('RGB'))
+        img = np.array(pad(img).convert('RGB'))
         t = test_transform(image=img)['image'][:1].unsqueeze(0)
 
     im = t.to(args.device)
@@ -89,11 +98,19 @@ def call_model(args, model, image_resizer, tokenizer):
     print(pred, '\n')
     df = pd.DataFrame([pred])
     df.to_clipboard(index=False, header=False)
-    if args.show:
+    if args.show or args.katex:
         try:
+            if args.katex:
+                raise ValueError
             tex2pil([f'$${pred}$$'])[0].show()
         except Exception as e:
-            print(e)
+            # render using katex
+            import webbrowser
+            from urllib.parse import quote
+            url = 'https://katex.org/?data=' + \
+                quote('{"displayMode":true,"leqno":false,"fleqn":false,"throwOnError":true,"errorColor":"#cc0000",\
+"strict":"warn","output":"htmlAndMathml","trust":false,"code":"%s"}' % pred.replace('\\', '\\\\'))
+            webbrowser.open(url)
 
 
 if __name__ == "__main__":
@@ -103,6 +120,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
     parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
     parser.add_argument('-f', '--file', type=str, default=None, help='Predict LaTeX code from image file instead of clipboard')
+    parser.add_argument('-k', '--katex', action='store_true', help='Render the latex code in the browser')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
     args = parser.parse_args()
@@ -114,14 +132,50 @@ if __name__ == "__main__":
         os.chdir(latexocr_path)
 
     args, *objs = initialize(args)
-    if args.file:
-        call_model(args, *objs)
-    else:
-        while True:
-            instructions = input('Press ENTER to predict the LaTeX code for the image in the memory. Type "x" to stop the program. ')
-            if instructions.strip().lower() == 'x':
-                break
-            try:
-                call_model(args, *objs)
-            except KeyboardInterrupt:
-                pass
+    while True:
+        instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+        ins = instructions.strip().lower()
+        if ins == 'x':
+            break
+        elif ins in ['?', 'h', 'help']:
+            print('''pix2tex help:
+
+Usage:
+    On Windows and macOS you can copy the image into memory and just press ENTER to get a prediction.
+    Alternatively you can paste the image file path here and submit.
+
+    You might get a different prediction every time you submit the same image. If the result you got was close you \
+can just predict the same image by pressing ENTER again. If that still does not work you can change the temperature \
+or you have take another picture with another resolution.
+
+    Press "x" to close the program.
+    You can interrupt the model if it takes too long by pressing Ctrl+C.
+
+Visualization:
+    You can either render the code into a png using XeLaTeX (see README) to get an image file back. \
+This is slow and requires a working installation of XeLaTeX. To activate type 'show' or set the flag --show
+    Alternatively you can render the expression in the browser using katex.org. Type 'katex' or set --katex
+
+Settings:
+    to toggle one of these settings: 'show', 'katex', 'no_resize' just type it into the console
+    Change the temperature (default=0.333) type: "t=0.XX" to set a new temperature.
+                ''')
+            continue
+        elif ins in ['show', 'katex', 'no_resize']:
+            setattr(args, ins, not getattr(args, ins, False))
+            print('set %s to %s' % (ins, getattr(args, ins)))
+            continue
+        elif os.path.isfile(ins):
+            args.file = ins
+        else:
+            t = re.match(r't=([\.\d]+)', ins)
+            if t is not None:
+                t = t.groups()[0]
+                args.temperature = float(t)+1e-8
+                print('new temperature: T=%.3f' % args.temperature)
+                continue
+        try:
+            call_model(args, *objs)
+        except KeyboardInterrupt:
+            pass
+        args.file = None
