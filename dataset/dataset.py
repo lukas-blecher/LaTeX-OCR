@@ -151,6 +151,10 @@ class Im2LatexDataset:
                 print(path, 'not found!')
                 continue
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            if not self.test:
+                # sometimes convert to bitmask
+                if np.random.random() < .04:
+                    im[im != 255] = 0
             images.append(self.transform(image=im)['image'][:1])
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
