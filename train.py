@@ -56,7 +56,7 @@ def train(args):
                     if args.wandb:
                         wandb.log({'train/loss': loss.item()})
                 if (i+1) % args.sample_freq == 0:
-                    evaluate(model, valdataloader, args, num_batches=args.valbatches, name='val')
+                    evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
             if (e+1) % args.save_freq == 0:
                 save_models(e)
             if args.wandb:

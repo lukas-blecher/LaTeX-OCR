@@ -26,6 +26,8 @@ betas: [0.9, 0.999]
 # Parameters for model architectures
 max_width: 672
 max_height: 192
+min_width: 96
+min_height: 32
 channels: 1
 patch_size: 16
 # Encoder / Decoder
@@ -41,7 +43,7 @@ decoder_args:
   rel_pos_bias: false
 heads: 8
 num_tokens: 8000
-max_seq_len: 1024
+max_seq_len: 512
 
 # Other
 seed: 42

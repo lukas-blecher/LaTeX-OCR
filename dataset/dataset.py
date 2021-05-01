@@ -53,6 +53,8 @@ class Im2LatexDataset:
     shuffle = True
     batchsize = 16
     max_dimensions = (1024, 512)
+    min_dimensions = (32, 32)
+    max_seq_len = 1024
     pad_token = "[PAD]"
     bos_token = "[BOS]"
     eos_token = "[EOS]"
@@ -61,7 +63,8 @@ class Im2LatexDataset:
     eos_token_id = 2
     transform = train_transform
 
-    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_dimensions=(1024, 512), pad=False, keep_smaller_batches=False, test=False):
+    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_seq_len=1024,
+                 max_dimensions=(1024, 512), min_dimensions=(32, 32), pad=False, keep_smaller_batches=False, test=False):
         """Generates a torch dataset from pairs of `equations` and `images`.
 
         Args:
@@ -70,7 +73,9 @@ class Im2LatexDataset:
             tokenizer (str, optional): Path to saved tokenizer. Defaults to None.
             shuffle (bool, opitonal): Defaults to True. 
             batchsize (int, optional): Defaults to 16.
+            max_seq_len (int, optional): Defaults to 1024.
             max_dimensions (tuple(int, int), optional): Maximal dimensions the model can handle
+            min_dimensions (tuple(int, int), optional): Minimal dimensions the model can handle
             pad (bool): Pad the images to `max_dimensions`. Defaults to False.
             keep_smaller_batches (bool): Whether to also return batches with smaller size than `batchsize`. Defaults to False.
             test (bool): Whether to use the test transformation or not. Defaults to False.
@@ -86,6 +91,7 @@ class Im2LatexDataset:
             self.shuffle = shuffle
             self.batchsize = batchsize
             self.max_dimensions = max_dimensions
+            self.min_dimensions = min_dimensions
             self.pad = pad
             self.keep_smaller_batches = keep_smaller_batches
             self.test = test
@@ -94,7 +100,7 @@ class Im2LatexDataset:
             try:
                 for i, im in tqdm(enumerate(self.images), total=len(self.images)):
                     width, height = imagesize.get(im)
-                    if width <= max_dimensions[0] and height <= max_dimensions[1]:
+                    if min_dimensions[0] <= width <= max_dimensions[0] and min_dimensions[1] <= height <= max_dimensions[1]:
                         self.data[(width, height)].append((eqs[self.indices[i]], im))
             except KeyboardInterrupt:
                 pass
@@ -160,6 +166,9 @@ class Im2LatexDataset:
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
             tok[k] = pad_sequence([torch.LongTensor([p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
+        # check if sequence length is too long
+        if self.max_seq_len < len(tok[0]):
+            return next(self)
         try:
             images = torch.cat(images).float().unsqueeze(1)
         except RuntimeError:
@@ -196,14 +205,17 @@ class Im2LatexDataset:
             pickle.dump(self, file)
 
     def update(self, **kwargs):
-        for k in ['batchsize', 'shuffle', 'pad', 'keep_smaller_batches', 'test']:
+        for k in ['batchsize', 'shuffle', 'pad', 'keep_smaller_batches', 'test', 'max_seq_len']:
             if k in kwargs:
                 setattr(self, k, kwargs[k])
-        if 'max_dimensions' in kwargs:
-            self.max_dimensions = kwargs['max_dimensions']
+        if 'max_dimensions' in kwargs or 'min_dimensions' in kwargs:
+            if 'max_dimensions' in kwargs:
+                self.max_dimensions = kwargs['max_dimensions']
+            if 'min_dimensions' in kwargs:
+                self.min_dimensions = kwargs['min_dimensions']
             temp = {}
             for k in self.data:
-                if 0 < k[0] <= self.max_dimensions[0] and 0 < k[1] <= self.max_dimensions[1]:
+                if self.min_dimensions[0] <= k[0] <= self.max_dimensions[0] and self.min_dimensions[1] <= k[1] <= self.max_dimensions[1]:
                     temp[k] = self.data[k]
             self.data = temp
         self._get_size()
