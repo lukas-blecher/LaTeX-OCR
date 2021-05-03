@@ -51,7 +51,6 @@ def train(args):
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
                     scheduler.step()
-
                     dset.set_description('Loss: %.4f' % loss.item())
                     if args.wandb:
                         wandb.log({'train/loss': loss.item()})
@@ -79,8 +78,7 @@ if __name__ == '__main__':
     parsed_args = parser.parse_args()
     with parsed_args.config as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
-    args = parse_args(Munch(params))
-
+    args = parse_args(Munch(params), **vars(parsed_args))
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
     seed_everything(args.seed)
     if args.wandb:
