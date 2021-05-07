@@ -4,20 +4,25 @@ channels: 1
 debug: false
 decoder_args: 
   cross_attend: true
+  attn_on_attn: true
+  cross_attend: true
+  ff_glu: true
+  rel_pos_bias: false
+  use_scalenorm: false
 device: cuda
 dim: 256
 encoder_depth: 4
 eos_token: 2
 heads: 8
-backbone_layers: 
-  - 3
-  - 4
-  - 9
+backbone_layers:
+- 2
+- 3
+- 7
 max_dimensions:
 - 672
 - 192
 min_dimensions:
-- 32
+- 96
 - 32
 max_height: 192
 max_seq_len: 1024

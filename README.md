@@ -4,8 +4,8 @@ The goal of this project is to create a learning based system that takes an imag
 ![header](https://user-images.githubusercontent.com/55287601/109183599-69431f00-778e-11eb-9809-d42b9451e018.png)
 
 ## Requirements
-### Evaluation
-* PyTorch (tested on v1.7.0)
+### Model
+* PyTorch (tested on v1.7.1)
 * Python 3.7+ & dependencies (`requirements.txt`)
   ```
   pip install -r requirements.txt
@@ -27,7 +27,8 @@ The `pix2tex.py` file offers a quick way to get the model prediction of an image
 
 **Note:** As of right now it works best with images of smaller resolution. Don't zoom in all the way before taking a picture. Double check the result carefully. You can try to redo the prediction with an other resolution if the answer was wrong.
 
-**Update:** I have trained an image classifier on randomly scaled images of the training data to predict the original size. This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. To use this preprocessing step, all you have to do is download the second weights file mentioned above. You should be able to take bigger (or smaller) images of the formula and still get a satisfying result
+**Update:** I have trained an image classifier on randomly scaled images of the training data to predict the original size.
+This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. To use this preprocessing step, all you have to do is download the second weights file mentioned above. You should be able to take bigger (or smaller) images of the formula and still get a satisfying result
 
 ## Training the model
 1. First we need to combine the images with their ground truth labels. I wrote a dataset class (which needs further improving) that saves the relative paths to the images with the LaTeX code they were rendered with. To generate the dataset pickle file run 
@@ -49,7 +50,9 @@ python train.py --config path_to_config_file
 The model consist of a ViT [[1](#References)] encoder with a ResNet backbone and a Transformer [[2](#References)] decoder.
 
 ### Performance
-BLEU score: 0.87
+|BLEU score | normed edit distance|
+|-|-|
+|0.88|0.10|
 
 ## Data
 We need paired data for the network to learn. Luckily there is a lot of LaTeX code on the internet, e.g. [wikipedia](www.wikipedia.org), [arXiv](www.arxiv.org). We also use the formulae from the [im2latex-100k](https://zenodo.org/record/56198#.V2px0jXT6eA) dataset.
@@ -64,7 +67,7 @@ Latin Modern Math, GFSNeohellenicMath.otf, Asana Math, XITS Math, Cambria Math
 - [ ] reduce model size (distillation)
 - [ ] find optimal hyperparameters
 - [ ] tweak model structure
-- [ ] add more evaluation metrics
+- [x] add more evaluation metrics
 - [ ] fix data scraping and scape more data
 - [ ] trace the model
 - [ ] create a standalone application
