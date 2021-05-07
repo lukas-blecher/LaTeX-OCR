@@ -25,7 +25,7 @@ min_dimensions:
 - 96
 - 32
 max_height: 192
-max_seq_len: 1024
+max_seq_len: 512
 max_width: 672
 num_layers: 4
 num_tokens: 8000
