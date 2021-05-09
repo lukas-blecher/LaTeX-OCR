@@ -1,8 +1,8 @@
 import sys
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget, QPushButton, QTextEdit
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QPushButton, QTextEdit
 import resources
 from pynput.mouse import Controller
 
@@ -31,7 +31,7 @@ class App(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("LaTeX OCR")
-        self.setWindowIcon(QtGui.QIcon(':/icons/icon.svg'))
+        QApplication.setWindowIcon(QtGui.QIcon(':/icons/icon.svg'))
         self.left = 300
         self.top = 300
         self.width = 300
@@ -40,9 +40,8 @@ class App(QMainWindow):
 
 
         # Create LaTeX display
-        pageSource = ""
         self.webView = QWebEngineView()
-        self.webView.setHtml(pageSource)
+        self.webView.setHtml("")
         self.webView.setMinimumHeight(70)
 
 
@@ -71,36 +70,79 @@ class App(QMainWindow):
 
 
     def returnSnip(self, img):
+        # Show processing icon
+        pageSource = """<center>
+        <img src="qrc:/icons/processing-icon-anim.svg" width="50", height="50">
+        </center>"""
+        self.webView.setHtml(pageSource)
+        self.textbox.setText("")
+
+        self.snipButton.setEnabled(False)
+
         self.show()
 
-        success = False
-        try:
-            prediction = pix2tex.call_model(img, self.args, *self.objs)
-            success = True
-        except:
-            print("Prediction failed!")
+        # Run the model in a separate thread
+        self.thread = ModelThread(img, self.args, self.objs)
+        self.thread.finished.connect(self.returnPrediction)
+        self.thread.finished.connect(self.thread.deleteLater)
+
+        self.thread.start()
+
+
+    def returnPrediction(self, result):
+        self.snipButton.setEnabled(True)
+
+        success, prediction = result["success"], result["prediction"]
 
         if success:
-            self.textbox.setText("${equation}$".format(equation=prediction))
+            self.displayPrediction(prediction)
+        else:
+            self.webView.setHtml("")
+            msg = QMessageBox()
+            msg.setWindowTitle(" ")
+            msg.setText("Prediction failed.")
+            msg.exec_()
 
-            pageSource = """
-            <html>
-            <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
-            <script>
-            MathJax.Hub.Config({messageStyle: 'none',tex2jax: {preview: 'none'}});
-            MathJax.Hub.Queue(
-                function () {
-                    document.getElementById("equation").style.visibility = "";
-                }
-                );
-            </script>
-            </head> """ + """
-            <body>
-            <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
-            </body>
-            </html>
-             """.format(equation=prediction)
-            self.webView.setHtml(pageSource)
+
+    def displayPrediction(self, prediction):
+        self.textbox.setText("${equation}$".format(equation=prediction))
+
+        pageSource = """
+        <html>
+        <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
+        <script>
+        MathJax.Hub.Config({messageStyle: 'none',tex2jax: {preview: 'none'}});
+        MathJax.Hub.Queue(
+            function () {
+                document.getElementById("equation").style.visibility = "";
+            }
+            );
+        </script>
+        </head> """ + """
+        <body>
+        <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
+        </body>
+        </html>
+            """.format(equation=prediction)
+        self.webView.setHtml(pageSource)
+
+
+class ModelThread(QThread):
+    finished = pyqtSignal(dict)
+
+    def __init__(self, img, args, objs):
+        super().__init__()
+        self.img = img
+        self.args = args
+        self.objs = objs
+
+    def run(self):
+        try:
+            prediction = pix2tex.call_model(self.img, self.args, *self.objs)
+
+            self.finished.emit({"success": True, "prediction": prediction})
+        except:
+            self.finished.emit({"success": False, "prediction": None})
 
 
 class SnipWidget(QMainWindow):
