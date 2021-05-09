@@ -85,9 +85,18 @@ class App(QMainWindow):
 
             pageSource = """
             <html>
-            <head><script id="MathJax-script" src="qrc:MathJax.js"></script></head>
+            <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
+            <script>
+            MathJax.Hub.Config({messageStyle: 'none',tex2jax: {preview: 'none'}});
+            MathJax.Hub.Queue(
+                function () {
+                    document.getElementById("equation").style.visibility = "";
+                }
+                );
+            </script>
+            </head> """ + """
             <body>
-            <p><mathjax style="font-size:1em">$${equation}$$</mathjax></p>
+            <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
             </body>
             </html>
              """.format(equation=prediction)
@@ -95,16 +104,16 @@ class App(QMainWindow):
 
 
 class SnipWidget(QMainWindow):
-    is_snipping = False
+    isSnipping = False
 
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
 
         root = tk.Tk()
-        screen_width = root.winfo_screenwidth()
-        screen_height = root.winfo_screenheight()
-        self.setGeometry(0, 0, screen_width, screen_height)
+        screenWidth = root.winfo_screenwidth()
+        screenHeight = root.winfo_screenheight()
+        self.setGeometry(0, 0, screenWidth, screenHeight)
 
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
@@ -112,7 +121,7 @@ class SnipWidget(QMainWindow):
         self.mouse = Controller()
 
     def snip(self):
-        self.is_snipping = True
+        self.isSnipping = True
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CrossCursor))
 
@@ -120,19 +129,19 @@ class SnipWidget(QMainWindow):
 
 
     def paintEvent(self, event):
-        if self.is_snipping:
-            brush_color = (0, 180, 255, 100)
+        if self.isSnipping:
+            brushColor = (0, 180, 255, 100)
             lw = 3
             opacity = 0.3
         else:
-            brush_color = (0, 200, 0, 128)
+            brushColor = (0, 200, 0, 128)
             lw = 3
             opacity = 0.3
 
         self.setWindowOpacity(opacity)
         qp = QtGui.QPainter(self)
         qp.setPen(QtGui.QPen(QtGui.QColor('black'), lw))
-        qp.setBrush(QtGui.QColor(*brush_color))
+        qp.setBrush(QtGui.QColor(*brushColor))
         qp.drawRect(QtCore.QRect(self.begin, self.end))
 
 
@@ -155,7 +164,7 @@ class SnipWidget(QMainWindow):
         self.update()
 
     def mouseReleaseEvent(self, event):
-        self.is_snipping = False
+        self.isSnipping = False
         QApplication.restoreOverrideCursor()
 
         startPos = self.startPos
