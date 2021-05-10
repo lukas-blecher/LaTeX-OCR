@@ -14,6 +14,7 @@ import pix2tex
 QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
+
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -28,29 +29,31 @@ class App(QMainWindow):
         self.args = args
         self.objs = objs
 
-
     def initUI(self):
         self.setWindowTitle("LaTeX OCR")
         QApplication.setWindowIcon(QtGui.QIcon(':/icons/icon.svg'))
         self.left = 300
         self.top = 300
-        self.width = 300
-        self.height = 200
+        self.width = 500
+        self.height = 300
         self.setGeometry(self.left, self.top, self.width, self.height)
-
 
         # Create LaTeX display
         self.webView = QWebEngineView()
         self.webView.setHtml("")
         self.webView.setMinimumHeight(70)
 
-
         # Create textbox
         self.textbox = QTextEdit(self)
+        self.textbox.textChanged.connect(self.displayPrediction)
 
         # Create snip button
         self.snipButton = QPushButton('Snip', self)
         self.snipButton.clicked.connect(self.onClick)
+
+        # Create retry button
+        self.retryButton = QPushButton('Retry', self)
+        self.retryButton.clicked.connect(self.returnSnip)
 
         # Create layout
         centralWidget = QWidget()
@@ -58,18 +61,17 @@ class App(QMainWindow):
         self.setCentralWidget(centralWidget)
 
         lay = QVBoxLayout(centralWidget)
-        lay.addWidget(self.webView, stretch=2)
-        lay.addWidget(self.textbox, stretch=3)
+        lay.addWidget(self.webView, stretch=4)
+        lay.addWidget(self.textbox, stretch=2)
         lay.addWidget(self.snipButton)
-
+        lay.addWidget(self.retryButton)
 
     @pyqtSlot()
     def onClick(self):
         self.close()
         self.snipWidget.snip()
 
-
-    def returnSnip(self, img):
+    def returnSnip(self, img=None):
         # Show processing icon
         pageSource = """<center>
         <img src="qrc:/icons/processing-icon-anim.svg" width="50", height="50">
@@ -82,12 +84,11 @@ class App(QMainWindow):
         self.show()
 
         # Run the model in a separate thread
-        self.thread = ModelThread(img, self.args, self.objs)
+        self.thread = ModelThread(img=img, args=self.args, objs=self.objs)
         self.thread.finished.connect(self.returnPrediction)
         self.thread.finished.connect(self.thread.deleteLater)
 
         self.thread.start()
-
 
     def returnPrediction(self, result):
         self.snipButton.setEnabled(True)
@@ -103,10 +104,11 @@ class App(QMainWindow):
             msg.setText("Prediction failed.")
             msg.exec_()
 
-
-    def displayPrediction(self, prediction):
-        self.textbox.setText("${equation}$".format(equation=prediction))
-
+    def displayPrediction(self, prediction=None):
+        if prediction is not None:
+            self.textbox.setText("${equation}$".format(equation=prediction))
+        else:
+            prediction = self.textbox.toPlainText().strip('$')
         pageSource = """
         <html>
         <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
@@ -120,7 +122,7 @@ class App(QMainWindow):
         </script>
         </head> """ + """
         <body>
-        <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
+        <div id="equation" style="font-size:17pt; visibility:hidden">$${equation}$$</div>
         </body>
         </html>
             """.format(equation=prediction)
@@ -138,10 +140,10 @@ class ModelThread(QThread):
 
     def run(self):
         try:
-            prediction = pix2tex.call_model(self.img, self.args, *self.objs)
-
+            prediction = pix2tex.call_model(self.args, *self.objs, img=self.img)
             self.finished.emit({"success": True, "prediction": prediction})
-        except:
+        except Exception as e:
+            print(e)
             self.finished.emit({"success": False, "prediction": None})
 
 
@@ -169,23 +171,21 @@ class SnipWidget(QMainWindow):
 
         self.show()
 
-
     def paintEvent(self, event):
         if self.isSnipping:
             brushColor = (0, 180, 255, 100)
             lw = 3
             opacity = 0.3
         else:
-            brushColor = (0, 200, 0, 128)
+            brushColor = (255, 255, 255, 0)
             lw = 3
-            opacity = 0.3
+            opacity = 0
 
         self.setWindowOpacity(opacity)
         qp = QtGui.QPainter(self)
         qp.setPen(QtGui.QPen(QtGui.QColor('black'), lw))
         qp.setBrush(QtGui.QColor(*brushColor))
         qp.drawRect(QtCore.QRect(self.begin, self.end))
-
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:

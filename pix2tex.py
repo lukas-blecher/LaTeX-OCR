@@ -33,18 +33,11 @@ def minmax_size(img, max_dimensions):
     return img
 
 
-def initialize():
-    parser = argparse.ArgumentParser(description='Use model', add_help=False)
-    parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
-    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
-    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
-    parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
-    parser.add_argument('-f', '--file', type=str, default=None, help='Predict LaTeX code from image file instead of clipboard')
-    parser.add_argument('-k', '--katex', action='store_true', help='Render the latex code in the browser')
-    parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
-    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
-    arguments = parser.parse_args()
-
+def initialize(arguments=None):
+    if arguments is None:
+        arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
+    logging.getLogger().setLevel(logging.FATAL)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     with open(arguments.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = Munch(params)
@@ -66,10 +59,19 @@ def initialize():
     return args, model, image_resizer, tokenizer
 
 
-def call_model(img, args, model, image_resizer, tokenizer):
+def call_model(args, model, image_resizer, tokenizer, img=None):
     global last_pic
     encoder, decoder = model.encoder, model.decoder
-
+    if type(img) is bool:
+        img = None
+    if img is None:
+        if last_pic is None:
+            print('Provide an image.')
+            return
+        else:
+            img = last_pic.copy()
+    else:
+        last_pic = img.copy()
     img = minmax_size(pad(img), args.max_dimensions)
     if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
@@ -85,7 +87,6 @@ def call_model(img, args, model, image_resizer, tokenizer):
     else:
         img = np.array(pad(img).convert('RGB'))
         t = test_transform(image=img)['image'][:1].unsqueeze(0)
-    print("processing... \n")
     im = t.to(args.device)
 
     with torch.no_grad():
@@ -98,7 +99,8 @@ def call_model(img, args, model, image_resizer, tokenizer):
 
     return pred
 
-def output_prediction(pred):
+
+def output_prediction(pred, args):
     print(pred, '\n')
     df = pd.DataFrame([pred])
     df.to_clipboard(index=False, header=False)
@@ -118,14 +120,22 @@ def output_prediction(pred):
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.FATAL)
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    parser = argparse.ArgumentParser(description='Use model', add_help=False)
+    parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
+    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
+    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
+    parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
+    parser.add_argument('-f', '--file', type=str, default=None, help='Predict LaTeX code from image file instead of clipboard')
+    parser.add_argument('-k', '--katex', action='store_true', help='Render the latex code in the browser')
+    parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
+    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
+    arguments = parser.parse_args()
     latexocr_path = os.path.dirname(sys.argv[0])
     if latexocr_path != '':
         sys.path.insert(0, latexocr_path)
         os.chdir(latexocr_path)
 
-    args, *objs = initialize()
+    args, *objs = initialize(arguments)
     while True:
         instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
         possible_file = instructions.strip()
@@ -141,7 +151,7 @@ Usage:
 
     You might get a different prediction every time you submit the same image. If the result you got was close you
     can just predict the same image by pressing ENTER again. If that still does not work you can change the temperature
-    or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution).
+    or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution). 
 
     Press "x" to close the program.
     You can interrupt the model if it takes too long by pressing Ctrl+C.
@@ -170,20 +180,16 @@ Settings:
                 print('new temperature: T=%.3f' % args.temperature)
                 continue
         try:
+            img = None
             if args.file:
                 img = Image.open(args.file)
             else:
-                img = ImageGrab.grabclipboard()
-            if img is None:
-                if last_pic is None:
-                    print('Copy an image into the clipboard.')
-                else:
-                    img = last_pic
-            else:
-                last_pic = img.copy()
-
-                output_prediction(call_model(args, *objs))
-
+                try:
+                    img = ImageGrab.grabclipboard()
+                except:
+                    pass
+            pred = call_model(args, *objs, img=img)
+            output_prediction(pred, args)
         except KeyboardInterrupt:
             pass
         args.file = None
