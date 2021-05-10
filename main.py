@@ -86,7 +86,6 @@ class App(QMainWindow):
         <img src="qrc:/icons/processing-icon-anim.svg" width="50", height="50">
         </center>"""
         self.webView.setHtml(pageSource)
-        self.textbox.setText("")
 
         self.snipButton.setEnabled(False)
         self.retryButton.setEnabled(False)
