@@ -2,7 +2,8 @@ import sys
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QPushButton, QTextEdit
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
+    QPushButton, QTextEdit, QLabel, QLineEdit, QFormLayout
 import resources
 from pynput.mouse import Controller
 
@@ -47,12 +48,17 @@ class App(QMainWindow):
         self.textbox = QTextEdit(self)
         self.textbox.textChanged.connect(self.displayPrediction)
 
+        # Create temperature text input
+        self.tempField = QLineEdit(self)
+        self.tempField.setText(str(self.args.get('temperature', 0.25)))
+
         # Create snip button
         self.snipButton = QPushButton('Snip', self)
         self.snipButton.clicked.connect(self.onClick)
 
         # Create retry button
         self.retryButton = QPushButton('Retry', self)
+        self.retryButton.setEnabled(False)
         self.retryButton.clicked.connect(self.returnSnip)
 
         # Create layout
@@ -65,6 +71,9 @@ class App(QMainWindow):
         lay.addWidget(self.textbox, stretch=2)
         lay.addWidget(self.snipButton)
         lay.addWidget(self.retryButton)
+        settings = QFormLayout()
+        settings.addRow('Temperature:', self.tempField)
+        lay.addLayout(settings)
 
     @pyqtSlot()
     def onClick(self):
@@ -82,7 +91,12 @@ class App(QMainWindow):
         self.snipButton.setEnabled(False)
 
         self.show()
-
+        try:
+            self.args.temperature = float(self.tempField.text())
+            if self.args.temperature == 0:
+                self.args.temperature = 1e-8
+        except:
+            pass
         # Run the model in a separate thread
         self.thread = ModelThread(img=img, args=self.args, objs=self.objs)
         self.thread.finished.connect(self.returnPrediction)
@@ -97,6 +111,7 @@ class App(QMainWindow):
 
         if success:
             self.displayPrediction(prediction)
+            self.retryButton.setEnabled(True)
         else:
             self.webView.setHtml("")
             msg = QMessageBox()

@@ -32,4 +32,5 @@ num_tokens: 8000
 pad: false
 pad_token: 0
 patch_size: 16
+temperature: 0.2
 tokenizer: dataset/tokenizer.json

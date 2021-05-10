@@ -94,7 +94,7 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
         device = args.device
         encoded = encoder(im.to(device))
         dec = decoder.generate(torch.LongTensor([args.bos_token])[:, None].to(device), args.max_seq_len,
-                               eos_token=args.eos_token, context=encoded.detach(), temperature=args.temperature)
+                               eos_token=args.eos_token, context=encoded.detach(), temperature=args.get('temperature', .25))
         pred = post_process(token2str(dec, tokenizer)[0])
 
     return pred
