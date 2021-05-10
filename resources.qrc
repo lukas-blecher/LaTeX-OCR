@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="icons">
+        <file alias="icon.svg">resources/icon.svg</file>
+        <file alias="processing-icon-anim.svg">resources/processing-icon-anim.svg</file>
+    </qresource>
+    <qresource>
+        <file alias="MathJax.js">resources/MathJax.js</file>
+    </qresource>
+</RCC>

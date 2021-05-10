@@ -17,3 +17,8 @@ albumentations>=0.5.2
 pandas>=1.0.0
 timm==0.4.5
 python-Levenshtein>=0.12.2
+
+# GUI
+PyQt5
+PyQtWebEngine
+pynput
