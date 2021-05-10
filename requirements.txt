@@ -22,3 +22,4 @@ python-Levenshtein>=0.12.2
 PyQt5
 PyQtWebEngine
 pynput
+screeninfo

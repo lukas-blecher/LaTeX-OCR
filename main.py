@@ -7,9 +7,9 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout,
 import resources
 from pynput.mouse import Controller
 
-import tkinter as tk
 from PIL import ImageGrab
-
+import numpy as np
+from screeninfo import get_monitors
 import pix2tex
 
 QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -89,6 +89,7 @@ class App(QMainWindow):
         self.textbox.setText("")
 
         self.snipButton.setEnabled(False)
+        self.retryButton.setEnabled(False)
 
         self.show()
         try:
@@ -169,10 +170,11 @@ class SnipWidget(QMainWindow):
         super().__init__()
         self.parent = parent
 
-        root = tk.Tk()
-        screenWidth = root.winfo_screenwidth()
-        screenHeight = root.winfo_screenheight()
-        self.setGeometry(0, 0, screenWidth, screenHeight)
+        monitos = get_monitors()
+        bboxes = np.array([[m.x, m.y, m.width, m.height] for m in monitos])
+        x, y, _, _ = bboxes.min(0)
+        wx, w, hy, h = bboxes[[*bboxes.argmax(0)]][[0, 0, 1, 1], [0, 2, 1, 3]]
+        self.setGeometry(x, y-10, wx+w-x, hy+h-y+10)
 
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
@@ -234,7 +236,7 @@ class SnipWidget(QMainWindow):
 
         self.repaint()
         QApplication.processEvents()
-        img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+        img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
         QApplication.processEvents()
 
         self.close()
