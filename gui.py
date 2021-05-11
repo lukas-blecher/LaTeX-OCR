@@ -3,8 +3,8 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
-    QPushButton, QTextEdit, QLabel, QLineEdit, QFormLayout
-import resources
+    QPushButton, QTextEdit, QLineEdit, QFormLayout
+from resources import resources
 from pynput.mouse import Controller
 
 from PIL import ImageGrab
@@ -172,8 +172,8 @@ class SnipWidget(QMainWindow):
         monitos = get_monitors()
         bboxes = np.array([[m.x, m.y, m.width, m.height] for m in monitos])
         x, y, _, _ = bboxes.min(0)
-        wx, w, hy, h = bboxes[[*bboxes.argmax(0)]][[0, 0, 1, 1], [0, 2, 1, 3]]
-        self.setGeometry(x, y-10, wx+w-x, hy+h-y+10)
+        w, h = bboxes[:, [0, 2]].sum(1).max(), bboxes[:, [1, 3]].sum(1).max()
+        self.setGeometry(x, y, w-x, h-y)
 
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
