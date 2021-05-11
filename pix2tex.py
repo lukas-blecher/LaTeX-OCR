@@ -1,6 +1,6 @@
 from dataset.dataset import test_transform
 import cv2
-import pandas as pd
+import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
 import os
@@ -96,14 +96,12 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
         dec = decoder.generate(torch.LongTensor([args.bos_token])[:, None].to(device), args.max_seq_len,
                                eos_token=args.eos_token, context=encoded.detach(), temperature=args.get('temperature', .25))
         pred = post_process(token2str(dec, tokenizer)[0])
-
+    clipboard.copy(pred)
     return pred
 
 
 def output_prediction(pred, args):
     print(pred, '\n')
-    df = pd.DataFrame([pred])
-    df.to_clipboard(index=False, header=False)
     if args.show or args.katex:
         try:
             if args.katex:

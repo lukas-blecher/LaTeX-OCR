@@ -1,9 +1,11 @@
 import sys
+import os
+import argparse
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
-    QPushButton, QTextEdit, QLineEdit, QFormLayout
+    QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
 from resources import resources
 from pynput.mouse import Controller
 
@@ -17,8 +19,9 @@ QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
 class App(QMainWindow):
-    def __init__(self):
+    def __init__(self, args=None):
         super().__init__()
+        self.args = args
         self.initModel()
         self.initUI()
         self.snipWidget = SnipWidget(self)
@@ -26,7 +29,7 @@ class App(QMainWindow):
         self.show()
 
     def initModel(self):
-        args, *objs = pix2tex.initialize()
+        args, *objs = pix2tex.initialize(self.args)
         self.args = args
         self.objs = objs
 
@@ -42,15 +45,18 @@ class App(QMainWindow):
         # Create LaTeX display
         self.webView = QWebEngineView()
         self.webView.setHtml("")
-        self.webView.setMinimumHeight(70)
+        self.webView.setMinimumHeight(80)
 
         # Create textbox
         self.textbox = QTextEdit(self)
         self.textbox.textChanged.connect(self.displayPrediction)
+        self.textbox.setMinimumHeight(40)
 
         # Create temperature text input
-        self.tempField = QLineEdit(self)
-        self.tempField.setText(str(self.args.get('temperature', 0.25)))
+        self.tempField = QDoubleSpinBox(self)
+        self.tempField.setValue(self.args.get('temperature', 0.25))
+        self.tempField.setRange(0, 1)
+        self.tempField.setSingleStep(0.1)
 
         # Create snip button
         self.snipButton = QPushButton('Snip', self)
@@ -69,8 +75,10 @@ class App(QMainWindow):
         lay = QVBoxLayout(centralWidget)
         lay.addWidget(self.webView, stretch=4)
         lay.addWidget(self.textbox, stretch=2)
-        lay.addWidget(self.snipButton)
-        lay.addWidget(self.retryButton)
+        buttons = QHBoxLayout()
+        buttons.addWidget(self.snipButton)
+        buttons.addWidget(self.retryButton)
+        lay.addLayout(buttons)
         settings = QFormLayout()
         settings.addRow('Temperature:', self.tempField)
         lay.addLayout(settings)
@@ -92,7 +100,7 @@ class App(QMainWindow):
 
         self.show()
         try:
-            self.args.temperature = float(self.tempField.text())
+            self.args.temperature = self.tempField.value()
             if self.args.temperature == 0:
                 self.args.temperature = 1e-8
         except:
@@ -137,7 +145,7 @@ class App(QMainWindow):
         </script>
         </head> """ + """
         <body>
-        <div id="equation" style="font-size:17pt; visibility:hidden">$${equation}$$</div>
+        <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
         </body>
         </html>
             """.format(equation=prediction)
@@ -245,6 +253,17 @@ class SnipWidget(QMainWindow):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='GUI arguments')
+    parser.add_argument('-t', '--temperature', type=float, default=.2, help='Softmax sampling frequency')
+    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml', help='path to config file')
+    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth', help='path to weights file')
+    parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
+    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
+    arguments = parser.parse_args()
+    latexocr_path = os.path.dirname(sys.argv[0])
+    if latexocr_path != '':
+        sys.path.insert(0, latexocr_path)
+        os.chdir(latexocr_path)
     app = QApplication(sys.argv)
-    ex = App()
+    ex = App(arguments)
     sys.exit(app.exec_())
