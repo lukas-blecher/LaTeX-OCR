@@ -1,6 +1,6 @@
 from dataset.dataset import test_transform
 import cv2
-import pandas as pd
+import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
 import os
@@ -33,7 +33,11 @@ def minmax_size(img, max_dimensions):
     return img
 
 
-def initialize(arguments):
+def initialize(arguments=None):
+    if arguments is None:
+        arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
+    logging.getLogger().setLevel(logging.FATAL)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     with open(arguments.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = Munch(params)
@@ -55,19 +59,17 @@ def initialize(arguments):
     return args, model, image_resizer, tokenizer
 
 
-def call_model(args, model, image_resizer, tokenizer):
+def call_model(args, model, image_resizer, tokenizer, img=None):
     global last_pic
     encoder, decoder = model.encoder, model.decoder
-    if args.file:
-        img = Image.open(args.file)
-    else:
-        img = ImageGrab.grabclipboard()
+    if type(img) is bool:
+        img = None
     if img is None:
         if last_pic is None:
-            print('Copy an image into the clipboard.')
+            print('Provide an image.')
             return
         else:
-            img = last_pic
+            img = last_pic.copy()
     else:
         last_pic = img.copy()
     img = minmax_size(pad(img), args.max_dimensions)
@@ -85,7 +87,6 @@ def call_model(args, model, image_resizer, tokenizer):
     else:
         img = np.array(pad(img).convert('RGB'))
         t = test_transform(image=img)['image'][:1].unsqueeze(0)
-    print("processing... \n")
     im = t.to(args.device)
 
     with torch.no_grad():
@@ -93,11 +94,14 @@ def call_model(args, model, image_resizer, tokenizer):
         device = args.device
         encoded = encoder(im.to(device))
         dec = decoder.generate(torch.LongTensor([args.bos_token])[:, None].to(device), args.max_seq_len,
-                               eos_token=args.eos_token, context=encoded.detach(), temperature=args.temperature)
+                               eos_token=args.eos_token, context=encoded.detach(), temperature=args.get('temperature', .25))
         pred = post_process(token2str(dec, tokenizer)[0])
+    clipboard.copy(pred)
+    return pred
+
+
+def output_prediction(pred, args):
     print(pred, '\n')
-    df = pd.DataFrame([pred])
-    df.to_clipboard(index=False, header=False)
     if args.show or args.katex:
         try:
             if args.katex:
@@ -123,15 +127,13 @@ if __name__ == "__main__":
     parser.add_argument('-k', '--katex', action='store_true', help='Render the latex code in the browser')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
-    args = parser.parse_args()
-    logging.getLogger().setLevel(logging.FATAL)
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    arguments = parser.parse_args()
     latexocr_path = os.path.dirname(sys.argv[0])
     if latexocr_path != '':
         sys.path.insert(0, latexocr_path)
         os.chdir(latexocr_path)
 
-    args, *objs = initialize(args)
+    args, *objs = initialize(arguments)
     while True:
         instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
         possible_file = instructions.strip()
@@ -176,7 +178,16 @@ Settings:
                 print('new temperature: T=%.3f' % args.temperature)
                 continue
         try:
-            call_model(args, *objs)
+            img = None
+            if args.file:
+                img = Image.open(args.file)
+            else:
+                try:
+                    img = ImageGrab.grabclipboard()
+                except:
+                    pass
+            pred = call_model(args, *objs, img=img)
+            output_prediction(pred, args)
         except KeyboardInterrupt:
             pass
         args.file = None
