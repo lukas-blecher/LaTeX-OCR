@@ -8,7 +8,16 @@
       contain
       :aspect-ratio="649 / 319"
     ></v-img>
-    Convert an image containing a formula to corresponding LaTeX code.
+    Convert an image containing a formula to corresponding LaTeX code. <br />
+    There is a User Interface written with
+    <a href="https://www.riverbankcomputing.com/software/pyqt/">PyQt5</a>
+    <v-img
+      class="mx-auto"
+      src="https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif"
+      :width="650"
+      contain
+    ></v-img>
+    See <NuxtLink to="performance">here</NuxtLink> for performance information.
     <v-card-title>Download</v-card-title>
     As of right now you have to use a Python environment with
     <a href="https://pytorch.org">PyTorch</a> to use the model. For more
@@ -54,7 +63,8 @@ export default {
     items: [
       {
         text: 'Handwritten formulae',
-        subtitle: 'Maybe use https://www.kaggle.com/aidapearson/ocr-data',
+        subtitle:
+          'Use CROHME, Im2Latex-Handwritten and maybe https://www.kaggle.com/aidapearson/ocr-data',
         icon: 'mdi-checkbox-blank-outline',
       },
       {
@@ -66,6 +76,16 @@ export default {
       {
         text: 'Tweak model structure',
         subtitle: 'Attention tricks, backbone model etc.',
+        icon: 'mdi-checkbox-marked-outline',
+      },
+      {
+        text: 'Distillation',
+        subtitle: 'Introduce more of the DeiT approach.',
+        icon: 'mdi-checkbox-blank-outline',
+      },
+      {
+        text: 'Data scraping',
+        subtitle: 'Fix equation extraction (regex) and collect more data.',
         icon: 'mdi-checkbox-blank-outline',
       },
       {
