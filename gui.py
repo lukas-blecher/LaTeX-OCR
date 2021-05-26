@@ -164,6 +164,8 @@ class ModelThread(QThread):
     def run(self):
         try:
             prediction = pix2tex.call_model(self.args, *self.objs, img=self.img)
+            # replace <, > with \lt, \gt so it won't be interpreted as html code
+            prediction = prediction.replace('<','\\lt ').replace('>','\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})
         except Exception as e:
             print(e)
