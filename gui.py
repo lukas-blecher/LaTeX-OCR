@@ -2,7 +2,7 @@ import sys
 import os
 import argparse
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
+from PyQt5.QtCore import QObject, QTimer, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
     QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
@@ -62,6 +62,11 @@ class App(QMainWindow):
         self.snipButton = QPushButton('Snip', self)
         self.snipButton.clicked.connect(self.onClick)
 
+        # Create copy to clipboard button
+        self.copyToClipboard = QPushButton('Copy', self)
+        self.copyToClipboard.setEnabled(False)
+        self.copyToClipboard.clicked.connect(self.copyLatexText)
+
         # Create retry button
         self.retryButton = QPushButton('Retry', self)
         self.retryButton.setEnabled(False)
@@ -77,6 +82,7 @@ class App(QMainWindow):
         lay.addWidget(self.textbox, stretch=2)
         buttons = QHBoxLayout()
         buttons.addWidget(self.snipButton)
+        buttons.addWidget(self.copyToClipboard)
         buttons.addWidget(self.retryButton)
         lay.addLayout(buttons)
         settings = QFormLayout()
@@ -88,6 +94,23 @@ class App(QMainWindow):
         self.close()
         self.snipWidget.snip()
 
+    @pyqtSlot()
+    def copyLatexText(self):
+        text = self.textbox.toPlainText()
+        if text:
+            cb = QApplication.clipboard()
+            cb.setText(text)
+            
+        timer = QTimer(self)
+        timer.singleShot(60, self.blinkBackgroundColor)
+        self.textbox.setStyleSheet("background-color: #00FF00")
+
+    @pyqtSlot()
+    def blinkBackgroundColor(self):
+        # Default to original color
+        self.textbox.setStyleSheet("")
+
+
     def returnSnip(self, img=None):
         # Show processing icon
         pageSource = """<center>
@@ -96,6 +119,7 @@ class App(QMainWindow):
         self.webView.setHtml(pageSource)
 
         self.snipButton.setEnabled(False)
+        self.copyToClipboard.setEnabled(False)
         self.retryButton.setEnabled(False)
 
         self.show()
@@ -119,6 +143,7 @@ class App(QMainWindow):
 
         if success:
             self.displayPrediction(prediction)
+            self.copyToClipboard.setEnabled(True)
             self.retryButton.setEnabled(True)
         else:
             self.webView.setHtml("")
