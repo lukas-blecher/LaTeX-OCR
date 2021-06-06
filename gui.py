@@ -4,7 +4,8 @@ import argparse
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QShortcut,\
     QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
 from resources import resources
 from pynput.mouse import Controller
@@ -59,8 +60,11 @@ class App(QMainWindow):
         self.tempField.setSingleStep(0.1)
 
         # Create snip button
-        self.snipButton = QPushButton('Snip', self)
+        self.snipButton = QPushButton('Snip [Alt+S]', self)
         self.snipButton.clicked.connect(self.onClick)
+
+        self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
+        self.shortcut.activated.connect(self.onClick)
 
         # Create retry button
         self.retryButton = QPushButton('Retry', self)
@@ -165,7 +169,7 @@ class ModelThread(QThread):
         try:
             prediction = pix2tex.call_model(self.args, *self.objs, img=self.img)
             # replace <, > with \lt, \gt so it won't be interpreted as html code
-            prediction = prediction.replace('<','\\lt ').replace('>','\\gt ')
+            prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})
         except Exception as e:
             print(e)

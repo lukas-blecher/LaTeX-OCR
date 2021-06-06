@@ -25,11 +25,17 @@ from utils import *
 last_pic = None
 
 
-def minmax_size(img, max_dimensions):
-    ratios = [a/b for a, b in zip(img.size, max_dimensions)]
-    if any([r > 1 for r in ratios]):
-        size = np.array(img.size)//max(ratios)
-        img = img.resize(size.astype(int), Image.BILINEAR)
+def minmax_size(img, max_dimensions=None, min_dimensions=None):
+    if max_dimensions is not None:
+        ratios = [a/b for a, b in zip(img.size, max_dimensions)]
+        if any([r > 1 for r in ratios]):
+            size = np.array(img.size)//max(ratios)
+            img = img.resize(size.astype(int), Image.BILINEAR)
+    if min_dimensions is not None:
+        if any([s < min_dimensions[i] for i, s in enumerate(img.size)]):
+            padded_im = Image.new('L', min_dimensions, 255)
+            padded_im.paste(img, img.getbbox())
+            img = padded_im
     return img
 
 
@@ -72,13 +78,13 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
             img = last_pic.copy()
     else:
         last_pic = img.copy()
-    img = minmax_size(pad(img), args.max_dimensions)
+    img = minmax_size(pad(img), args.max_dimensions, args.min_dimensions)
     if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
             input_image = pad(img).convert('RGB').copy()
             r, w = 1, img.size[0]
             for i in range(10):
-                img = minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions)
+                img = minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions)
                 t = test_transform(image=np.array(pad(img).convert('RGB')))['image'][:1].unsqueeze(0)
                 w = image_resizer(t.to(args.device)).argmax(-1).item()*32
                 if (w/img.size[0] == 1):
