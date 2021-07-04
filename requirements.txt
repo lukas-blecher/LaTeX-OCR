@@ -9,6 +9,7 @@ x_transformers>=0.8.1
 torch>=1.7.0
 imagesize>=1.2.0
 transformers>=4.2.2
+tokenizers==0.9.4
 numpy>=1.19.5
 Pillow>=8.1.0
 PyYAML>=5.4.1

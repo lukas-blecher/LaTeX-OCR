@@ -26,7 +26,7 @@ train_transform = alb.Compose(
             [alb.ShiftScaleRotate(shift_limit=0, scale_limit=(-.15, 0), rotate_limit=1, border_mode=0, interpolation=3,
                                   value=[255, 255, 255], p=1),
              alb.GridDistortion(distort_limit=0.1, border_mode=0, interpolation=3, value=[255, 255, 255], p=.5)], p=.15),
-        #alb.InvertImg(p=.15),
+        # alb.InvertImg(p=.15),
         alb.RGBShift(r_shift_limit=15, g_shift_limit=15,
                      b_shift_limit=15, p=0.3),
         alb.GaussNoise(10, p=.2),
@@ -229,7 +229,7 @@ def generate_tokenizer(equations, output, vocab_size):
     tokenizer = Tokenizer(BPE())
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
     trainer = BpeTrainer(special_tokens=["[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
-    tokenizer.train([equations], trainer)
+    tokenizer.train(trainer, [equations])
     tokenizer.save(path=output, pretty=False)
 
 
