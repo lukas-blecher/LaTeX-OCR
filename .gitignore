@@ -135,3 +135,4 @@ wandb/
 checkpoints/**
 !**/.gitkeep
 .vscode
+.DS_Store
