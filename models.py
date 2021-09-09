@@ -11,7 +11,6 @@ from timm.models.layers import StdConv2dSame
 from einops import rearrange, repeat
 
 
-
 class CustomARWrapper(AutoregressiveWrapper):
     def __init__(self, *args, **kwargs):
         super(CustomARWrapper, self).__init__(*args, **kwargs)
@@ -112,7 +111,11 @@ def get_model(args):
     backbone = ResNetV2(
         layers=args.backbone_layers, num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
-    embed_layer = partial(HybridEmbed, backbone=backbone)
+
+    def embed_layer(**x):
+        x.pop('patch_size', None)
+        return HybridEmbed(**x, patch_size=1, backbone=backbone)
+
     encoder = CustomVisionTransformer(img_size=(args.max_height, args.max_width),
                                       patch_size=args.patch_size,
                                       in_chans=args.channels,
