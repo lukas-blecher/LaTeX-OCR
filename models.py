@@ -5,10 +5,10 @@ import torch.nn.functional as F
 from x_transformers import *
 from x_transformers.autoregressive_wrapper import *
 from timm.models.vision_transformer import VisionTransformer
+from timm.models.vision_transformer_hybrid import HybridEmbed
 from timm.models.resnetv2 import ResNetV2
 from timm.models.layers import StdConv2dSame
 from einops import rearrange, repeat
-
 
 
 class CustomARWrapper(AutoregressiveWrapper):
@@ -111,6 +111,11 @@ def get_model(args):
     backbone = ResNetV2(
         layers=args.backbone_layers, num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
+
+    def embed_layer(**x):
+        x.pop('patch_size', None)
+        return HybridEmbed(**x, patch_size=1, backbone=backbone)
+
     encoder = CustomVisionTransformer(img_size=(args.max_height, args.max_width),
                                       patch_size=args.patch_size,
                                       in_chans=args.channels,
@@ -118,7 +123,7 @@ def get_model(args):
                                       embed_dim=args.dim,
                                       depth=args.encoder_depth,
                                       num_heads=args.heads,
-                                      hybrid_backbone=backbone
+                                      embed_layer=embed_layer
                                       ).to(args.device)
 
     decoder = CustomARWrapper(
