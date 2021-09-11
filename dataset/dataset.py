@@ -31,7 +31,7 @@ train_transform = alb.Compose(
                      b_shift_limit=15, p=0.3),
         alb.GaussNoise(10, p=.2),
         alb.RandomBrightnessContrast(.05, (-.2, 0), True, p=0.2),
-        alb.JpegCompression(95, p=.3),
+        alb.ImageCompression(95, p=.3),
         alb.ToGray(always_apply=True),
         alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
         # alb.Sharpen()
