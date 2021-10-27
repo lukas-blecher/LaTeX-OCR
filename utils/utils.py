@@ -8,9 +8,45 @@ import torch
 from munch import Munch
 from inspect import isfunction
 
-operators = '|'.join(['arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth', 'csc', 'deg', 'det', 'dim', 'exp', 'gcd', 'hom', 'inf',
-                      'injlim', 'ker', 'lg', 'lim', 'liminf', 'limsup', 'ln', 'log', 'max', 'min', 'Pr', 'projlim', 'sec', 'sin', 'sinh', 'sup', 'tan', 'tanh'])
-ops = re.compile(r'\\operatorname{(%s)}' % operators)
+operators = "|".join(
+    [
+        "arccos",
+        "arcsin",
+        "arctan",
+        "arg",
+        "cos",
+        "cosh",
+        "cot",
+        "coth",
+        "csc",
+        "deg",
+        "det",
+        "dim",
+        "exp",
+        "gcd",
+        "hom",
+        "inf",
+        "injlim",
+        "ker",
+        "lg",
+        "lim",
+        "liminf",
+        "limsup",
+        "ln",
+        "log",
+        "max",
+        "min",
+        "Pr",
+        "projlim",
+        "sec",
+        "sin",
+        "sinh",
+        "sup",
+        "tan",
+        "tanh",
+    ]
+)
+ops = re.compile(r"\\operatorname{(%s)}" % operators)
 
 
 class EmptyStepper:
@@ -19,6 +55,7 @@ class EmptyStepper:
 
     def step(self, *args, **kwargs):
         pass
+
 
 # helper functions from lucidrains
 
@@ -40,7 +77,7 @@ def seed_everything(seed: int):
         seed (int): seed
     """
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -49,15 +86,15 @@ def seed_everything(seed: int):
 
 
 def parse_args(args, **kwargs):
-    args = Munch({'epoch': 0}, **args)
-    kwargs = Munch({'no_cuda': False, 'debug': False}, **kwargs)
+    args = Munch({"epoch": 0}, **args)
+    kwargs = Munch({"no_cuda": False, "debug": False}, **kwargs)
     args.wandb = not kwargs.debug and not args.debug
-    args.device = 'cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu'
+    args.device = "cuda" if torch.cuda.is_available() and not kwargs.no_cuda else "cpu"
     args.max_dimensions = [args.max_width, args.max_height]
-    args.min_dimensions = [args.get('min_width', 32), args.get('min_height', 32)]
-    if 'decoder_args' not in args or args.decoder_args is None:
+    args.min_dimensions = [args.get("min_width", 32), args.get("min_height", 32)]
+    if "decoder_args" not in args or args.decoder_args is None:
         args.decoder_args = {}
-    if 'model_path' in args:
+    if "model_path" in args:
         args.out_path = os.path.join(args.model_path, args.name)
         os.makedirs(args.out_path, exist_ok=True)
     return args
@@ -67,7 +104,15 @@ def token2str(tokens, tokenizer):
     if len(tokens.shape) == 1:
         tokens = tokens[None, :]
     dec = [tokenizer.decode(tok) for tok in tokens]
-    return [''.join(detok.split(' ')).replace('Ġ', ' ').replace('[EOS]', '').replace('[BOS]', '').replace('[PAD]', '').strip() for detok in dec]
+    return [
+        "".join(detok.split(" "))
+        .replace("Ġ", " ")
+        .replace("[EOS]", "")
+        .replace("[BOS]", "")
+        .replace("[PAD]", "")
+        .strip()
+        for detok in dec
+    ]
 
 
 def pad(img: Image, divable=32):
@@ -80,26 +125,28 @@ def pad(img: Image, divable=32):
     Returns:
         PIL.Image
     """
-    data = np.array(img.convert('LA'))
-    data = (data-data.min())/(data.max()-data.min())*255
+    data = np.array(img.convert("LA"))
+    data = (data - data.min()) / (data.max() - data.min()) * 255
     if data[..., 0].mean() > 128:
-        gray = 255*(data[..., 0] < 128).astype(np.uint8)  # To invert the text to white
+        gray = 255 * (data[..., 0] < 128).astype(
+            np.uint8
+        )  # To invert the text to white
     else:
-        gray = 255*(data[..., 0] > 128).astype(np.uint8)
-        data[..., 0] = 255-data[..., 0]
+        gray = 255 * (data[..., 0] > 128).astype(np.uint8)
+        data[..., 0] = 255 - data[..., 0]
 
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
     a, b, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
-    rect = data[b:b+h, a:a+w]
+    rect = data[b : b + h, a : a + w]
     if rect[..., -1].var() == 0:
-        im = Image.fromarray((rect[..., 0]).astype(np.uint8)).convert('L')
+        im = Image.fromarray((rect[..., 0]).astype(np.uint8)).convert("L")
     else:
-        im = Image.fromarray((255-rect[..., -1]).astype(np.uint8)).convert('L')
+        im = Image.fromarray((255 - rect[..., -1]).astype(np.uint8)).convert("L")
     dims = []
     for x in [w, h]:
         div, mod = divmod(x, divable)
-        dims.append(divable*(div + (1 if mod > 0 else 0)))
-    padded = Image.new('L', dims, 255)
+        dims.append(divable * (div + (1 if mod > 0 else 0)))
+    padded = Image.new("L", dims, 255)
     padded.paste(im, im.getbbox())
     return padded
 
@@ -113,17 +160,17 @@ def post_process(s: str):
     Returns:
         str: Processed image
     """
-    text_reg = r'(\\(operatorname|mathrm|text|mathbf)\s?\*? {.*?})'
-    letter = '[a-zA-Z]'
-    noletter = '[\W_^\d]'
-    names = [x[0].replace(' ', '') for x in re.findall(text_reg, s)]
+    text_reg = r"(\\(operatorname|mathrm|text|mathbf)\s?\*? {.*?})"
+    letter = "[a-zA-Z]"
+    noletter = "[\W_^\d]"
+    names = [x[0].replace(" ", "") for x in re.findall(text_reg, s)]
     s = re.sub(text_reg, lambda match: str(names.pop(0)), s)
     news = s
     while True:
         s = news
-        news = re.sub(r'(?!\\ )(%s)\s+?(%s)' % (noletter, noletter), r'\1\2', s)
-        news = re.sub(r'(?!\\ )(%s)\s+?(%s)' % (noletter, letter), r'\1\2', news)
-        news = re.sub(r'(%s)\s+?(%s)' % (letter, noletter), r'\1\2', news)
+        news = re.sub(r"(?!\\ )(%s)\s+?(%s)" % (noletter, noletter), r"\1\2", s)
+        news = re.sub(r"(?!\\ )(%s)\s+?(%s)" % (noletter, letter), r"\1\2", news)
+        news = re.sub(r"(%s)\s+?(%s)" % (letter, noletter), r"\1\2", news)
         if news == s:
             break
     return s

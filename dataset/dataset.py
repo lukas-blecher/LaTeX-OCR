@@ -23,15 +23,31 @@ from tqdm.auto import tqdm
 train_transform = alb.Compose(
     [
         alb.Compose(
-            [alb.ShiftScaleRotate(shift_limit=0, scale_limit=(-.15, 0), rotate_limit=1, border_mode=0, interpolation=3,
-                                  value=[255, 255, 255], p=1),
-             alb.GridDistortion(distort_limit=0.1, border_mode=0, interpolation=3, value=[255, 255, 255], p=.5)], p=.15),
+            [
+                alb.ShiftScaleRotate(
+                    shift_limit=0,
+                    scale_limit=(-0.15, 0),
+                    rotate_limit=1,
+                    border_mode=0,
+                    interpolation=3,
+                    value=[255, 255, 255],
+                    p=1,
+                ),
+                alb.GridDistortion(
+                    distort_limit=0.1,
+                    border_mode=0,
+                    interpolation=3,
+                    value=[255, 255, 255],
+                    p=0.5,
+                ),
+            ],
+            p=0.15,
+        ),
         # alb.InvertImg(p=.15),
-        alb.RGBShift(r_shift_limit=15, g_shift_limit=15,
-                     b_shift_limit=15, p=0.3),
-        alb.GaussNoise(10, p=.2),
-        alb.RandomBrightnessContrast(.05, (-.2, 0), True, p=0.2),
-        alb.ImageCompression(95, p=.3),
+        alb.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.3),
+        alb.GaussNoise(10, p=0.2),
+        alb.RandomBrightnessContrast(0.05, (-0.2, 0), True, p=0.2),
+        alb.ImageCompression(95, p=0.3),
         alb.ToGray(always_apply=True),
         alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
         # alb.Sharpen()
@@ -63,8 +79,20 @@ class Im2LatexDataset:
     eos_token_id = 2
     transform = train_transform
 
-    def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_seq_len=1024,
-                 max_dimensions=(1024, 512), min_dimensions=(32, 32), pad=False, keep_smaller_batches=False, test=False):
+    def __init__(
+        self,
+        equations=None,
+        images=None,
+        tokenizer=None,
+        shuffle=True,
+        batchsize=16,
+        max_seq_len=1024,
+        max_dimensions=(1024, 512),
+        min_dimensions=(32, 32),
+        pad=False,
+        keep_smaller_batches=False,
+        test=False,
+    ):
         """Generates a torch dataset from pairs of `equations` and `images`.
 
         Args:
@@ -83,10 +111,14 @@ class Im2LatexDataset:
 
         if images is not None and equations is not None:
             assert tokenizer is not None
-            self.images = [path.replace('\\', '/') for path in glob.glob(join(images, '*.png'))]
+            self.images = [
+                path.replace("\\", "/") for path in glob.glob(join(images, "*.png"))
+            ]
             self.sample_size = len(self.images)
-            eqs = open(equations, 'r').read().split('\n')
-            self.indices = [int(os.path.basename(img).split('.')[0]) for img in self.images]
+            eqs = open(equations, "r").read().split("\n")
+            self.indices = [
+                int(os.path.basename(img).split(".")[0]) for img in self.images
+            ]
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer)
             self.shuffle = shuffle
             self.batchsize = batchsize
@@ -100,7 +132,10 @@ class Im2LatexDataset:
             try:
                 for i, im in tqdm(enumerate(self.images), total=len(self.images)):
                     width, height = imagesize.get(im)
-                    if min_dimensions[0] <= width <= max_dimensions[0] and min_dimensions[1] <= height <= max_dimensions[1]:
+                    if (
+                        min_dimensions[0] <= width <= max_dimensions[0]
+                        and min_dimensions[1] <= height <= max_dimensions[1]
+                    ):
                         self.data[(width, height)].append((eqs[self.indices[i]], im))
             except KeyboardInterrupt:
                 pass
@@ -120,7 +155,7 @@ class Im2LatexDataset:
             info = np.array(self.data[k], dtype=object)
             p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
             for i in range(0, len(info), self.batchsize):
-                batch = info[p[i:i+self.batchsize]]
+                batch = info[p[i : i + self.batchsize]]
                 if len(batch.shape) == 1:
                     batch = batch[None, :]
                 if len(batch) < self.batchsize and not self.keep_smaller_batches:
@@ -137,7 +172,7 @@ class Im2LatexDataset:
         if self.i >= self.size:
             raise StopIteration
         self.i += 1
-        return self.prepare_data(self.pairs[self.i-1])
+        return self.prepare_data(self.pairs[self.i - 1])
 
     def prepare_data(self, batch):
         """loads images into memory
@@ -153,30 +188,38 @@ class Im2LatexDataset:
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
-            tok[k] = pad_sequence([torch.LongTensor([p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
+            tok[k] = pad_sequence(
+                [torch.LongTensor([p[0]] + x + [p[1]]) for x in tok[k]],
+                batch_first=True,
+                padding_value=self.pad_token_id,
+            )
         # check if sequence length is too long
-        if self.max_seq_len < tok['attention_mask'].shape[1]:
+        if self.max_seq_len < tok["attention_mask"].shape[1]:
             return next(self)
         images = []
         for path in list(ims):
             im = cv2.imread(path)
             if im is None:
-                print(path, 'not found!')
+                print(path, "not found!")
                 continue
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
             if not self.test:
                 # sometimes convert to bitmask
-                if np.random.random() < .04:
+                if np.random.random() < 0.04:
                     im[im != 255] = 0
-            images.append(self.transform(image=im)['image'][:1])
+            images.append(self.transform(image=im)["image"][:1])
         try:
             images = torch.cat(images).float().unsqueeze(1)
         except RuntimeError:
-            logging.critical('Images not working: %s' % (' '.join(list(ims))))
+            logging.critical("Images not working: %s" % (" ".join(list(ims))))
             return None, None
         if self.pad:
             h, w = images.shape[2:]
-            images = F.pad(images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)
+            images = F.pad(
+                images,
+                (0, self.max_dimensions[0] - w, 0, self.max_dimensions[1] - h),
+                value=1,
+            )
         return tok, images
 
     def _get_size(self):
@@ -191,7 +234,7 @@ class Im2LatexDataset:
         Args:
             filename (str): Path to dataset
         """
-        with open(filename, 'rb') as file:
+        with open(filename, "rb") as file:
             x = pickle.load(file)
         return x
 
@@ -201,21 +244,31 @@ class Im2LatexDataset:
         Args:
             filename (str): Path to dataset
         """
-        with open(filename, 'wb') as file:
+        with open(filename, "wb") as file:
             pickle.dump(self, file)
 
     def update(self, **kwargs):
-        for k in ['batchsize', 'shuffle', 'pad', 'keep_smaller_batches', 'test', 'max_seq_len']:
+        for k in [
+            "batchsize",
+            "shuffle",
+            "pad",
+            "keep_smaller_batches",
+            "test",
+            "max_seq_len",
+        ]:
             if k in kwargs:
                 setattr(self, k, kwargs[k])
-        if 'max_dimensions' in kwargs or 'min_dimensions' in kwargs:
-            if 'max_dimensions' in kwargs:
-                self.max_dimensions = kwargs['max_dimensions']
-            if 'min_dimensions' in kwargs:
-                self.min_dimensions = kwargs['min_dimensions']
+        if "max_dimensions" in kwargs or "min_dimensions" in kwargs:
+            if "max_dimensions" in kwargs:
+                self.max_dimensions = kwargs["max_dimensions"]
+            if "min_dimensions" in kwargs:
+                self.min_dimensions = kwargs["min_dimensions"]
             temp = {}
             for k in self.data:
-                if self.min_dimensions[0] <= k[0] <= self.max_dimensions[0] and self.min_dimensions[1] <= k[1] <= self.max_dimensions[1]:
+                if (
+                    self.min_dimensions[0] <= k[0] <= self.max_dimensions[0]
+                    and self.min_dimensions[1] <= k[1] <= self.max_dimensions[1]
+                ):
                     temp[k] = self.data[k]
             self.data = temp
         self._get_size()
@@ -226,27 +279,47 @@ def generate_tokenizer(equations, output, vocab_size):
     from tokenizers import Tokenizer, pre_tokenizers
     from tokenizers.models import BPE
     from tokenizers.trainers import BpeTrainer
+
     tokenizer = Tokenizer(BPE())
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
-    trainer = BpeTrainer(special_tokens=["[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
+    trainer = BpeTrainer(
+        special_tokens=["[PAD]", "[BOS]", "[EOS]"],
+        vocab_size=vocab_size,
+        show_progress=True,
+    )
     tokenizer.train(trainer, [equations])
     tokenizer.save(path=output, pretty=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='Train model', add_help=False)
-    parser.add_argument('-i', '--images', type=str, default=None, help='Image folder')
-    parser.add_argument('-e', '--equations', type=str, default=None, help='equations text file')
-    parser.add_argument('-t', '--tokenizer', default=None, help='Pretrained tokenizer file')
-    parser.add_argument('-o', '--out', required=True, help='output file')
-    parser.add_argument('-s', '--vocab-size', default=8000, help='vocabulary size when training a tokenizer')
+
+    parser = argparse.ArgumentParser(description="Train model", add_help=False)
+    parser.add_argument("-i", "--images", type=str, default=None, help="Image folder")
+    parser.add_argument(
+        "-e", "--equations", type=str, default=None, help="equations text file"
+    )
+    parser.add_argument(
+        "-t", "--tokenizer", default=None, help="Pretrained tokenizer file"
+    )
+    parser.add_argument("-o", "--out", required=True, help="output file")
+    parser.add_argument(
+        "-s",
+        "--vocab-size",
+        default=8000,
+        help="vocabulary size when training a tokenizer",
+    )
     args = parser.parse_args()
     if args.images is None and args.equations is not None and args.tokenizer is None:
-        print('Generate tokenizer')
+        print("Generate tokenizer")
         generate_tokenizer(args.equations, args.out, args.vocab_size)
-    elif args.images is not None and args.equations is not None and args.tokenizer is not None:
-        print('Generate dataset')
+    elif (
+        args.images is not None
+        and args.equations is not None
+        and args.tokenizer is not None
+    ):
+        print("Generate dataset")
         Im2LatexDataset(args.equations, args.images, args.tokenizer).save(args.out)
     else:
-        print('Not defined')
+        print("Not defined")
+

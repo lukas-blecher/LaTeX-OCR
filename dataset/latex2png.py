@@ -11,7 +11,7 @@ from PIL import Image
 
 
 class Latex:
-    BASE = r'''
+    BASE = r"""
 \documentclass[varwidth]{standalone}
 \usepackage{fontspec,unicode-math}
 \usepackage[active,tightpage,displaymath,textmath]{preview}
@@ -20,10 +20,10 @@ class Latex:
 \thispagestyle{empty}
 %s
 \end{document}
-'''
+"""
 
-    def __init__(self, math, dpi=250, font='Latin Modern Math'):
-        '''takes list of math code. `returns each element as PNG with DPI=`dpi`'''
+    def __init__(self, math, dpi=250, font="Latin Modern Math"):
+        """takes list of math code. `returns each element as PNG with DPI=`dpi`"""
         self.math = math
         self.dpi = dpi
         self.font = font
@@ -32,10 +32,10 @@ class Latex:
         # inline = bool(re.match('^\$[^$]*\$$', self.math)) and False
         try:
             workdir = tempfile.gettempdir()
-            fd, texfile = tempfile.mkstemp('.tex', 'eq', workdir, True)
+            fd, texfile = tempfile.mkstemp(".tex", "eq", workdir, True)
             # print(self.BASE % (self.font, self.math))
-            with os.fdopen(fd, 'w+') as f:
-                document = self.BASE % (self.font, '\n'.join(self.math))
+            with os.fdopen(fd, "w+") as f:
+                document = self.BASE % (self.font, "\n".join(self.math))
                 # print(document)
                 f.write(document)
 
@@ -53,7 +53,7 @@ class Latex:
 
         try:
             # Generate the PDF file
-            cmd = 'xelatex -halt-on-error -output-directory %s %s' % (workdir, infile)
+            cmd = "xelatex -halt-on-error -output-directory %s %s" % (workdir, infile)
 
             p = subprocess.Popen(
                 cmd,
@@ -65,13 +65,13 @@ class Latex:
             sout, serr = p.communicate()
             # Something bad happened, abort
             if p.returncode != 0:
-                raise Exception('latex error', serr, sout)
+                raise Exception("latex error", serr, sout)
 
             # Convert the PDF file to PNG's
-            pdffile = infile.replace('.tex', '.pdf')
-            pngfile = os.path.join(workdir, infile.replace('.tex', '.png'))
+            pdffile = infile.replace(".tex", ".pdf")
+            pngfile = os.path.join(workdir, infile.replace(".tex", ".png"))
 
-            cmd = 'magick convert -density %i -colorspace gray %s -quality 90 %s' % (
+            cmd = "magick convert -density %i -colorspace gray %s -quality 90 %s" % (
                 self.dpi,
                 pdffile,
                 pngfile,
@@ -86,24 +86,36 @@ class Latex:
 
             sout, serr = p.communicate()
             if p.returncode != 0:
-                raise Exception('PDFpng error', serr, cmd, os.path.exists(pdffile), os.path.exists(infile))
+                raise Exception(
+                    "PDFpng error",
+                    serr,
+                    cmd,
+                    os.path.exists(pdffile),
+                    os.path.exists(infile),
+                )
             if return_bytes:
                 if len(self.math) > 1:
-                    png = [open(pngfile.replace('.png', '')+'-%i.png' % i, 'rb').read() for i in range(len(self.math))]
+                    png = [
+                        open(pngfile.replace(".png", "") + "-%i.png" % i, "rb").read()
+                        for i in range(len(self.math))
+                    ]
                 else:
-                    png = [open(pngfile.replace('.png', '')+'.png', 'rb').read()]
+                    png = [open(pngfile.replace(".png", "") + ".png", "rb").read()]
                 return png
             else:
                 if len(self.math) > 1:
-                    return [(pngfile.replace('.png', '')+'-%i.png' % i) for i in range(len(self.math))]
+                    return [
+                        (pngfile.replace(".png", "") + "-%i.png" % i)
+                        for i in range(len(self.math))
+                    ]
                 else:
-                    return (pngfile.replace('.png', '')+'.png')
+                    return pngfile.replace(".png", "") + ".png"
         finally:
             # Cleanup temporaries
-            basefile = infile.replace('.tex', '')
-            tempext = ['.aux', '.pdf', '.log']
+            basefile = infile.replace(".tex", "")
+            tempext = [".aux", ".pdf", ".log"]
             if return_bytes:
-                ims = glob.glob(basefile+'*.png')
+                ims = glob.glob(basefile + "*.png")
                 for im in ims:
                     os.remove(im)
             for te in tempext:
@@ -127,11 +139,11 @@ def tex2pil(tex, **kwargs):
     return images
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) > 1:
         src = sys.argv[1]
     else:
-        src = r'\begin{equation}\mathcal{ L}\nonumber\end{equation}'
+        src = r"\begin{equation}\mathcal{ L}\nonumber\end{equation}"
 
-    print('Equation is: %s' % src)
+    print("Equation is: %s" % src)
     print(Latex(src).write())

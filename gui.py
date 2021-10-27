@@ -5,8 +5,22 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QShortcut,\
-    QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QApplication,
+    QMessageBox,
+    QVBoxLayout,
+    QWidget,
+    QShortcut,
+    QPushButton,
+    QTextEdit,
+    QLineEdit,
+    QFormLayout,
+    QHBoxLayout,
+    QCheckBox,
+    QSpinBox,
+    QDoubleSpinBox,
+)
 from resources import resources
 from pynput.mouse import Controller
 
@@ -36,7 +50,7 @@ class App(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("LaTeX OCR")
-        QApplication.setWindowIcon(QtGui.QIcon(':/icons/icon.svg'))
+        QApplication.setWindowIcon(QtGui.QIcon(":/icons/icon.svg"))
         self.left = 300
         self.top = 300
         self.width = 500
@@ -55,19 +69,19 @@ class App(QMainWindow):
 
         # Create temperature text input
         self.tempField = QDoubleSpinBox(self)
-        self.tempField.setValue(self.args.get('temperature', 0.25))
+        self.tempField.setValue(self.args.get("temperature", 0.25))
         self.tempField.setRange(0, 1)
         self.tempField.setSingleStep(0.1)
 
         # Create snip button
-        self.snipButton = QPushButton('Snip [Alt+S]', self)
+        self.snipButton = QPushButton("Snip [Alt+S]", self)
         self.snipButton.clicked.connect(self.onClick)
 
         self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
         self.shortcut.activated.connect(self.onClick)
 
         # Create retry button
-        self.retryButton = QPushButton('Retry', self)
+        self.retryButton = QPushButton("Retry", self)
         self.retryButton.setEnabled(False)
         self.retryButton.clicked.connect(self.returnSnip)
 
@@ -84,7 +98,7 @@ class App(QMainWindow):
         buttons.addWidget(self.retryButton)
         lay.addLayout(buttons)
         settings = QFormLayout()
-        settings.addRow('Temperature:', self.tempField)
+        settings.addRow("Temperature:", self.tempField)
         lay.addLayout(settings)
 
     @pyqtSlot()
@@ -135,7 +149,7 @@ class App(QMainWindow):
         if prediction is not None:
             self.textbox.setText("${equation}$".format(equation=prediction))
         else:
-            prediction = self.textbox.toPlainText().strip('$')
+            prediction = self.textbox.toPlainText().strip("$")
         pageSource = """
         <html>
         <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
@@ -152,7 +166,9 @@ class App(QMainWindow):
         <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
         </body>
         </html>
-            """.format(equation=prediction)
+            """.format(
+            equation=prediction
+        )
         self.webView.setHtml(pageSource)
 
 
@@ -169,7 +185,7 @@ class ModelThread(QThread):
         try:
             prediction = pix2tex.call_model(self.args, *self.objs, img=self.img)
             # replace <, > with \lt, \gt so it won't be interpreted as html code
-            prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
+            prediction = prediction.replace("<", "\\lt ").replace(">", "\\gt ")
             self.finished.emit({"success": True, "prediction": prediction})
         except Exception as e:
             print(e)
@@ -187,7 +203,7 @@ class SnipWidget(QMainWindow):
         bboxes = np.array([[m.x, m.y, m.width, m.height] for m in monitos])
         x, y, _, _ = bboxes.min(0)
         w, h = bboxes[:, [0, 2]].sum(1).max(), bboxes[:, [1, 3]].sum(1).max()
-        self.setGeometry(x, y, w-x, h-y)
+        self.setGeometry(x, y, w - x, h - y)
 
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
@@ -213,7 +229,7 @@ class SnipWidget(QMainWindow):
 
         self.setWindowOpacity(opacity)
         qp = QtGui.QPainter(self)
-        qp.setPen(QtGui.QPen(QtGui.QColor('black'), lw))
+        qp.setPen(QtGui.QPen(QtGui.QColor("black"), lw))
         qp.setBrush(QtGui.QColor(*brushColor))
         qp.drawRect(QtCore.QRect(self.begin, self.end))
 
@@ -258,16 +274,36 @@ class SnipWidget(QMainWindow):
         self.parent.returnSnip(img)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='GUI arguments')
-    parser.add_argument('-t', '--temperature', type=float, default=.2, help='Softmax sampling frequency')
-    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml', help='path to config file')
-    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth', help='path to weights file')
-    parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
-    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="GUI arguments")
+    parser.add_argument(
+        "-t",
+        "--temperature",
+        type=float,
+        default=0.2,
+        help="Softmax sampling frequency",
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        default="settings/config.yaml",
+        help="path to config file",
+    )
+    parser.add_argument(
+        "-m",
+        "--checkpoint",
+        type=str,
+        default="checkpoints/weights.pth",
+        help="path to weights file",
+    )
+    parser.add_argument("--no-cuda", action="store_true", help="Compute on CPU")
+    parser.add_argument(
+        "--no-resize", action="store_true", help="Resize the image beforehand"
+    )
     arguments = parser.parse_args()
     latexocr_path = os.path.dirname(sys.argv[0])
-    if latexocr_path != '':
+    if latexocr_path != "":
         sys.path.insert(0, latexocr_path)
         os.chdir(latexocr_path)
     app = QApplication(sys.argv)
