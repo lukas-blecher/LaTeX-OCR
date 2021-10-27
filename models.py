@@ -8,7 +8,7 @@ from timm.models.vision_transformer import VisionTransformer
 from timm.models.vision_transformer_hybrid import HybridEmbed
 from timm.models.resnetv2 import ResNetV2
 from timm.models.layers import StdConv2dSame
-from einops import rearrange, repeat
+from einops import repeat
 
 
 class CustomARWrapper(AutoregressiveWrapper):
@@ -26,7 +26,6 @@ class CustomARWrapper(AutoregressiveWrapper):
         filter_thres=0.9,
         **kwargs
     ):
-        device = start_tokens.device
         was_training = self.net.training
         num_dims = len(start_tokens.shape)
 

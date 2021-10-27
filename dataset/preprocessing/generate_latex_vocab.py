@@ -72,7 +72,6 @@ def main(args):
 
     formulas = open(label_path).readlines()
     vocab = {}
-    max_len = 0
     with open(data_path) as fin:
         for line in fin:
             _, line_idx = line.strip().split()

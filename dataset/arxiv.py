@@ -1,19 +1,14 @@
 # modified from https://github.com/soskek/arxiv_leaks
 
 import argparse
-import json
 import os
 import glob
 import re
-import sys
-import argparse
 import logging
-import shutil
 import subprocess
 import tarfile
 import tempfile
 import chardet
-import logging
 import requests
 import urllib.request
 from urllib.error import HTTPError

@@ -1,11 +1,8 @@
 import albumentations as alb
 from albumentations.pytorch import ToTensorV2
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-import torch.utils.data as data
-from torchvision import transforms
 import numpy as np
 import imagesize
 import logging
@@ -14,7 +11,6 @@ import os
 from os.path import join
 from collections import defaultdict
 import pickle
-from PIL import Image
 import cv2
 from transformers import PreTrainedTokenizerFast
 from tqdm.auto import tqdm
@@ -99,7 +95,7 @@ class Im2LatexDataset:
             equations (str, optional): Path to equations. Defaults to None.
             images (str, optional): Directory where images are saved. Defaults to None.
             tokenizer (str, optional): Path to saved tokenizer. Defaults to None.
-            shuffle (bool, opitonal): Defaults to True. 
+            shuffle (bool, opitonal): Defaults to True.
             batchsize (int, optional): Defaults to 16.
             max_seq_len (int, optional): Defaults to 1024.
             max_dimensions (tuple(int, int), optional): Maximal dimensions the model can handle

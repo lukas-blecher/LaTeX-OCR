@@ -23,7 +23,7 @@ def render_dataset(dataset: np.ndarray, names: np.ndarray, args):
                                         shuffle (bool)
 
     Returns:
-        list: equation indices that could not be rendered. 
+        list: equation indices that could not be rendered.
     """
     assert len(names) == len(dataset), "names and dataset must be of equal size"
     math_mode = "$$" if args.mode == "equation" else "$"

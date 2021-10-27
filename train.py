@@ -1,14 +1,10 @@
 from dataset.dataset import Im2LatexDataset
 import os
-import sys
 import argparse
 import logging
 import yaml
 
-import numpy as np
 import torch
-import torch.optim as optim
-import torch.nn as nn
 from munch import Munch
 from tqdm.auto import tqdm
 import wandb

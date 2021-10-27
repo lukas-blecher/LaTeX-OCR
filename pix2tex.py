@@ -1,5 +1,4 @@
 from dataset.dataset import test_transform
-import cv2
 import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
@@ -12,7 +11,6 @@ import re
 
 import numpy as np
 import torch
-from torchvision import transforms
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
 from timm.models.resnetv2 import ResNetV2
@@ -222,7 +220,7 @@ Usage:
 
     You might get a different prediction every time you submit the same image. If the result you got was close you
     can just predict the same image by pressing ENTER again. If that still does not work you can change the temperature
-    or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution). 
+    or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution).
 
     Press "x" to close the program.
     You can interrupt the model if it takes too long by pressing Ctrl+C.

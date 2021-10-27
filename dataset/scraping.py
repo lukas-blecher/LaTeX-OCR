@@ -5,7 +5,6 @@ from tqdm import tqdm
 import html
 import requests
 import re
-import tempfile
 
 try:
     from arxiv import *
@@ -29,7 +28,7 @@ def parse_url(url, encoding=None):
 
 def parse_wiki(url):
     text = parse_url(url)
-    linked = list(set([l for l in re.findall(wikilinks, text) if not ":" in l]))
+    linked = list(set([l for l in re.findall(wikilinks, text) if ":" not in l]))
     return find_math(text, wiki=True), linked
 
 
@@ -43,7 +42,7 @@ def recursive_search(parser, seeds, depth=2, skip=[], unit="links", base_url=Non
             random.shuffle(link_list)
             t_bar = tqdm(link_list, initial=len(visited), unit=unit)
             for link in t_bar:
-                if not link in visited:
+                if link not in visited:
                     t_bar.set_description("searching %s" % (link))
                     if base_url:
                         m, l = parser(base_url + link)
@@ -69,7 +68,7 @@ def recursive_search(parser, seeds, depth=2, skip=[], unit="links", base_url=Non
 
 
 def recursive_wiki(seeds, depth=4, skip=[]):
-    """Recursivley search wikipedia for math. Every link on the starting page `start` will be visited in the next round and so on, until there is no 
+    """Recursivley search wikipedia for math. Every link on the starting page `start` will be visited in the next round and so on, until there is no
     math in the child page anymore. This will be repeated `depth` times."""
     start = [s.split("/")[-1] for s in seeds]
     return recursive_search(

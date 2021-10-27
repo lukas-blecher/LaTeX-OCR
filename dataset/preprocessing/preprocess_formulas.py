@@ -82,7 +82,7 @@ def main(args):
 
     assert os.path.exists(input_file), input_file
     shutil.copy(input_file, output_file)
-    operators = "\s?".join(
+    operators = "\\s?".join(
         "|".join(
             [
                 "arccos",

@@ -1,7 +1,6 @@
 # mostly taken from http://code.google.com/p/latexmath2png/
 # install preview.sty
 import os
-import re
 import sys
 import io
 import glob
@@ -128,7 +127,7 @@ __cache = {}
 
 
 def tex2png(eq, **kwargs):
-    if not eq in __cache:
+    if eq not in __cache:
         __cache[eq] = Latex(eq, **kwargs).write(return_bytes=True)
     return __cache[eq]
 

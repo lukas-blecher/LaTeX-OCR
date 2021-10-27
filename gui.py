@@ -2,7 +2,7 @@ import sys
 import os
 import argparse
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
@@ -14,14 +14,10 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QPushButton,
     QTextEdit,
-    QLineEdit,
     QFormLayout,
     QHBoxLayout,
-    QCheckBox,
-    QSpinBox,
     QDoubleSpinBox,
 )
-from resources import resources
 from pynput.mouse import Controller
 
 from PIL import ImageGrab

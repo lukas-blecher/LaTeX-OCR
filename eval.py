@@ -1,6 +1,4 @@
 from dataset.dataset import Im2LatexDataset
-import os
-import sys
 import argparse
 import logging
 import yaml
@@ -58,10 +56,10 @@ def evaluate(
     for i, (seq, im) in pbar:
         if seq is None or im is None:
             continue
-        tgt_seq, tgt_mask = (
+        """ tgt_seq, tgt_mask = (
             seq["input_ids"].to(device),
             seq["attention_mask"].bool().to(device),
-        )
+        ) """
         encoded = model.encoder(im.to(device))
         # loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
         dec = model.decoder.generate(
