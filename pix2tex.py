@@ -89,7 +89,7 @@ def initialize(arguments=None):
 def call_model(args, model, image_resizer, tokenizer, img=None):
     global last_pic
     encoder, decoder = model.encoder, model.decoder
-    if type(img) is bool:
+    if isinstance(img, bool):
         img = None
     if img is None:
         if last_pic is None:
@@ -104,7 +104,7 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
         with torch.no_grad():
             input_image = pad(img).convert("RGB").copy()
             r, w = 1, img.size[0]
-            for i in range(10):
+            for _ in range(10):
                 img = minmax_size(
                     input_image.resize(
                         (w, int(input_image.size[1] * r)),

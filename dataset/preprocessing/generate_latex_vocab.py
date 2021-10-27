@@ -63,7 +63,7 @@ def main(args):
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
 
-    logging.info("Script being executed: %s" % __file__)
+    logging.info("Script being executed: %s", __file__)
 
     label_path = parameters.label_path
     assert os.path.exists(label_path), label_path
@@ -97,7 +97,7 @@ def main(args):
 
     with open(parameters.output_file, "w") as fout:
         fout.write("\n".join(vocab))
-    logging.info("#UNK's: %d" % num_unknown)
+    logging.info("#UNK's: %d", num_unknown)
 
 
 if __name__ == "__main__":

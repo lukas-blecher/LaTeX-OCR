@@ -46,7 +46,7 @@ def download(url, dir_path="./"):
         r = urllib.request.urlretrieve(url, file_path)
         return r[0]
     except HTTPError:
-        logging.info("Could not download %s" % url)
+        logging.info("Could not download %s", url)
         return 0
 
 
@@ -90,7 +90,7 @@ def read_tex_files(file_path, demacro=True):
                     pass
             tex = unfold(convert(tex))
     except Exception as e:
-        logging.debug("Could not read %s: %s" % (file_path, str(e)))
+        logging.debug("Could not read %s: %s", file_path, str(e))
         pass
     # remove comments
     return re.sub(r"(?<!\\)%.*\n", "", tex)
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             parse_arxiv, args.args, skip=skip, unit="paper"
         )
     elif args.mode == "top100":
-        url = "https://arxiv.org/list/hep-th/2012?skip=0&show=100"  # https://arxiv.org/list/hep-th/2012?skip=0&show=100
+        url = "https://arxiv.org/list/hep-th/2012?skip=0&show=100"
         ids = get_all_arxiv_ids(requests.get(url).text)
         math, visited = [], ids
         for id in tqdm(ids):

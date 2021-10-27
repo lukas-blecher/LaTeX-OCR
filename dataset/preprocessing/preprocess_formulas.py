@@ -75,7 +75,7 @@ def main(args):
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
 
-    logging.info("Script being executed: %s" % __file__)
+    logging.info("Script being executed: %s", __file__)
 
     input_file = parameters.input_file
     output_file = parameters.output_file

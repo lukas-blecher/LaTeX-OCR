@@ -175,8 +175,8 @@ if __name__ == "__main__":
         names = render_dataset(dataset[names], names, args)
         same = names == prev_names
         if (
-            (type(same) == bool and same)
-            or (type(same) == np.ndarray and same.all())
+            (isinstance(same, bool) and same)
+            or (isinstance(same, np.ndarray) and same.all())
             or (args.batchsize == 1)
         ):
             break

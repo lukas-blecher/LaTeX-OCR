@@ -37,7 +37,7 @@ def recursive_search(parser, seeds, depth=2, skip=[], unit="links", base_url=Non
     visited, links = set(skip), set(seeds)
     math = []
     try:
-        for i in range(int(depth)):
+        for _ in range(int(depth)):
             link_list = list(links)
             random.shuffle(link_list)
             t_bar = tqdm(link_list, initial=len(visited), unit=unit)

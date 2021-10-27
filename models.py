@@ -82,7 +82,7 @@ class CustomVisionTransformer(VisionTransformer):
         self.patch_size = 16
 
     def forward_features(self, x):
-        B, c, h, w = x.shape
+        B, _, h, w = x.shape
         x = self.patch_embed(x)
 
         cls_tokens = self.cls_token.expand(

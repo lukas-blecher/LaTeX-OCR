@@ -1,3 +1,9 @@
+import logging
+import glob
+import os
+from os.path import join
+from collections import defaultdict
+import pickle
 import albumentations as alb
 from albumentations.pytorch import ToTensorV2
 import torch
@@ -5,12 +11,6 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 import numpy as np
 import imagesize
-import logging
-import glob
-import os
-from os.path import join
-from collections import defaultdict
-import pickle
 import cv2
 from transformers import PreTrainedTokenizerFast
 from tqdm.auto import tqdm
@@ -207,7 +207,7 @@ class Im2LatexDataset:
         try:
             images = torch.cat(images).float().unsqueeze(1)
         except RuntimeError:
-            logging.critical("Images not working: %s" % (" ".join(list(ims))))
+            logging.critical("Images not working: %s", (" ".join(list(ims))))
             return None, None
         if self.pad:
             h, w = images.shape[2:]
