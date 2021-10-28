@@ -21,7 +21,7 @@ In order to render the math in many different fonts we use  XeLaTeX, generate a 
 ## Using the model
 1. Download/Clone this repository
 2. For now you need to install the Python dependencies specified in `requirements.txt` (look [above](#Requirements))
-3. Download the `weights.pth` (and optionally `image_resizer.pth`) file from my [Google Drive](https://drive.google.com/drive/folders/1cgmyiaT5uwQJY2pB0ngebuTcK5ivKXIb) and place it in the `checkpoints` directory
+3. Download the `weights.pth` (and optionally `image_resizer.pth`) file from the [Releases](https://github.com/lukas-blecher/LaTeX-OCR/releases/latest)->Assets section and place it in the `checkpoints` directory
 
 Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `python gui.py`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
