@@ -1,36 +1,51 @@
+backbone_layers:
+- 2
+- 3
+- 7
 batchsize: 10
+betas:
+- 0.9
+- 0.999
 bos_token: 1
 channels: 1
+data: dataset/data/train.pkl
 debug: false
-decoder_args: 
-  cross_attend: true
+decoder_args:
   attn_on_attn: true
   cross_attend: true
   ff_glu: true
   rel_pos_bias: false
   use_scalenorm: false
-device: cuda
 dim: 256
 encoder_depth: 4
 eos_token: 2
+epochs: 10
 heads: 8
-backbone_layers:
-- 2
-- 3
-- 7
-max_dimensions:
-- 672
-- 192
-min_dimensions:
-- 96
-- 32
+id: null
+load_chkpt: null
+lr: 0.001
 max_height: 192
+max_lr: 0.005
 max_seq_len: 512
 max_width: 672
+min_height: 32
+min_width: 96
+model_path: checkpoints
+name: pix2tex
 num_layers: 4
 num_tokens: 8000
+optimizer: Adam
+output_path: outputs
 pad: false
 pad_token: 0
 patch_size: 16
+sample_freq: 3000
+save_freq: 5
+scheduler: OneCycleLR
+seed: 42
 temperature: 0.2
+test_samples: 5
+testbatchsize: 20
 tokenizer: dataset/tokenizer.json
+valbatches: 100
+valdata: dataset/data/val.pkl
