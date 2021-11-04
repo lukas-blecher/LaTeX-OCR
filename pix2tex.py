@@ -46,7 +46,7 @@ def initialize(arguments=None):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     with open(arguments.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
-    args = Munch(params)
+    args = parse_args(Munch(params))
     args.update(**vars(arguments))
     args.wandb = False
     args.device = 'cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu'
