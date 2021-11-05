@@ -63,10 +63,10 @@ class CustomARWrapper(AutoregressiveWrapper):
 
 
 class CustomVisionTransformer(VisionTransformer):
-    def __init__(self, img_size=224, *args, **kwargs):
-        super(CustomVisionTransformer, self).__init__(img_size=img_size, *args, **kwargs)
+    def __init__(self, img_size=224, patch_size=16, *args, **kwargs):
+        super(CustomVisionTransformer, self).__init__(img_size=img_size, patch_size=patch_size, *args, **kwargs)
         self.height, self.width = img_size
-        self.patch_size = 16
+        self.patch_size = patch_size
 
     def forward_features(self, x):
         B, c, h, w = x.shape
@@ -111,10 +111,12 @@ def get_model(args):
     backbone = ResNetV2(
         layers=args.backbone_layers, num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
+    min_patch_size = 2**(len(args.backbone_layers)+1)
 
     def embed_layer(**x):
-        x.pop('patch_size', None)
-        return HybridEmbed(**x, patch_size=1, backbone=backbone)
+        ps = x.pop('patch_size', min_patch_size)
+        assert ps % min_patch_size == 0 and ps >= min_patch_size, 'patch_size needs to be multiple of %i with current backbone configuration' % min_patch_size
+        return HybridEmbed(**x, patch_size=ps//min_patch_size, backbone=backbone)
 
     encoder = CustomVisionTransformer(img_size=(args.max_height, args.max_width),
                                       patch_size=args.patch_size,

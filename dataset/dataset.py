@@ -1,11 +1,8 @@
 import albumentations as alb
 from albumentations.pytorch import ToTensorV2
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-import torch.utils.data as data
-from torchvision import transforms
 import numpy as np
 import imagesize
 import logging
@@ -14,7 +11,6 @@ import os
 from os.path import join
 from collections import defaultdict
 import pickle
-from PIL import Image
 import cv2
 from transformers import PreTrainedTokenizerFast
 from tqdm.auto import tqdm
@@ -90,6 +86,7 @@ class Im2LatexDataset:
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer)
             self.shuffle = shuffle
             self.batchsize = batchsize
+            self.max_seq_len = max_seq_len
             self.max_dimensions = max_dimensions
             self.min_dimensions = min_dimensions
             self.pad = pad
