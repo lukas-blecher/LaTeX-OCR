@@ -26,7 +26,7 @@ def train(args):
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     valdataloader.update(**valargs)
     device = args.device
-    model = get_model(args)
+    model = get_model(args, training=True)
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder

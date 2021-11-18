@@ -107,7 +107,7 @@ class Model(nn.Module):
         return dec
 
 
-def get_model(args):
+def get_model(args, training=False):
     backbone = ResNetV2(
         layers=args.backbone_layers, num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
@@ -143,4 +143,13 @@ def get_model(args):
     if 'wandb' in args and args.wandb:
         import wandb
         wandb.watch((encoder, decoder.net.attn_layers))
-    return Model(encoder, decoder, args)
+    model = Model(encoder, decoder, args)
+    if training:
+        # check if largest batch can be handled by system
+        im = torch.empty(args.batchsize, args.channels, args.max_height, args.min_height, device=args.device).float()
+        seq = torch.randint(0, args.num_tokens, (args.batchsize, args.max_seq_len), device=args.device).long()
+        decoder(seq, context=encoder(im)).sum().backward()
+        model.zero_grad()
+        torch.cuda.empty_cache() 
+        del im, seq
+    return model
