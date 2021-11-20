@@ -29,7 +29,7 @@ max_lr: 0.005
 max_seq_len: 512
 max_width: 672
 min_height: 32
-min_width: 96
+min_width: 32
 model_path: checkpoints
 name: pix2tex
 num_layers: 4

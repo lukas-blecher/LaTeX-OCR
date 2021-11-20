@@ -55,7 +55,7 @@ def initialize(arguments=None):
     model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
 
     if 'image_resizer.pth' in os.listdir(os.path.dirname(args.checkpoint)) and not arguments.no_resize:
-        image_resizer = ResNetV2(layers=[2, 3, 3], num_classes=22, global_pool='avg', in_chans=1, drop_rate=.05,
+        image_resizer = ResNetV2(layers=[2, 3, 3], num_classes=max(args.max_dimensions)//32, global_pool='avg', in_chans=1, drop_rate=.05,
                                  preact=True, stem_type='same', conv_layer=StdConv2dSame).to(args.device)
         image_resizer.load_state_dict(torch.load(os.path.join(os.path.dirname(args.checkpoint), 'image_resizer.pth'), map_location=args.device))
         image_resizer.eval()
@@ -73,7 +73,7 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
     if img is None:
         if last_pic is None:
             print('Provide an image.')
-            return
+            return ''
         else:
             img = last_pic.copy()
     else:
@@ -82,14 +82,14 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
     if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
             input_image = pad(img).convert('RGB').copy()
-            r, w = 1, img.size[0]
+            r, w = 1, input_image.size[0]
             for i in range(10):
                 img = minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions)
                 t = test_transform(image=np.array(pad(img).convert('RGB')))['image'][:1].unsqueeze(0)
-                w = image_resizer(t.to(args.device)).argmax(-1).item()*32
-                if (w/img.size[0] == 1):
+                w = (image_resizer(t.to(args.device)).argmax(-1).item()+1)*32
+                if (w == img.size[0]):
                     break
-                r *= w/img.size[0]
+                r = w/img.size[0]
     else:
         img = np.array(pad(img).convert('RGB'))
         t = test_transform(image=img)['image'][:1].unsqueeze(0)
@@ -174,7 +174,7 @@ Settings:
             setattr(args, ins, not getattr(args, ins, False))
             print('set %s to %s' % (ins, getattr(args, ins)))
             continue
-        elif os.path.isfile(possible_file):
+        elif os.path.isfile(os.path.realpath(possible_file)):
             args.file = possible_file
         else:
             t = re.match(r't=([\.\d]+)', ins)
