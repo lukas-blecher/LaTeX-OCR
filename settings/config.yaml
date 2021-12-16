@@ -3,9 +3,6 @@ backbone_layers:
 - 3
 - 7
 batchsize: 10
-betas:
-- 0.9
-- 0.999
 bos_token: 1
 channels: 1
 data: dataset/data/train.pkl
@@ -20,12 +17,13 @@ dim: 256
 encoder_depth: 4
 eos_token: 2
 epochs: 10
+gamma: 0.9995
 heads: 8
 id: null
 load_chkpt: null
 lr: 0.001
+lr_step: 30
 max_height: 192
-max_lr: 0.005
 max_seq_len: 512
 max_width: 672
 min_height: 32
@@ -41,7 +39,7 @@ pad_token: 0
 patch_size: 16
 sample_freq: 3000
 save_freq: 5
-scheduler: OneCycleLR
+scheduler: StepLR
 seed: 42
 temperature: 0.2
 test_samples: 5

@@ -19,10 +19,10 @@ temperature: 0.2
 
 # Optimizer configurations
 optimizer: "Adam"
-scheduler: "OneCycleLR"
+scheduler: "StepLR"
 lr: 0.001
-max_lr: 0.005
-betas: [0.9, 0.999]
+gamma: 0.9995
+lr_step: 30
 
 # Parameters for model architectures
 max_width: 128
