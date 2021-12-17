@@ -23,6 +23,9 @@ scheduler: "StepLR"
 lr: 0.001
 gamma: 0.9995
 lr_step: 30
+betas:
+- 0.9
+- 0.999
 
 # Parameters for model architectures
 max_width: 128

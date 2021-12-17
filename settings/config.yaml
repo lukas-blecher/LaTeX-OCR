@@ -2,6 +2,9 @@ backbone_layers:
 - 2
 - 3
 - 7
+betas:
+- 0.9
+- 0.999
 batchsize: 10
 bos_token: 1
 channels: 1
