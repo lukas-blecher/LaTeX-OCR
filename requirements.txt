@@ -1,14 +1,14 @@
 tqdm>=4.47.0
 munch>=2.5.0
+torch>=1.7.1
 torchvision>=0.8.1
 opencv_python_headless>=4.1.1.26
 requests>=2.22.0
 einops>=0.3.0
 chardet>=3.0.4
 x_transformers==0.15.0
-torch>=1.7.0
 imagesize>=1.2.0
-transformers>=4.2.2
+transformers==4.2.2
 tokenizers==0.9.4
 numpy>=1.19.5
 Pillow>=8.1.0
