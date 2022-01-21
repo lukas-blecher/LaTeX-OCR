@@ -58,6 +58,7 @@ class Im2LatexDataset:
     bos_token_id = 1
     eos_token_id = 2
     transform = train_transform
+    data = defaultdict(lambda: [])
 
     def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_seq_len=1024,
                  max_dimensions=(1024, 512), min_dimensions=(32, 32), pad=False, keep_smaller_batches=False, test=False):
@@ -92,7 +93,6 @@ class Im2LatexDataset:
             self.pad = pad
             self.keep_smaller_batches = keep_smaller_batches
             self.test = test
-            self.data = defaultdict(lambda: [])
             # check the image dimension for every image and group them together
             try:
                 for i, im in tqdm(enumerate(self.images), total=len(self.images)):
@@ -192,6 +192,21 @@ class Im2LatexDataset:
             x = pickle.load(file)
         return x
 
+    def combine(self, x):
+        """Combine Im2LatexDataset with another Im2LatexDataset
+
+        Args:
+            x (Im2LatexDataset): Dataset to absorb
+        """
+        for key in x.data.keys():
+            if key in self.data.keys():
+                self.data[key].extend(x.data[key])
+                self.data[key]=list(set(self.data[key]))
+            else:
+                self.data[key] = x.data[key]
+        self._get_size()
+        iter(self)
+
     def save(self, filename):
         """save a pickled version of a dataset
 
@@ -226,24 +241,31 @@ def generate_tokenizer(equations, output, vocab_size):
     tokenizer = Tokenizer(BPE())
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
     trainer = BpeTrainer(special_tokens=["[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
-    tokenizer.train(trainer, [equations])
+    tokenizer.train(trainer, equations)
     tokenizer.save(path=output, pretty=False)
 
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Train model', add_help=False)
-    parser.add_argument('-i', '--images', type=str, default=None, help='Image folder')
-    parser.add_argument('-e', '--equations', type=str, default=None, help='equations text file')
+    parser.add_argument('-i', '--images', type=str, nargs='+', default=None, help='Image folders')
+    parser.add_argument('-e', '--equations', type=str, nargs='+', default=None, help='equations text files')
     parser.add_argument('-t', '--tokenizer', default=None, help='Pretrained tokenizer file')
     parser.add_argument('-o', '--out', required=True, help='output file')
-    parser.add_argument('-s', '--vocab-size', default=8000, help='vocabulary size when training a tokenizer')
+    parser.add_argument('-s', '--vocab-size', default=8000, type=int, help='vocabulary size when training a tokenizer')
     args = parser.parse_args()
     if args.images is None and args.equations is not None and args.tokenizer is None:
         print('Generate tokenizer')
         generate_tokenizer(args.equations, args.out, args.vocab_size)
     elif args.images is not None and args.equations is not None and args.tokenizer is not None:
         print('Generate dataset')
-        Im2LatexDataset(args.equations, args.images, args.tokenizer).save(args.out)
+        dataset = None
+        for images, equations in zip(args.images, args.equations):
+            if dataset is None:
+                dataset = Im2LatexDataset(equations, images, args.tokenizer)
+            else:
+                dataset.combine(Im2LatexDataset(equations, images, args.tokenizer))
+        dataset.update(batchsize=1, keep_smaller_batches=True)
+        dataset.save(args.out)
     else:
         print('Not defined')
