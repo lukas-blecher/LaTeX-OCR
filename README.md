@@ -21,7 +21,7 @@ In order to render the math in many different fonts we use  XeLaTeX, generate a 
 ## Using the model
 1. Download/Clone this repository
 2. For now you need to install the Python dependencies specified in `requirements.txt` (look [above](#Requirements))
-3. Download the `weights.pth` (and optionally `image_resizer.pth`) file from my [Google Drive](https://drive.google.com/drive/folders/1cgmyiaT5uwQJY2pB0ngebuTcK5ivKXIb) and place it in the `checkpoints` directory
+3. Download the `weights.pth` (and optionally `image_resizer.pth`) file from the [Releases](https://github.com/lukas-blecher/LaTeX-OCR/releases/latest)->Assets section and place it in the `checkpoints` directory
 
 Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `python gui.py`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
@@ -40,17 +40,22 @@ This model will automatically resize the custom image to best resemble the train
 1. First we need to combine the images with their ground truth labels. I wrote a dataset class (which needs further improving) that saves the relative paths to the images with the LaTeX code they were rendered with. To generate the dataset pickle file run 
 
 ```
-python dataset/dataset.py --equations path_to_textfile --images path_to_images --tokenizer path_to_tokenizer --out dataset.pkl
+python dataset/dataset.py --equations path_to_textfile --images path_to_images --tokenizer dataset/tokenizer.json --out dataset.pkl
 ```
 
 You can find my generated training data on the [Google Drive](https://drive.google.com/drive/folders/13CA4vAmOmD_I_dSbvLp-Lf0s6KiaNfuO) as well (formulae.zip - images, math.txt - labels). Repeat the step for the validation and test data. All use the same label text file.
 
-2. Edit the `data` entry in the config file to the newly generated `.pkl` file. Change other hyperparameters if you want to. See `settings/default.yaml` for a template.
+2. Edit the `data` (and `valdata`) entry in the config file to the newly generated `.pkl` file. Change other hyperparameters if you want to. See `settings/config.yaml` for a template.
 3. Now for the actual training run 
 ```
 python train.py --config path_to_config_file
 ```
 
+If you want to use your own data you might be interested in creating your own tokenizer with
+```
+python dataset/dataset.py --equations path_to_textfile --vocab-size 8000 --out tokenizer.json
+```
+Don't forget to update the path to the tokenizer in the config file and set `num_tokens` to your vocabulary size.
 
 ## Model
 The model consist of a ViT [[1](#References)] encoder with a ResNet backbone and a Transformer [[2](#References)] decoder.

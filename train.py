@@ -26,7 +26,7 @@ def train(args):
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     valdataloader.update(**valargs)
     device = args.device
-    model = get_model(args)
+    model = get_model(args, training=True)
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
@@ -36,7 +36,7 @@ def train(args):
         yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))
 
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
-    scheduler = get_scheduler(args.scheduler)(opt, max_lr=args.max_lr, steps_per_epoch=len(dataloader)*2, epochs=args.epochs)  # scheduler steps are weird.
+    scheduler = get_scheduler(args.scheduler)(opt, step_size=args.lr_step, gamma=args.gamma)
     try:
         for e in range(args.epoch, args.epochs):
             args.epoch = e
