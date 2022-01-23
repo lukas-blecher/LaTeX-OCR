@@ -81,12 +81,13 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
     img = minmax_size(pad(img), args.max_dimensions, args.min_dimensions)
     if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
-            input_image = pad(img).convert('RGB').copy()
+            input_image = img.convert('RGB').copy()
             r, w = 1, input_image.size[0]
-            for i in range(10):
-                img = minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions)
-                t = test_transform(image=np.array(pad(img).convert('RGB')))['image'][:1].unsqueeze(0)
+            for _ in range(10):
+                img = pad(minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions))
+                t = test_transform(image=np.array(img.convert('RGB')))['image'][:1].unsqueeze(0)
                 w = (image_resizer(t.to(args.device)).argmax(-1).item()+1)*32
+                logging.info(r, img.size, (w, int(input_image.size[1]*r)))
                 if (w == img.size[0]):
                     break
                 r = w/img.size[0]
