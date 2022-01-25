@@ -62,7 +62,8 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
         bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
         for predi, truthi in zip(token2str(dec, dataset.tokenizer), token2str(seq['input_ids'], dataset.tokenizer)):
             ts = post_process(truthi)
-            edit_dists.append(distance(post_process(predi), ts)/len(ts))
+            if len(ts) > 0:
+                edit_dists.append(distance(post_process(predi), ts)/len(ts))
         pbar.set_description('BLEU: %.3f, ED: %.2e' % (np.mean(bleus), np.mean(edit_dists)))
         if num_batches is not None and i >= num_batches:
             break
