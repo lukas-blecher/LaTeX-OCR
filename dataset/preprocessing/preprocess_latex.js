@@ -328,7 +328,7 @@ groupTypes.underline = function(group, options) {
 };
 
 groupTypes.rule = function(group) {
-    norm_str = norm_str + "\rule { "+group.value.width.number+" "+group.value.width.unit+"  } { "+group.value.height.number+" "+group.value.height.unit+ " } ";
+    norm_str = norm_str + "\\rule { "+group.value.width.number+" "+group.value.width.unit+"  } { "+group.value.height.number+" "+group.value.height.unit+ " } ";
 
 };
 
