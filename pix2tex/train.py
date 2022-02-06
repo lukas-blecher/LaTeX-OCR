@@ -1,4 +1,4 @@
-from dataset.dataset import Im2LatexDataset
+from pix2tex.dataset.dataset import Im2LatexDataset
 import os
 import sys
 import argparse
@@ -13,9 +13,9 @@ from munch import Munch
 from tqdm.auto import tqdm
 import wandb
 
-from eval import evaluate
-from models import get_model
-from utils import *
+from pix2tex.eval import evaluate
+from pix2tex.models import get_model
+from pix2tex.utils import *
 
 
 def train(args):

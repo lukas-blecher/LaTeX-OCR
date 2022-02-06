@@ -1,4 +1,4 @@
-from dataset.dataset import test_transform
+from pix2tex.dataset.dataset import test_transform
 import cv2
 import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
@@ -18,9 +18,9 @@ from transformers import PreTrainedTokenizerFast
 from timm.models.resnetv2 import ResNetV2
 from timm.models.layers import StdConv2dSame
 
-from dataset.latex2png import tex2pil
-from models import get_model
-from utils import *
+from pix2tex.dataset.latex2png import tex2pil
+from pix2tex.models import get_model
+from pix2tex.utils import *
 
 last_pic = None
 

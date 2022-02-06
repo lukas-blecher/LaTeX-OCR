@@ -7,13 +7,13 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QShortcut,\
     QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
-from resources import resources
+from pix2tex.resources import resources
 from pynput.mouse import Controller
 
 from PIL import ImageGrab
 import numpy as np
 from screeninfo import get_monitors
-import pix2tex
+from pix2tex import cli
 
 QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
@@ -30,7 +30,7 @@ class App(QMainWindow):
         self.show()
 
     def initModel(self):
-        args, *objs = pix2tex.initialize(self.args)
+        args, *objs = cli.initialize(self.args)
         self.args = args
         self.objs = objs
 
@@ -167,7 +167,7 @@ class ModelThread(QThread):
 
     def run(self):
         try:
-            prediction = pix2tex.call_model(self.args, *self.objs, img=self.img)
+            prediction = cli.call_model(self.args, *self.objs, img=self.img)
             # replace <, > with \lt, \gt so it won't be interpreted as html code
             prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})

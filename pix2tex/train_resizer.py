@@ -11,8 +11,8 @@ import cv2
 import imagesize
 import yaml
 from tqdm.auto import tqdm
-from utils import *
-from dataset.dataset import *
+from pix2tex.utils import *
+from pix2tex.dataset.dataset import *
 from munch import Munch
 import argparse
 
