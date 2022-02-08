@@ -173,7 +173,8 @@ class ModelThread(QThread):
             prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})
         except Exception as e:
-            print(e)
+            import traceback
+            traceback.print_exc()
             self.finished.emit({"success": False, "prediction": None})
 
 
