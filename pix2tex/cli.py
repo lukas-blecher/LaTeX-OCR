@@ -127,7 +127,7 @@ def output_prediction(pred, args):
             webbrowser.open(url)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Use model', add_help=False)
     parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
@@ -201,3 +201,7 @@ Settings:
         except KeyboardInterrupt:
             pass
         args.file = None
+
+
+if __name__ == "__main__":
+    main()

@@ -258,7 +258,7 @@ class SnipWidget(QMainWindow):
         self.parent.returnSnip(img)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='GUI arguments')
     parser.add_argument('-t', '--temperature', type=float, default=.2, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml', help='path to config file')
@@ -273,3 +273,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = App(arguments)
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
