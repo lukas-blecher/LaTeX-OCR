@@ -138,69 +138,65 @@ def main():
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
     arguments = parser.parse_args()
-    latexocr_path = os.path.dirname(sys.argv[0])
-    if latexocr_path != '':
-        sys.path.insert(0, latexocr_path)
-        os.chdir(latexocr_path)
+    with in_model_path():
+        args, *objs = initialize(arguments)
+        while True:
+            instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+            possible_file = instructions.strip()
+            ins = possible_file.lower()
+            if ins == 'x':
+                break
+            elif ins in ['?', 'h', 'help']:
+                print('''pix2tex help:
 
-    args, *objs = initialize(arguments)
-    while True:
-        instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
-        possible_file = instructions.strip()
-        ins = possible_file.lower()
-        if ins == 'x':
-            break
-        elif ins in ['?', 'h', 'help']:
-            print('''pix2tex help:
+    Usage:
+        On Windows and macOS you can copy the image into memory and just press ENTER to get a prediction.
+        Alternatively you can paste the image file path here and submit.
 
-Usage:
-    On Windows and macOS you can copy the image into memory and just press ENTER to get a prediction.
-    Alternatively you can paste the image file path here and submit.
+        You might get a different prediction every time you submit the same image. If the result you got was close you
+        can just predict the same image by pressing ENTER again. If that still does not work you can change the temperature
+        or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution). 
 
-    You might get a different prediction every time you submit the same image. If the result you got was close you
-    can just predict the same image by pressing ENTER again. If that still does not work you can change the temperature
-    or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution). 
+        Press "x" to close the program.
+        You can interrupt the model if it takes too long by pressing Ctrl+C.
 
-    Press "x" to close the program.
-    You can interrupt the model if it takes too long by pressing Ctrl+C.
+    Visualization:
+        You can either render the code into a png using XeLaTeX (see README) to get an image file back.
+        This is slow and requires a working installation of XeLaTeX. To activate type 'show' or set the flag --show
+        Alternatively you can render the expression in the browser using katex.org. Type 'katex' or set --katex
 
-Visualization:
-    You can either render the code into a png using XeLaTeX (see README) to get an image file back.
-    This is slow and requires a working installation of XeLaTeX. To activate type 'show' or set the flag --show
-    Alternatively you can render the expression in the browser using katex.org. Type 'katex' or set --katex
-
-Settings:
-    to toggle one of these settings: 'show', 'katex', 'no_resize' just type it into the console
-    Change the temperature (default=0.333) type: "t=0.XX" to set a new temperature.
-                ''')
-            continue
-        elif ins in ['show', 'katex', 'no_resize']:
-            setattr(args, ins, not getattr(args, ins, False))
-            print('set %s to %s' % (ins, getattr(args, ins)))
-            continue
-        elif os.path.isfile(os.path.realpath(possible_file)):
-            args.file = possible_file
-        else:
-            t = re.match(r't=([\.\d]+)', ins)
-            if t is not None:
-                t = t.groups()[0]
-                args.temperature = float(t)+1e-8
-                print('new temperature: T=%.3f' % args.temperature)
+    Settings:
+        to toggle one of these settings: 'show', 'katex', 'no_resize' just type it into the console
+        Change the temperature (default=0.333) type: "t=0.XX" to set a new temperature.
+                    ''')
                 continue
-        try:
-            img = None
-            if args.file:
-                img = Image.open(args.file)
+            elif ins in ['show', 'katex', 'no_resize']:
+                setattr(args, ins, not getattr(args, ins, False))
+                print('set %s to %s' % (ins, getattr(args, ins)))
+                continue
+            elif os.path.isfile(os.path.realpath(possible_file)):
+                args.file = possible_file
             else:
-                try:
-                    img = ImageGrab.grabclipboard()
-                except:
-                    pass
-            pred = call_model(args, *objs, img=img)
-            output_prediction(pred, args)
-        except KeyboardInterrupt:
-            pass
-        args.file = None
+                t = re.match(r't=([\.\d]+)', ins)
+                if t is not None:
+                    t = t.groups()[0]
+                    args.temperature = float(t)+1e-8
+                    print('new temperature: T=%.3f' % args.temperature)
+                    continue
+            try:
+                img = None
+                if args.file:
+                    img = Image.open(args.file)
+                else:
+                    try:
+                        img = ImageGrab.grabclipboard()
+                    except:
+                        pass
+                pred = call_model(args, *objs, img=img)
+                output_prediction(pred, args)
+            except KeyboardInterrupt:
+                pass
+            args.file = None
 
 
 if __name__ == "__main__":

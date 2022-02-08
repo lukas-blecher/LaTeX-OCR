@@ -14,6 +14,7 @@ from PIL import ImageGrab
 import numpy as np
 from screeninfo import get_monitors
 from pix2tex import cli
+from pix2tex.utils import in_model_path
 
 QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
@@ -266,13 +267,10 @@ def main():
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
     arguments = parser.parse_args()
-    latexocr_path = os.path.dirname(sys.argv[0])
-    if latexocr_path != '':
-        sys.path.insert(0, latexocr_path)
-        os.chdir(latexocr_path)
-    app = QApplication(sys.argv)
-    ex = App(arguments)
-    sys.exit(app.exec_())
+    with in_model_path():
+        app = QApplication(sys.argv)
+        ex = App(arguments)
+        sys.exit(app.exec_())
 
 
 if __name__ == '__main__':
