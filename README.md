@@ -1,4 +1,6 @@
 # pix2tex - LaTeX OCR
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ba_qCGJl29dFQqfBjdqMik3o_EqPE4fr)
+
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code. 
 
 ![header](https://user-images.githubusercontent.com/55287601/109183599-69431f00-778e-11eb-9809-d42b9451e018.png)
@@ -36,7 +38,8 @@ Alternatively you can use `pix2tex.py` with similar functionality as `gui.py`, o
 **Update:** I have trained an image classifier on randomly scaled images of the training data to predict the original size.
 This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. To use this preprocessing step, all you have to do is download the second weights file mentioned above. You should be able to take bigger (or smaller) images of the formula and still get a satisfying result
 
-## Training the model
+## Training the model [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MqZSKzSgEnJB9lU7LyPma4bo4J3dnj1E)
+
 1. First we need to combine the images with their ground truth labels. I wrote a dataset class (which needs further improving) that saves the relative paths to the images with the LaTeX code they were rendered with. To generate the dataset pickle file run 
 
 ```
