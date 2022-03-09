@@ -136,8 +136,3 @@ checkpoints/**
 !**/.gitkeep
 .vscode
 .DS_Store
-
-# ZIP dataset files, test Png files
-formulae.zip
-snip.png
-formula_images.tar.gz*
