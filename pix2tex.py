@@ -49,6 +49,7 @@ def initialize(arguments=None):
     args = parse_args(Munch(params))
     args.update(**vars(arguments))
     args.wandb = False
+    # args.device = "cpu"
     args.device = 'cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu'
 
     model = get_model(args)
@@ -82,9 +83,10 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
     if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
             input_image = img.convert('RGB').copy()
-            r, w = 1, input_image.size[0]
+            r, w, h = 1, input_image.size[0], input_image.size[1]
             for _ in range(10):
-                img = pad(minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions))
+                h = int(h * r)  # height to resize
+                img = pad(minmax_size(input_image.resize((w, h), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions))
                 t = test_transform(image=np.array(img.convert('RGB')))['image'][:1].unsqueeze(0)
                 w = (image_resizer(t.to(args.device)).argmax(-1).item()+1)*32
                 logging.info(r, img.size, (w, int(input_image.size[1]*r)))
