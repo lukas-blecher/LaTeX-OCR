@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from x_transformers import *
-from x_transformers.autoregressive_wrapper import *
+# from x_transformers import *
+from x_transformers import TransformerWrapper, Decoder
+from x_transformers.autoregressive_wrapper import AutoregressiveWrapper, top_k, top_p, entmax, ENTMAX_ALPHA
 from timm.models.vision_transformer import VisionTransformer
 from timm.models.vision_transformer_hybrid import HybridEmbed
 from timm.models.resnetv2 import ResNetV2
