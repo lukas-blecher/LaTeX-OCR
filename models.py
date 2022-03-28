@@ -17,7 +17,7 @@ class CustomARWrapper(AutoregressiveWrapper):
         super(CustomARWrapper, self).__init__(*args, **kwargs)
 
     @torch.no_grad()
-    def generate(self, start_tokens, seq_len, eos_token=None, temperature=1., filter_logits_fn=top_k, filter_thres=0.9, **kwargs):
+    def forward(self, start_tokens, seq_len=256, eos_token=None, temperature=1., filter_logits_fn=top_k, filter_thres=0.9, **kwargs):
         device = start_tokens.device
         was_training = self.net.training
         num_dims = len(start_tokens.shape)
@@ -42,9 +42,6 @@ class CustomARWrapper(AutoregressiveWrapper):
             if filter_logits_fn in {top_k, top_p}:
                 filtered_logits = filter_logits_fn(logits, thres=filter_thres)
                 probs = F.softmax(filtered_logits / temperature, dim=-1)
-
-            elif filter_logits_fn is entmax:
-                probs = entmax(logits / temperature, alpha=ENTMAX_ALPHA, dim=-1)
 
             sample = torch.multinomial(probs, 1)
 
@@ -151,6 +148,6 @@ def get_model(args, training=False):
         seq = torch.randint(0, args.num_tokens, (args.batchsize, args.max_seq_len), device=args.device).long()
         decoder(seq, context=encoder(im)).sum().backward()
         model.zero_grad()
-        torch.cuda.empty_cache() 
+        torch.cuda.empty_cache()
         del im, seq
     return model

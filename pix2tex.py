@@ -21,6 +21,7 @@ from timm.models.layers import StdConv2dSame
 from dataset.latex2png import tex2pil
 from models import get_model
 from utils import *
+from checkpoints.get_latest_checkpoint import download_checkpoints
 
 last_pic = None
 
@@ -51,7 +52,8 @@ def initialize(arguments=None):
     args.wandb = False
     # args.device = "cpu"
     args.device = 'cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu'
-
+    if not os.path.exists(args.checkpoint):
+        download_checkpoints()
     model = get_model(args)
     model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
 

@@ -133,6 +133,7 @@ notebooks/
 dataset/data/**
 wandb/
 checkpoints/**
+!checkpoints/*.py
 !**/.gitkeep
 .vscode
 .DS_Store
