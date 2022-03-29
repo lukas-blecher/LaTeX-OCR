@@ -20,7 +20,6 @@ QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
-
 class App(QMainWindow):
     def __init__(self, args=None):
         super().__init__()
@@ -166,7 +165,6 @@ class App(QMainWindow):
         </body>
         </html>
             """.format(equation=prediction)
-        print("INFO: Displaying HTML")
         self.webView.setHtml(pageSource)
 
 
