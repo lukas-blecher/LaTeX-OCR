@@ -103,6 +103,8 @@ class App(QMainWindow):
                 # Use `tmp.name` instead of `tmp.file` due to compatability issues between Pillow and tempfile
                 self.returnSnip(Image.open(tmp.name))
         except:
+            print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
+            print("If you don't have gnome-screenshot installed, please install it.")
             self.returnSnip()
     def returnSnip(self, img=None):
         # Show processing icon
