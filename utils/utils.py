@@ -80,12 +80,17 @@ def pad(img: Image, divable=32):
     Returns:
         PIL.Image
     """
+    invert = False  # when text is inverted, make up inverse background pixels otherwise always 255
+    threshold = 128
     data = np.array(img.convert('LA'))
-    data = (data-data.min())/(data.max()-data.min())*255
-    if data[..., 0].mean() > 128:
-        gray = 255*(data[..., 0] < 128).astype(np.uint8)  # To invert the text to white
+    grayscale = (data[..., 0]-data[..., 0].min()) / (data[..., 0].max()-data[..., 0].min())*255
+    data = np.stack((grayscale, grayscale), axis=-1)
+    if data[..., 0].mean() > threshold:
+        # To invert the text to white
+        invert = True
+        gray = 255*(data[..., 0] < threshold).astype(np.uint8)
     else:
-        gray = 255*(data[..., 0] > 128).astype(np.uint8)
+        gray = 255*(data[..., 0] > threshold).astype(np.uint8)
         data[..., 0] = 255-data[..., 0]
 
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
@@ -99,8 +104,9 @@ def pad(img: Image, divable=32):
     for x in [w, h]:
         div, mod = divmod(x, divable)
         dims.append(divable*(div + (1 if mod > 0 else 0)))
-    padded = Image.new('L', dims, 255)
-    padded.paste(im, im.getbbox())
+    padded_pixel = 0 if invert else 255
+    padded = Image.new('L', dims, padded_pixel)
+    padded.paste(im, (0, 0, im.size[0], im.size[1]))
     return padded
 
 
