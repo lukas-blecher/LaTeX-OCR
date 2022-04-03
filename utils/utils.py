@@ -80,32 +80,29 @@ def pad(img: Image, divable=32):
     Returns:
         PIL.Image
     """
-    invert = False  # when text is inverted, make up inverse background pixels otherwise always 255
     threshold = 128
     data = np.array(img.convert('LA'))
-    grayscale = (data[..., 0]-data[..., 0].min()) / (data[..., 0].max()-data[..., 0].min())*255
-    data = np.stack((grayscale, grayscale), axis=-1)
-    if data[..., 0].mean() > threshold:
-        # To invert the text to white
-        invert = True
-        gray = 255*(data[..., 0] < threshold).astype(np.uint8)
+    if data[..., -1].var() == 0:
+        data = (data[..., 0]).astype(np.uint8)
     else:
-        gray = 255*(data[..., 0] > threshold).astype(np.uint8)
-        data[..., 0] = 255-data[..., 0]
+        data = (255-data[..., -1]).astype(np.uint8)
+    data = (data-data.min())/(data.max()-data.min())*255
+    if data.mean() > threshold:
+        # To invert the text to white
+        gray = 255*(data < threshold).astype(np.uint8)
+    else:
+        gray = 255*(data > threshold).astype(np.uint8)
+        data = 255-data
 
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
     a, b, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
     rect = data[b:b+h, a:a+w]
-    if rect[..., -1].var() == 0:
-        im = Image.fromarray((rect[..., 0]).astype(np.uint8)).convert('L')
-    else:
-        im = Image.fromarray((255-rect[..., -1]).astype(np.uint8)).convert('L')
+    im = Image.fromarray(rect).convert('L')
     dims = []
     for x in [w, h]:
         div, mod = divmod(x, divable)
         dims.append(divable*(div + (1 if mod > 0 else 0)))
-    padded_pixel = 0 if invert else 255
-    padded = Image.new('L', dims, padded_pixel)
+    padded = Image.new('L', dims, 255)
     padded.paste(im, (0, 0, im.size[0], im.size[1]))
     return padded
 
