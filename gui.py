@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+import tempfile
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -10,7 +11,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout,
 from resources import resources
 from pynput.mouse import Controller
 
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import numpy as np
 from screeninfo import get_monitors
 import pix2tex
@@ -90,8 +91,21 @@ class App(QMainWindow):
     @pyqtSlot()
     def onClick(self):
         self.close()
-        self.snipWidget.snip()
+        if self.args.gnome:
+            self.snip_using_gnome_screenshot()
+        else:
+            self.snipWidget.snip()
 
+    def snip_using_gnome_screenshot(self):
+        try:
+            with tempfile.NamedTemporaryFile() as tmp:
+                os.system(f"gnome-screenshot --area --file={tmp.name}")
+                # Use `tmp.name` instead of `tmp.file` due to compatability issues between Pillow and tempfile
+                self.returnSnip(Image.open(tmp.name))
+        except:
+            print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
+            print("If you don't have gnome-screenshot installed, please install it.")
+            self.returnSnip()
     def returnSnip(self, img=None):
         # Show processing icon
         pageSource = """<center>
@@ -265,6 +279,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth', help='path to weights file')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
+    parser.add_argument('--gnome', action='store_true', help='Use gnome-screenshot to capture screenshot')
     arguments = parser.parse_args()
     latexocr_path = os.path.dirname(sys.argv[0])
     if latexocr_path != '':
