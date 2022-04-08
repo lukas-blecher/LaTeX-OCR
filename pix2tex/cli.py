@@ -1,5 +1,4 @@
 from pix2tex.dataset.dataset import test_transform
-import cv2
 import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
@@ -12,7 +11,6 @@ import re
 
 import numpy as np
 import torch
-from torchvision import transforms
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
 from timm.models.resnetv2 import ResNetV2
@@ -21,6 +19,7 @@ from timm.models.layers import StdConv2dSame
 from pix2tex.dataset.latex2png import tex2pil
 from pix2tex.models import get_model
 from pix2tex.utils import *
+from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
 
 last_pic = None
 
@@ -41,17 +40,17 @@ def minmax_size(img, max_dimensions=None, min_dimensions=None):
 
 def initialize(arguments=None):
     if arguments is None:
-        arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
+        arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'model/checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
     logging.getLogger().setLevel(logging.FATAL)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    print(__file__, os.listdir('.'))
     with open(arguments.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params))
     args.update(**vars(arguments))
     args.wandb = False
     args.device = 'cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu'
-
+    if not os.path.exists(args.checkpoint):
+        download_checkpoints()
     model = get_model(args)
     model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
 
@@ -83,9 +82,10 @@ def call_model(args, model, image_resizer, tokenizer, img=None):
     if image_resizer is not None and not args.no_resize:
         with torch.no_grad():
             input_image = img.convert('RGB').copy()
-            r, w = 1, input_image.size[0]
+            r, w, h = 1, input_image.size[0], input_image.size[1]
             for _ in range(10):
-                img = pad(minmax_size(input_image.resize((w, int(input_image.size[1]*r)), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions))
+                h = int(h * r)  # height to resize
+                img = pad(minmax_size(input_image.resize((w, h), Image.BILINEAR if r > 1 else Image.LANCZOS), args.max_dimensions, args.min_dimensions))
                 t = test_transform(image=np.array(img.convert('RGB')))['image'][:1].unsqueeze(0)
                 w = (image_resizer(t.to(args.device)).argmax(-1).item()+1)*32
                 logging.info(r, img.size, (w, int(input_image.size[1]*r)))

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import setuptools
+import os
+from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.2',
+    version='0.0.3',
     description="pix2tex: Using a ViT to convert images of equations into LaTeX code.",
     author='Lukas Blecher',
     url='https://lukas-blecher.github.io/LaTeX-OCR/',
@@ -54,3 +56,6 @@ setuptools.setup(
         ],
     }
 )
+
+if not os.path.exists(os.path.join(os.path.dirname(__file__), 'pix2tex', 'models', 'checkpoints', 'weights.pth')):
+    download_checkpoints()

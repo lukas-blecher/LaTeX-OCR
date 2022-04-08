@@ -132,7 +132,7 @@ notebooks/
 .ipynb_checkpoints/
 dataset/data/**
 wandb/
-!pix2tex/model/checkpoints/**
+pix2tex/model/checkpoints/**
 !pix2tex/model/checkpoints/*.py
 !**/.gitkeep
 .vscode
