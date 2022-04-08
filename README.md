@@ -22,10 +22,12 @@ In order to render the math in many different fonts we use  XeLaTeX, generate a 
 
 ## Using the model
 1. Download/Clone this repository
-2. For now you need to install the Python dependencies specified in `setup.py` (look [above](#Requirements))
-3. Download the `weights.pth` (and optionally `image_resizer.pth`) file from the [Releases](https://github.com/lukas-blecher/LaTeX-OCR/releases/latest)->Assets section and place it in the `pix2tex/model/checkpoints` directory
+2. For now you need to install the Python dependencies specified in `requirements.txt` (look [above](#Requirements))
+3. The latest model checkpoint will be downloaded the first time the program is executed. Alternatively you can download the `weights.pth` (and optionally `image_resizer.pth`) file from the [Releases](https://github.com/lukas-blecher/LaTeX-OCR/releases/latest)->Assets section and place it in the `checkpoints` directory
 
 Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `python pix2tex.gui`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
+
+Under linux, it is possible to use `gui.py` with `gnome-screenshot` which comes with multiple monitor support. You just need to run `python gui.py --gnome` (**Note:** you should install `gnome-screenshot` beforehand).
 
 ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 

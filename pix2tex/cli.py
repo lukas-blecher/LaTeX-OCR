@@ -44,6 +44,7 @@ def initialize(arguments=None):
         arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
     logging.getLogger().setLevel(logging.FATAL)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    print(__file__, os.listdir('.'))
     with open(arguments.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params))
@@ -128,7 +129,7 @@ def output_prediction(pred, args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Use model', add_help=False)
+    parser = argparse.ArgumentParser(description='Use model')
     parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')

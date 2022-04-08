@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+import tempfile
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -10,7 +11,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout,
 from pix2tex.resources import resources
 from pynput.mouse import Controller
 
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import numpy as np
 from screeninfo import get_monitors
 from pix2tex import cli
@@ -91,8 +92,21 @@ class App(QMainWindow):
     @pyqtSlot()
     def onClick(self):
         self.close()
-        self.snipWidget.snip()
+        if self.args.gnome:
+            self.snip_using_gnome_screenshot()
+        else:
+            self.snipWidget.snip()
 
+    def snip_using_gnome_screenshot(self):
+        try:
+            with tempfile.NamedTemporaryFile() as tmp:
+                os.system(f"gnome-screenshot --area --file={tmp.name}")
+                # Use `tmp.name` instead of `tmp.file` due to compatability issues between Pillow and tempfile
+                self.returnSnip(Image.open(tmp.name))
+        except:
+            print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
+            print("If you don't have gnome-screenshot installed, please install it.")
+            self.returnSnip()
     def returnSnip(self, img=None):
         # Show processing icon
         pageSource = """<center>
@@ -267,6 +281,7 @@ def main():
     parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth', help='path to weights file')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
+    parser.add_argument('--gnome', action='store_true', help='Use gnome-screenshot to capture screenshot')
     arguments = parser.parse_args()
     with in_model_path():
         app = QApplication(sys.argv)
