@@ -57,10 +57,10 @@ def initialize(arguments=None):
     model = get_model(args)
     model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
 
-    if 'resizer.pth' in os.listdir(os.path.dirname(args.checkpoint)) and not arguments.no_resize:
+    if 'image_resizer.pth' in os.listdir(os.path.dirname(args.checkpoint)) and not arguments.no_resize:
         image_resizer = ResNetV2(layers=[2, 3, 3], num_classes=max(args.max_dimensions)//32, global_pool='avg', in_chans=1, drop_rate=.05,
                                  preact=True, stem_type='same', conv_layer=StdConv2dSame).to(args.device)
-        image_resizer.load_state_dict(torch.load(os.path.join(os.path.dirname(args.checkpoint), 'resizer.pth'), map_location=args.device))
+        image_resizer.load_state_dict(torch.load(os.path.join(os.path.dirname(args.checkpoint), 'image_resizer.pth'), map_location=args.device))
         image_resizer.eval()
     else:
         image_resizer = None
