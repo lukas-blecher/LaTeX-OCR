@@ -18,7 +18,7 @@ def download_checkpoints():
     print('download weights', tag, 'to path', path)
     weights = 'https://github.com/lukas-blecher/LaTeX-OCR/releases/download/%s/weights.pth' % tag
     resizer = 'https://github.com/lukas-blecher/LaTeX-OCR/releases/download/%s/image_resizer.pth' % tag
-    for url, name in zip([weights, resizer], ['weights.pth', 'resizer.pth']):
+    for url, name in zip([weights, resizer], ['weights.pth', 'image_resizer.pth']):
         r = requests.get(url, allow_redirects=True)
         open(os.path.join(path, name), "wb").write(r.content)
 

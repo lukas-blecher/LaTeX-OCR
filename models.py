@@ -17,7 +17,7 @@ class CustomARWrapper(AutoregressiveWrapper):
         super(CustomARWrapper, self).__init__(*args, **kwargs)
 
     @torch.no_grad()
-    def forward(self, start_tokens, seq_len=256, eos_token=None, temperature=1., filter_logits_fn=top_k, filter_thres=0.9, **kwargs):
+    def generate(self, start_tokens, seq_len=256, eos_token=None, temperature=1., filter_logits_fn=top_k, filter_thres=0.9, **kwargs):
         device = start_tokens.device
         was_training = self.net.training
         num_dims = len(start_tokens.shape)
