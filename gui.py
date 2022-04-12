@@ -218,16 +218,14 @@ class SnipWidget(QMainWindow):
     def paintEvent(self, event):
         if self.isSnipping:
             brushColor = (0, 180, 255, 100)
-            lw = 3
             opacity = 0.3
         else:
             brushColor = (255, 255, 255, 0)
-            lw = 3
             opacity = 0
 
         self.setWindowOpacity(opacity)
         qp = QtGui.QPainter(self)
-        qp.setPen(QtGui.QPen(QtGui.QColor('black'), lw))
+        qp.setPen(QtGui.QPen(QtGui.QColor('black'), 2))
         qp.setBrush(QtGui.QColor(*brushColor))
         qp.drawRect(QtCore.QRect(self.begin, self.end))
 
