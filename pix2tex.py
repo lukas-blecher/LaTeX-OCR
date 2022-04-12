@@ -1,5 +1,4 @@
 from dataset.dataset import test_transform
-import cv2
 import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
@@ -12,7 +11,6 @@ import re
 
 import numpy as np
 import torch
-from torchvision import transforms
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
 from timm.models.resnetv2 import ResNetV2
@@ -33,8 +31,10 @@ def minmax_size(img, max_dimensions=None, min_dimensions=None):
             size = np.array(img.size)//max(ratios)
             img = img.resize(size.astype(int), Image.BILINEAR)
     if min_dimensions is not None:
-        if any([s < min_dimensions[i] for i, s in enumerate(img.size)]):
-            padded_im = Image.new('L', min_dimensions, 255)
+        # hypothesis: there is a dim in img smaller than min_dimensions, and return a proper dim >= min_dimensions
+        padded_size = [max(img_dim, min_dim) for img_dim, min_dim in zip(img.size, min_dimensions)]
+        if padded_size != list(img.size):  # assert hypothesis
+            padded_im = Image.new('L', padded_size, 255)
             padded_im.paste(img, img.getbbox())
             img = padded_im
     return img
@@ -50,7 +50,6 @@ def initialize(arguments=None):
     args = parse_args(Munch(params))
     args.update(**vars(arguments))
     args.wandb = False
-    # args.device = "cpu"
     args.device = 'cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu'
     if not os.path.exists(args.checkpoint):
         download_checkpoints()
