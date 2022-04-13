@@ -1,7 +1,17 @@
 <template>
   <v-app dark>
     <v-app-bar :clipped-left="clipped" fixed app>
-      <v-app-bar-title class="mx-3"> LaTeX OCR </v-app-bar-title>
+      <v-app-bar-title class="px-3"
+        ><NuxtLink to="/" tag="r" style="cursor: pointer">
+          LaTeX OCR
+        </NuxtLink></v-app-bar-title
+      >
+      <NuxtLink to="/#Install" tag="r" style="cursor: pointer" class="px-3">
+        Install
+      </NuxtLink>
+      <NuxtLink to="/performance" tag="r" style="cursor: pointer" class="px-3">
+        Performance
+      </NuxtLink>
       <v-spacer />
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">

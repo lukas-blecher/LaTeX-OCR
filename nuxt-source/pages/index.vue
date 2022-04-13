@@ -1,5 +1,5 @@
 <template>
-  <v-sheet flat dark min-height="500" class="px-3">
+  <v-sheet flat dark min-height="500" class="px-7 py-7">
     <v-card-title>Overview</v-card-title>
     <v-img
       class="mx-auto"
@@ -18,10 +18,14 @@
       contain
     ></v-img>
     See <NuxtLink to="performance">here</NuxtLink> for performance information.
-    <v-card-title>Download</v-card-title>
+    <v-card-title id="Install">Install</v-card-title>
     As of right now you have to use a Python environment with
-    <a href="https://pytorch.org">PyTorch</a> to use the model. For more
-    information follow the instructions on the
+    <a href="https://pytorch.org">PyTorch</a> to use the model. <br />
+    Easy installation:
+    <div class="pl-5 py-4">
+      <code>pip install pix2tex</code>
+    </div>
+    For more information go to the
     <v-btn
       icon
       :ripple="false"
@@ -32,7 +36,10 @@
     </v-btn>
     <a class="ml-n1" href="https://github.com/lukas-blecher/LaTeX-OCR"
       >GitHub repository</a
-    >.<br />A standalone version is planned.
+    >.<br />A standalone version is planned. For Linux an AppImage is in
+    development (<a href="https://github.com/lukas-blecher/LaTeX-OCR/pull/120"
+      >link</a
+    >).
     <v-card-title>Troubleshooting</v-card-title>
     If you run into problems, please see if you can find the solution in the
     <a href="https://github.com/lukas-blecher/LaTeX-OCR/issues?q=is%3Aissue"
