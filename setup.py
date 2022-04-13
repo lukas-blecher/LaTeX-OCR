@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.3',
+    version='0.0.1',
     description="pix2tex: Using a ViT to convert images of equations into LaTeX code.",
     author='Lukas Blecher',
     url='https://lukas-blecher.github.io/LaTeX-OCR/',
