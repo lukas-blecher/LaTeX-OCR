@@ -159,8 +159,8 @@ def num_model_params(model):
 def in_model_path():
     from importlib.resources import path
     with path('pix2tex', 'model') as model_path:
-        os.chdir(model_path)
         saved = os.getcwd()
+        os.chdir(model_path)
         try:
             yield
         finally:

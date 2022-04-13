@@ -40,9 +40,10 @@ def minmax_size(img, max_dimensions=None, min_dimensions=None):
     return img
 
 
+@in_model_path()
 def initialize(arguments=None):
     if arguments is None:
-        arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'model/checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
+        arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
     logging.getLogger().setLevel(logging.FATAL)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     with open(arguments.config, 'r') as f:
@@ -67,6 +68,7 @@ def initialize(arguments=None):
     return args, model, image_resizer, tokenizer
 
 
+@in_model_path()
 def call_model(args, model, image_resizer, tokenizer, img=None):
     global last_pic
     encoder, decoder = model.encoder, model.decoder

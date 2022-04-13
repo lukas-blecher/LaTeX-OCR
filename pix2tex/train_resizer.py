@@ -135,7 +135,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train size classification model')
-    parser.add_argument('--config', default='settings/debug.yaml', help='path to yaml config file', type=argparse.FileType('r'))
+    parser.add_argument('--config', default=None, help='path to yaml config file', type=str)
     parser.add_argument('--no_cuda', action='store_true', help='Use CPU')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--resume', help='path to checkpoint folder', type=str, default='')
@@ -143,7 +143,10 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs to train')
     parser.add_argument('--batchsize', type=int, default=10)
     parsed_args = parser.parse_args()
-    with parsed_args.config as f:
+    if parsed_args.config is None:
+        with in_model_path():
+            parsed_args.config = os.path.realpath('settings/debug.yaml')
+    with open(parsed_args.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params), **vars(parsed_args))
     args.update(**vars(parsed_args))
