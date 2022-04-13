@@ -39,7 +39,7 @@ def minmax_size(img, max_dimensions=None, min_dimensions=None):
             img = padded_im
     return img
 
-
+@in_model_path()
 def initialize(arguments=None):
     if arguments is None:
         arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'model/checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
@@ -67,6 +67,7 @@ def initialize(arguments=None):
     return args, model, image_resizer, tokenizer
 
 
+@in_model_path()
 def call_model(args, model, image_resizer, tokenizer, img=None):
     global last_pic
     encoder, decoder = model.encoder, model.decoder
