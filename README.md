@@ -1,5 +1,6 @@
 # pix2tex - LaTeX OCR
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ba_qCGJl29dFQqfBjdqMik3o_EqPE4fr)
+
+[![GitHub](https://img.shields.io/github/license/lukas-blecher/LaTeX-OCR)](https://github.com/lukas-blecher/LaTeX-OCR) [![PyPI](https://img.shields.io/pypi/v/pix2tex?logo=pypi)](https://pypi.org/project/pix2tex) [![PyPI - Downloads](https://img.shields.io/pypi/dm/pix2tex?logo=pypi)](https://pypi.org/project/pix2tex) [![GitHub all releases](https://img.shields.io/github/downloads/lukas-blecher/LaTeX-OCR/total?color=blue&logo=github)](https://github.com/lukas-blecher/LaTeX-OCR/releases) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ba_qCGJl29dFQqfBjdqMik3o_EqPE4fr) 
 
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code. 
 
@@ -10,7 +11,9 @@ To run the model you need Python 3.7+
 
 Install the package `pix2tex`: 
 
-```pip install pix2tex```
+```
+pip install pix2tex
+```
 
 Model checkpoints will be automatically downloaded.
 
@@ -85,7 +88,7 @@ Latin Modern Math, GFSNeohellenicMath.otf, Asana Math, XITS Math, Cambria Math
 - [ ] find optimal hyperparameters
 - [ ] tweak model structure
 - [ ] fix data scraping and scrape more data
-- [ ] trace the model (#2)
+- [ ] trace the model ([#2](https://github.com/lukas-blecher/LaTeX-OCR/issues/2))
 
 
 ## Contribution
