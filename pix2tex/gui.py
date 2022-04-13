@@ -22,6 +22,8 @@ QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
 class App(QMainWindow):
+    isProcessing = False
+
     def __init__(self, args=None):
         super().__init__()
         self.args = args
@@ -89,6 +91,23 @@ class App(QMainWindow):
         settings.addRow('Temperature:', self.tempField)
         lay.addLayout(settings)
 
+    def toggleProcessing(self, value=None):
+        if value is None:
+            self.isProcessing = not self.isProcessing
+        else:
+            self.isProcessing = value
+        if self.isProcessing:
+            text = 'Interrupt'
+            func = self.interrupt
+        else:
+            text = 'Snip [Alt+S]'
+            func = self.onClick
+        self.shortcut.setEnabled(not self.isProcessing)
+        self.snipButton.setText(text)
+        self.snipButton.clicked.disconnect()
+        self.snipButton.clicked.connect(func)
+        self.displayPrediction()
+
     @pyqtSlot()
     def onClick(self):
         self.close()
@@ -96,6 +115,13 @@ class App(QMainWindow):
             self.snip_using_gnome_screenshot()
         else:
             self.snipWidget.snip()
+
+    @pyqtSlot()
+    def interrupt(self):
+        if hasattr(self, 'thread'):
+            self.thread.terminate()
+            self.thread.wait()
+            self.toggleProcessing(False)
 
     def snip_using_gnome_screenshot(self):
         try:
@@ -107,14 +133,9 @@ class App(QMainWindow):
             print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
             print("If you don't have gnome-screenshot installed, please install it.")
             self.returnSnip()
-    def returnSnip(self, img=None):
-        # Show processing icon
-        pageSource = """<center>
-        <img src="qrc:/icons/processing-icon-anim.svg" width="50", height="50">
-        </center>"""
-        self.webView.setHtml(pageSource)
 
-        self.snipButton.setEnabled(False)
+    def returnSnip(self, img=None):
+        self.toggleProcessing(True)
         self.retryButton.setEnabled(False)
 
         self.show()
@@ -128,12 +149,10 @@ class App(QMainWindow):
         self.thread = ModelThread(img=img, args=self.args, objs=self.objs)
         self.thread.finished.connect(self.returnPrediction)
         self.thread.finished.connect(self.thread.deleteLater)
-
         self.thread.start()
 
     def returnPrediction(self, result):
-        self.snipButton.setEnabled(True)
-
+        self.toggleProcessing(False)
         success, prediction = result["success"], result["prediction"]
 
         if success:
@@ -147,27 +166,32 @@ class App(QMainWindow):
             msg.exec_()
 
     def displayPrediction(self, prediction=None):
-        if prediction is not None:
-            self.textbox.setText("${equation}$".format(equation=prediction))
+        if self.isProcessing:
+            pageSource = """<center>
+            <img src="qrc:/icons/processing-icon-anim.svg" width="50", height="50">
+            </center>"""
         else:
-            prediction = self.textbox.toPlainText().strip('$')
-        pageSource = """
-        <html>
-        <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
-        <script>
-        MathJax.Hub.Config({messageStyle: 'none',tex2jax: {preview: 'none'}});
-        MathJax.Hub.Queue(
-            function () {
-                document.getElementById("equation").style.visibility = "";
-            }
-            );
-        </script>
-        </head> """ + """
-        <body>
-        <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
-        </body>
-        </html>
-            """.format(equation=prediction)
+            if prediction is not None:
+                self.textbox.setText("${equation}$".format(equation=prediction))
+            else:
+                prediction = self.textbox.toPlainText().strip('$')
+            pageSource = """
+            <html>
+            <head><script id="MathJax-script" src="qrc:MathJax.js"></script>
+            <script>
+            MathJax.Hub.Config({messageStyle: 'none',tex2jax: {preview: 'none'}});
+            MathJax.Hub.Queue(
+                function () {
+                    document.getElementById("equation").style.visibility = "";
+                }
+                );
+            </script>
+            </head> """ + """
+            <body>
+            <div id="equation" style="font-size:1em; visibility:hidden">$${equation}$$</div>
+            </body>
+            </html>
+                """.format(equation=prediction)
         self.webView.setHtml(pageSource)
 
 
@@ -220,16 +244,14 @@ class SnipWidget(QMainWindow):
     def paintEvent(self, event):
         if self.isSnipping:
             brushColor = (0, 180, 255, 100)
-            lw = 3
             opacity = 0.3
         else:
             brushColor = (255, 255, 255, 0)
-            lw = 3
             opacity = 0
 
         self.setWindowOpacity(opacity)
         qp = QtGui.QPainter(self)
-        qp.setPen(QtGui.QPen(QtGui.QColor('black'), lw))
+        qp.setPen(QtGui.QPen(QtGui.QColor('black'), 2))
         qp.setBrush(QtGui.QColor(*brushColor))
         qp.drawRect(QtCore.QRect(self.begin, self.end))
 
