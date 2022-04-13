@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import setuptools
-import os
-from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
 
 setuptools.setup(
     name='pix2tex',
@@ -56,6 +54,3 @@ setuptools.setup(
         ],
     }
 )
-
-if not os.path.exists(os.path.join(os.path.dirname(__file__), 'pix2tex', 'models', 'checkpoints', 'weights.pth')):
-    download_checkpoints()

@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Name=pix2tex
-Comment=LaTeX math recognition using machine learning
-Exec=pix2tex
-Icon=icon
-Terminal=false
-Type=Application
-Categories=Utility;
