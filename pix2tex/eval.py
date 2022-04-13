@@ -1,4 +1,4 @@
-from dataset.dataset import Im2LatexDataset
+from pix2tex.dataset.dataset import Im2LatexDataset
 import os
 import sys
 import argparse
@@ -13,8 +13,8 @@ from tqdm.auto import tqdm
 import wandb
 from Levenshtein import distance
 
-from models import get_model, Model
-from utils import *
+from pix2tex.models import get_model, Model
+from pix2tex.utils import *
 
 
 def detokenize(tokens, tokenizer):

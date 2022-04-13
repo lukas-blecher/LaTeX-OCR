@@ -1,4 +1,4 @@
-from dataset.dataset import Im2LatexDataset
+from pix2tex.dataset.dataset import Im2LatexDataset
 import os
 import sys
 import argparse
@@ -13,9 +13,9 @@ from munch import Munch
 from tqdm.auto import tqdm
 import wandb
 
-from eval import evaluate
-from models import get_model
-from utils import *
+from pix2tex.eval import evaluate
+from pix2tex.models import get_model
+from pix2tex.utils import *
 
 
 def train(args):
@@ -31,9 +31,12 @@ def train(args):
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
 
+    out_path = os.path.join(args.model_path, args.name)
+    os.makedirs(out_path, exist_ok=True)
+
     def save_models(e):
-        torch.save(model.state_dict(), os.path.join(args.out_path, '%s_e%02d.pth' % (args.name, e+1)))
-        yaml.dump(dict(args), open(os.path.join(args.out_path, 'config.yaml'), 'w+'))
+        torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d.pth' % (args.name, e+1)))
+        yaml.dump(dict(args), open(os.path.join(out_path, 'config.yaml'), 'w+'))
 
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
     scheduler = get_scheduler(args.scheduler)(opt, step_size=args.lr_step, gamma=args.gamma)

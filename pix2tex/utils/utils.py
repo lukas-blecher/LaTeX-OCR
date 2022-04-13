@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from munch import Munch
 from inspect import isfunction
+import contextlib
 
 operators = '|'.join(['arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth', 'csc', 'deg', 'det', 'dim', 'exp', 'gcd', 'hom', 'inf',
                       'injlim', 'ker', 'lg', 'lim', 'liminf', 'limsup', 'ln', 'log', 'max', 'min', 'Pr', 'projlim', 'sec', 'sin', 'sinh', 'sup', 'tan', 'tanh'])
@@ -57,9 +58,6 @@ def parse_args(args, **kwargs):
     args.min_dimensions = [args.get('min_width', 32), args.get('min_height', 32)]
     if 'decoder_args' not in args or args.decoder_args is None:
         args.decoder_args = {}
-    if 'model_path' in args:
-        args.out_path = os.path.join(args.model_path, args.name)
-        os.makedirs(args.out_path, exist_ok=True)
     return args
 
 
@@ -155,3 +153,15 @@ def get_scheduler(scheduler):
 
 def num_model_params(model):
     return sum([p.numel() for p in model.parameters()])
+
+
+@contextlib.contextmanager
+def in_model_path():
+    from importlib.resources import path
+    with path('pix2tex', 'model') as model_path:
+        os.chdir(model_path)
+        saved = os.getcwd()
+        try:
+            yield
+        finally:
+            os.chdir(saved)
