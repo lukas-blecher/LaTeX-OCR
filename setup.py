@@ -2,17 +2,30 @@
 
 import setuptools
 
+# read the contents of your README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setuptools.setup(
     name='pix2tex',
-    version='0.0.1',
+    version='0.0.4',
     description="pix2tex: Using a ViT to convert images of equations into LaTeX code.",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Lukas Blecher',
+    author_email='luk.blecher@gmail.com',
     url='https://lukas-blecher.github.io/LaTeX-OCR/',
+    license='MIT',
+    keywords=[
+        'artificial intelligence',
+        'deep learning',
+        'image to text'
+    ],
     packages=setuptools.find_packages(),
     package_data={
         'pix2tex': [
             'resources/*',
-            'model/checkpoints/*.pth',
             'model/settings/*.yaml',
             'model/dataset/*.json',
         ]
@@ -52,5 +65,12 @@ setuptools.setup(
             'pix2tex_gui = pix2tex.gui:main',
             'pix2tex_cli = pix2tex.cli:main',
         ],
-    }
+    },
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.7',
+    ],
 )

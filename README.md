@@ -10,7 +10,7 @@ To run the model you need Python 3.7+
 
 Install the package `pix2tex`: 
 
-```pip install git+https://github.com/lukas-blecher/LaTeX-OCR.git```
+```pip install pix2tex```
 
 Model checkpoints will be automatically downloaded.
 
