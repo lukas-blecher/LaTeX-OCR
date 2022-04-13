@@ -1,6 +1,4 @@
 from pix2tex.dataset.dataset import Im2LatexDataset
-import os
-import sys
 import argparse
 import logging
 import yaml
@@ -90,8 +88,8 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test model')
-    parser.add_argument('--config', default='settings/config.yaml', help='path to yaml config file', type=argparse.FileType('r'))
-    parser.add_argument('-c', '--checkpoint', default='checkpoints/weights.pth', type=str, help='path to model checkpoint')
+    parser.add_argument('--config', default=None, help='path to yaml config file', type=str)
+    parser.add_argument('-c', '--checkpoint', default=None, type=str, help='path to model checkpoint')
     parser.add_argument('-d', '--data', default='dataset/data/val.pkl', type=str, help='Path to Dataset pkl file')
     parser.add_argument('--no-cuda', action='store_true', help='Use CPU')
     parser.add_argument('-b', '--batchsize', type=int, default=10, help='Batch size')
@@ -100,7 +98,10 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num-batches', type=int, default=None, help='how many batches to evaluate on. Defaults to None (all)')
 
     parsed_args = parser.parse_args()
-    with parsed_args.config as f:
+    if parsed_args.config is None:
+        with in_model_path():
+            parsed_args.config = os.path.realpath('settings/config.yaml')
+    with open(parsed_args.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params))
     args.testbatchsize = parsed_args.batchsize
@@ -109,8 +110,10 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)
     seed_everything(args.seed if 'seed' in args else 42)
     model = get_model(args)
-    if parsed_args.checkpoint is not None:
-        model.load_state_dict(torch.load(parsed_args.checkpoint, args.device))
+    if parsed_args.checkpoint is None:
+        with in_model_path():
+            parsed_args.checkpoint = os.path.realpath('checkpoints/weights.pth')
+    model.load_state_dict(torch.load(parsed_args.checkpoint, args.device))
     dataset = Im2LatexDataset().load(parsed_args.data)
     valargs = args.copy()
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)

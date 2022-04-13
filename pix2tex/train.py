@@ -1,14 +1,10 @@
 from pix2tex.dataset.dataset import Im2LatexDataset
 import os
-import sys
 import argparse
 import logging
 import yaml
 
-import numpy as np
 import torch
-import torch.optim as optim
-import torch.nn as nn
 from munch import Munch
 from tqdm.auto import tqdm
 import wandb
@@ -72,14 +68,15 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train model')
-    parser.add_argument('--config', default='settings/debug.yaml', help='path to yaml config file', type=argparse.FileType('r'))
-    parser.add_argument('-d', '--data', default='dataset/data/train.pkl', type=str, help='Path to Dataset pkl file')
+    parser.add_argument('--config', default=None, help='path to yaml config file', type=str)
     parser.add_argument('--no_cuda', action='store_true', help='Use CPU')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
     parser.add_argument('--resume', help='path to checkpoint folder', action='store_true')
-
     parsed_args = parser.parse_args()
-    with parsed_args.config as f:
+    if parsed_args.config is None:
+        with in_model_path():
+            parsed_args.config = os.path.realpath('settings/debug.yaml')
+    with open(parsed_args.config, 'r') as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
     args = parse_args(Munch(params), **vars(parsed_args))
     logging.getLogger().setLevel(logging.DEBUG if parsed_args.debug else logging.WARNING)

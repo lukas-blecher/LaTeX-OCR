@@ -38,12 +38,13 @@ Always double check the result carefully. You can try to redo the prediction wit
 1. First we need to combine the images with their ground truth labels. I wrote a dataset class (which needs further improving) that saves the relative paths to the images with the LaTeX code they were rendered with. To generate the dataset pickle file run 
 
 ```
-python -m pix2tex.dataset.dataset --equations path_to_textfile --images path_to_images --tokenizer dataset/tokenizer.json --out dataset.pkl
+python -m pix2tex.dataset.dataset --equations path_to_textfile --images path_to_images --out dataset.pkl
 ```
+To use your own tokenizer pass it via `--tokenizer` (See below).
 
 You can find my generated training data on the [Google Drive](https://drive.google.com/drive/folders/13CA4vAmOmD_I_dSbvLp-Lf0s6KiaNfuO) as well (formulae.zip - images, math.txt - labels). Repeat the step for the validation and test data. All use the same label text file.
 
-2. Edit the `data` (and `valdata`) entry in the config file to the newly generated `.pkl` file. Change other hyperparameters if you want to. See `settings/config.yaml` for a template.
+2. Edit the `data` (and `valdata`) entry in the config file to the newly generated `.pkl` file. Change other hyperparameters if you want to. See `pix2tex/model/settings/config.yaml` for a template.
 3. Now for the actual training run 
 ```
 python -m pix2tex.train --config path_to_config_file
