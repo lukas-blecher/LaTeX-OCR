@@ -132,8 +132,8 @@ notebooks/
 .ipynb_checkpoints/
 dataset/data/**
 wandb/
-checkpoints/**
-!checkpoints/*.py
+pix2tex/model/checkpoints/**
+!pix2tex/model/checkpoints/*.py
 !**/.gitkeep
 .vscode
 .DS_Store

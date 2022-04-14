@@ -1,3 +1,4 @@
+from tempfile import tempdir
 import albumentations as alb
 from albumentations.pytorch import ToTensorV2
 import torch
@@ -15,6 +16,7 @@ import cv2
 from transformers import PreTrainedTokenizerFast
 from tqdm.auto import tqdm
 
+from pix2tex.utils.utils import in_model_path
 
 train_transform = alb.Compose(
     [
@@ -188,6 +190,11 @@ class Im2LatexDataset:
         Args:
             filename (str): Path to dataset
         """
+        if not os.path.exists(filename):
+            with in_model_path():
+                tempf = os.path.join('..', filename)
+                if os.path.exists(tempf):
+                    filename = os.path.realpath(tempf)
         with open(filename, 'rb') as file:
             x = pickle.load(file)
         return x
@@ -201,7 +208,7 @@ class Im2LatexDataset:
         for key in x.data.keys():
             if key in self.data.keys():
                 self.data[key].extend(x.data[key])
-                self.data[key]=list(set(self.data[key]))
+                self.data[key] = list(set(self.data[key]))
             else:
                 self.data[key] = x.data[key]
         self._get_size()
@@ -230,6 +237,12 @@ class Im2LatexDataset:
                 if self.min_dimensions[0] <= k[0] <= self.max_dimensions[0] and self.min_dimensions[1] <= k[1] <= self.max_dimensions[1]:
                     temp[k] = self.data[k]
             self.data = temp
+        if 'tokenizer' in kwargs:
+            tokenizer_file = kwargs['tokenizer']
+            if not os.path.exists(tokenizer_file):
+                with in_model_path():
+                    tokenizer_file = os.path.realpath(tokenizer_file)
+            self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_file)
         self._get_size()
         iter(self)
 
@@ -251,13 +264,16 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--images', type=str, nargs='+', default=None, help='Image folders')
     parser.add_argument('-e', '--equations', type=str, nargs='+', default=None, help='equations text files')
     parser.add_argument('-t', '--tokenizer', default=None, help='Pretrained tokenizer file')
-    parser.add_argument('-o', '--out', required=True, help='output file')
+    parser.add_argument('-o', '--out', type=str, required=True, help='output file')
     parser.add_argument('-s', '--vocab-size', default=8000, type=int, help='vocabulary size when training a tokenizer')
     args = parser.parse_args()
-    if args.images is None and args.equations is not None and args.tokenizer is None:
+    if args.tokenizer is None:
+        with in_model_path():
+            args.tokenizer = os.path.realpath(os.path.join('dataset', 'tokenizer.json'))
+    if args.images is None and args.equations is not None:
         print('Generate tokenizer')
         generate_tokenizer(args.equations, args.out, args.vocab_size)
-    elif args.images is not None and args.equations is not None and args.tokenizer is not None:
+    elif args.images is not None and args.equations is not None:
         print('Generate dataset')
         dataset = None
         for images, equations in zip(args.images, args.equations):
