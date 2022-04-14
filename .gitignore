@@ -128,7 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-notebooks/
+notebooks/**
+!notebooks/LaTeX_OCR*.ipynb
 .ipynb_checkpoints/
 dataset/data/**
 wandb/
