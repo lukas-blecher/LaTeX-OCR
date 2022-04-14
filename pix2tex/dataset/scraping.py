@@ -6,12 +6,8 @@ import html
 import requests
 import re
 import tempfile
-try:
-    from arxiv import *
-    from extract_latex import *
-except:
-    from dataset.arxiv import *
-    from dataset.extract_latex import *
+from pix2tex.dataset.arxiv import *
+from pix2tex.dataset.extract_latex import *
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
 htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)

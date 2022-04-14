@@ -8,13 +8,14 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QShortcut,\
     QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
-from resources import resources
+from pix2tex.resources import resources
 from pynput.mouse import Controller
 
 from PIL import ImageGrab, Image
 import numpy as np
 from screeninfo import get_monitors
-import pix2tex
+from pix2tex import cli
+from pix2tex.utils import in_model_path
 
 QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
@@ -33,7 +34,7 @@ class App(QMainWindow):
         self.show()
 
     def initModel(self):
-        args, *objs = pix2tex.initialize(self.args)
+        args, *objs = cli.initialize(self.args)
         self.args = args
         self.objs = objs
 
@@ -205,12 +206,13 @@ class ModelThread(QThread):
 
     def run(self):
         try:
-            prediction = pix2tex.call_model(self.args, *self.objs, img=self.img)
+            prediction = cli.call_model(self.args, *self.objs, img=self.img)
             # replace <, > with \lt, \gt so it won't be interpreted as html code
             prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})
         except Exception as e:
-            print(e)
+            import traceback
+            traceback.print_exc()
             self.finished.emit({"success": False, "prediction": None})
 
 
@@ -294,7 +296,7 @@ class SnipWidget(QMainWindow):
         self.parent.returnSnip(img)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='GUI arguments')
     parser.add_argument('-t', '--temperature', type=float, default=.2, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml', help='path to config file')
@@ -303,10 +305,11 @@ if __name__ == '__main__':
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
     parser.add_argument('--gnome', action='store_true', help='Use gnome-screenshot to capture screenshot')
     arguments = parser.parse_args()
-    latexocr_path = os.path.dirname(sys.argv[0])
-    if latexocr_path != '':
-        sys.path.insert(0, latexocr_path)
-        os.chdir(latexocr_path)
-    app = QApplication(sys.argv)
-    ex = App(arguments)
-    sys.exit(app.exec_())
+    with in_model_path():
+        app = QApplication(sys.argv)
+        ex = App(arguments)
+        sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()

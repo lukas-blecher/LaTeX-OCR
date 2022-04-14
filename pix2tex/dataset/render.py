@@ -1,7 +1,4 @@
-try:
-    from dataset.latex2png import *
-except ModuleNotFoundError:
-    from latex2png import *
+from pix2tex.dataset.latex2png import *
 import argparse
 import sys
 import os
