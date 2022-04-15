@@ -1,0 +1,16 @@
+[
+  {
+    "name": "performance",
+    "path": "/performance",
+    "component": "C:\\\\Users\\\\user\\\\Desktop\\\\webdev\\\\pix2tex-website\\\\nuxt-source\\\\pages\\\\performance.vue",
+    "chunkName": "pages/performance",
+    "_name": "_f888d204"
+  },
+  {
+    "name": "index",
+    "path": "/",
+    "component": "C:\\\\Users\\\\user\\\\Desktop\\\\webdev\\\\pix2tex-website\\\\nuxt-source\\\\pages\\\\index.vue",
+    "chunkName": "pages/index",
+    "_name": "_6bcd6f20"
+  }
+]
