@@ -131,7 +131,7 @@ dmypy.json
 notebooks/**
 !notebooks/LaTeX_OCR*.ipynb
 .ipynb_checkpoints/
-dataset/data/**
+pix2tex/dataset/data/**
 wandb/
 pix2tex/model/checkpoints/**
 !pix2tex/model/checkpoints/*.py
