@@ -9,7 +9,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.11',
+    version='0.0.12',
     description="pix2tex: Using a ViT to convert images of equations into LaTeX code.",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -64,6 +64,8 @@ setuptools.setup(
         'console_scripts': [
             'pix2tex_gui = pix2tex.gui:main',
             'pix2tex_cli = pix2tex.cli:main',
+            'latexocr = pix2tex.gui:main',
+            'pix2tex = pix2tex.cli:main',
         ],
     },
     classifiers=[
