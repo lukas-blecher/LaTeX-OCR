@@ -9,13 +9,13 @@ long_description = (this_directory / "README.md").read_text()
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.8',
+    version='0.0.10',
     description="pix2tex: Using a ViT to convert images of equations into LaTeX code.",
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Lukas Blecher',
     author_email='luk.blecher@gmail.com',
-    url='https://lukas-blecher.github.io/LaTeX-OCR/',
+    url='https://github.com/lukas-blecher/LaTeX-OCR/',
     license='MIT',
     keywords=[
         'artificial intelligence',

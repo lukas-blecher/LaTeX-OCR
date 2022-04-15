@@ -280,10 +280,10 @@ class SnipWidget(QMainWindow):
         startPos = self.startPos
         endPos = self.mouse.position
 
-        x1 = min(startPos[0], endPos[0])
-        y1 = min(startPos[1], endPos[1])
-        x2 = max(startPos[0], endPos[0])
-        y2 = max(startPos[1], endPos[1])
+        x1 = int(min(startPos[0], endPos[0]))
+        y1 = int(min(startPos[1], endPos[1]))
+        x2 = int(max(startPos[0], endPos[0]))
+        y2 = int(max(startPos[1], endPos[1]))
 
         self.repaint()
         QApplication.processEvents()
