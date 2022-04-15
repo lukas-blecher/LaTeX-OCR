@@ -279,15 +279,23 @@ class SnipWidget(QMainWindow):
 
         startPos = self.startPos
         endPos = self.mouse.position
+        # account for retina display. #TODO how to check if device is actually using retina display
+        factor = 2 if sys.platform == "darwin" else 1
 
-        x1 = int(min(startPos[0], endPos[0]))
-        y1 = int(min(startPos[1], endPos[1]))
-        x2 = int(max(startPos[0], endPos[0]))
-        y2 = int(max(startPos[1], endPos[1]))
+        x1 = int(min(startPos[0], endPos[0])*factor)
+        y1 = int(min(startPos[1], endPos[1])*factor)
+        x2 = int(max(startPos[0], endPos[0])*factor)
+        y2 = int(max(startPos[1], endPos[1])*factor)
 
         self.repaint()
         QApplication.processEvents()
-        img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
+        try:
+            img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
+        except Exception as e:
+            if sys.platform == "darwin":
+                img = ImageGrab.grab(bbox=(x1//factor, y1//factor, x2//factor, y2//factor), all_screens=True)
+            else:
+                raise e
         QApplication.processEvents()
 
         self.close()
