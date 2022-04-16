@@ -14,14 +14,15 @@ import tarfile
 import tempfile
 import chardet
 import logging
-from pix2tex.dataset.demacro import convert, unfold
-from pix2tex.dataset.extract_latex import find_math
 
 import requests
 import urllib.request
-from urllib.error import HTTPError
-from pix2tex.dataset.scraping import recursive_search
 from tqdm import tqdm
+from urllib.error import HTTPError
+from pix2tex.dataset.extract_latex import find_math
+from pix2tex.dataset.scraping import recursive_search
+from pix2tex.dataset.demacro import convert, unfold
+
 # logging.getLogger().setLevel(logging.INFO)
 arxiv_id = re.compile(r'(?<!\d)(\d{4}\.\d{5})(?!\d)')
 arxiv_base = 'https://arxiv.org/e-print/'

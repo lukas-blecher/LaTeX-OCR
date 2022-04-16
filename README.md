@@ -18,11 +18,11 @@ pip install pix2tex
 Model checkpoints will be downloaded automatically.
 
 There are two ways to get a prediction from an image. 
-1. You can use the command line tool by calling `pix2tex_cli`. Here you can parse already existing images from the disk and images in your clipboard.
+1. You can use the command line tool by calling `pix2tex`. Here you can parse already existing images from the disk and images in your clipboard.
 
-2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `pix2tex_gui`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
+2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
-    Under linux, it is possible to use the GUI with `gnome-screenshot` which comes with multiple monitor support. You just need to run `pix2tex_gui --gnome` (**Note:** you should install `gnome-screenshot` beforehand).
+    Under linux, it is possible to use the GUI with `gnome-screenshot` which comes with multiple monitor support. You just need to run `latexocr --gnome` (**Note:** you should install `gnome-screenshot` beforehand).
 
 ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 

@@ -1,11 +1,11 @@
 import os
 import sys
 import random
-from pix2tex.dataset.extract_latex import find_math
 from tqdm import tqdm
 import html
 import requests
 import re
+from pix2tex.dataset.extract_latex import find_math
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
 htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
