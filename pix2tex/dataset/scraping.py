@@ -1,13 +1,11 @@
 import os
 import sys
 import random
+from pix2tex.dataset.extract_latex import find_math
 from tqdm import tqdm
 import html
 import requests
 import re
-import tempfile
-from pix2tex.dataset.arxiv import *
-from pix2tex.dataset.extract_latex import *
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
 htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
@@ -24,7 +22,8 @@ def parse_url(url, encoding=None):
 
 def parse_wiki(url):
     text = parse_url(url)
-    linked = list(set([l for l in re.findall(wikilinks, text) if not ':' in l]))
+    linked = list(
+        set([l for l in re.findall(wikilinks, text) if not ':' in l]))
     return find_math(text, wiki=True), linked
 
 
@@ -73,10 +72,12 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         url = [sys.argv[1]]
     else:
-        url = ['https://en.wikipedia.org/wiki/Mathematics', 'https://en.wikipedia.org/wiki/Physics']
+        url = ['https://en.wikipedia.org/wiki/Mathematics',
+               'https://en.wikipedia.org/wiki/Physics']
     visited, math = recursive_wiki(url)
     for l, name in zip([visited, math], ['visited_wiki.txt', 'math_wiki.txt']):
-        f = open(os.path.join(sys.path[0], 'dataset', 'data', name), 'a', encoding='utf-8')
+        f = open(os.path.join(sys.path[0], 'dataset',
+                 'data', name), 'a', encoding='utf-8')
         for element in l:
             f.write(element)
             f.write('\n')

@@ -15,7 +15,6 @@ import pickle
 import cv2
 from transformers import PreTrainedTokenizerFast
 from tqdm.auto import tqdm
-
 from pix2tex.utils.utils import in_model_path
 
 train_transform = alb.Compose(
@@ -82,10 +81,12 @@ class Im2LatexDataset:
 
         if images is not None and equations is not None:
             assert tokenizer is not None
-            self.images = [path.replace('\\', '/') for path in glob.glob(join(images, '*.png'))]
+            self.images = [path.replace('\\', '/')
+                           for path in glob.glob(join(images, '*.png'))]
             self.sample_size = len(self.images)
             eqs = open(equations, 'r').read().split('\n')
-            self.indices = [int(os.path.basename(img).split('.')[0]) for img in self.images]
+            self.indices = [int(os.path.basename(img).split('.')[0])
+                            for img in self.images]
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer)
             self.shuffle = shuffle
             self.batchsize = batchsize
@@ -100,7 +101,8 @@ class Im2LatexDataset:
                 for i, im in tqdm(enumerate(self.images), total=len(self.images)):
                     width, height = imagesize.get(im)
                     if min_dimensions[0] <= width <= max_dimensions[0] and min_dimensions[1] <= height <= max_dimensions[1]:
-                        self.data[(width, height)].append((eqs[self.indices[i]], im))
+                        self.data[(width, height)].append(
+                            (eqs[self.indices[i]], im))
             except KeyboardInterrupt:
                 pass
             self.data = dict(self.data)
@@ -117,7 +119,8 @@ class Im2LatexDataset:
         self.pairs = []
         for k in self.data:
             info = np.array(self.data[k], dtype=object)
-            p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
+            p = torch.randperm(
+                len(info)) if self.shuffle else torch.arange(len(info))
             for i in range(0, len(info), self.batchsize):
                 batch = info[p[i:i+self.batchsize]]
                 if len(batch.shape) == 1:
@@ -126,7 +129,8 @@ class Im2LatexDataset:
                     continue
                 self.pairs.append(batch)
         if self.shuffle:
-            self.pairs = np.random.permutation(np.array(self.pairs, dtype=object))
+            self.pairs = np.random.permutation(
+                np.array(self.pairs, dtype=object))
         else:
             self.pairs = np.array(self.pairs, dtype=object)
         self.size = len(self.pairs)
@@ -152,7 +156,8 @@ class Im2LatexDataset:
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
-            tok[k] = pad_sequence([torch.LongTensor([p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
+            tok[k] = pad_sequence([torch.LongTensor(
+                [p[0]]+x+[p[1]]) for x in tok[k]], batch_first=True, padding_value=self.pad_token_id)
         # check if sequence length is too long
         if self.max_seq_len < tok['attention_mask'].shape[1]:
             return next(self)
@@ -175,7 +180,8 @@ class Im2LatexDataset:
             return None, None
         if self.pad:
             h, w = images.shape[2:]
-            images = F.pad(images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)
+            images = F.pad(
+                images, (0, self.max_dimensions[0]-w, 0, self.max_dimensions[1]-h), value=1)
         return tok, images
 
     def _get_size(self):
@@ -242,7 +248,8 @@ class Im2LatexDataset:
             if not os.path.exists(tokenizer_file):
                 with in_model_path():
                     tokenizer_file = os.path.realpath(tokenizer_file)
-            self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_file)
+            self.tokenizer = PreTrainedTokenizerFast(
+                tokenizer_file=tokenizer_file)
         self._get_size()
         iter(self)
 
@@ -253,7 +260,8 @@ def generate_tokenizer(equations, output, vocab_size):
     from tokenizers.trainers import BpeTrainer
     tokenizer = Tokenizer(BPE())
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
-    trainer = BpeTrainer(special_tokens=["[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
+    trainer = BpeTrainer(special_tokens=[
+                         "[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
     tokenizer.train(trainer, equations)
     tokenizer.save(path=output, pretty=False)
 
@@ -261,15 +269,21 @@ def generate_tokenizer(equations, output, vocab_size):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Train model', add_help=False)
-    parser.add_argument('-i', '--images', type=str, nargs='+', default=None, help='Image folders')
-    parser.add_argument('-e', '--equations', type=str, nargs='+', default=None, help='equations text files')
-    parser.add_argument('-t', '--tokenizer', default=None, help='Pretrained tokenizer file')
-    parser.add_argument('-o', '--out', type=str, required=True, help='output file')
-    parser.add_argument('-s', '--vocab-size', default=8000, type=int, help='vocabulary size when training a tokenizer')
+    parser.add_argument('-i', '--images', type=str, nargs='+',
+                        default=None, help='Image folders')
+    parser.add_argument('-e', '--equations', type=str,
+                        nargs='+', default=None, help='equations text files')
+    parser.add_argument('-t', '--tokenizer', default=None,
+                        help='Pretrained tokenizer file')
+    parser.add_argument('-o', '--out', type=str,
+                        required=True, help='output file')
+    parser.add_argument('-s', '--vocab-size', default=8000,
+                        type=int, help='vocabulary size when training a tokenizer')
     args = parser.parse_args()
     if args.tokenizer is None:
         with in_model_path():
-            args.tokenizer = os.path.realpath(os.path.join('dataset', 'tokenizer.json'))
+            args.tokenizer = os.path.realpath(
+                os.path.join('dataset', 'tokenizer.json'))
     if args.images is None and args.equations is not None:
         print('Generate tokenizer')
         generate_tokenizer(args.equations, args.out, args.vocab_size)
@@ -280,7 +294,8 @@ if __name__ == '__main__':
             if dataset is None:
                 dataset = Im2LatexDataset(equations, images, args.tokenizer)
             else:
-                dataset.combine(Im2LatexDataset(equations, images, args.tokenizer))
+                dataset.combine(Im2LatexDataset(
+                    equations, images, args.tokenizer))
         dataset.update(batchsize=1, keep_smaller_batches=True)
         dataset.save(args.out)
     else:
