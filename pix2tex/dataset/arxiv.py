@@ -16,9 +16,10 @@ import chardet
 import logging
 import requests
 import urllib.request
+from tqdm import tqdm
 from urllib.error import HTTPError
-from pix2tex.dataset.extract_latex import *
-from pix2tex.dataset.scraping import *
+from pix2tex.dataset.extract_latex import find_math
+from pix2tex.dataset.scraping import recursive_search
 from pix2tex.dataset.demacro import *
 
 # logging.getLogger().setLevel(logging.INFO)
