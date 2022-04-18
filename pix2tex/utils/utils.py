@@ -8,6 +8,7 @@ import torch
 from munch import Munch
 from inspect import isfunction
 import contextlib
+import pix2tex
 
 operators = '|'.join(['arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth', 'csc', 'deg', 'det', 'dim', 'exp', 'gcd', 'hom', 'inf',
                       'injlim', 'ker', 'lg', 'lim', 'liminf', 'limsup', 'ln', 'log', 'max', 'min', 'Pr', 'projlim', 'sec', 'sin', 'sinh', 'sup', 'tan', 'tanh'])
@@ -165,3 +166,16 @@ def in_model_path():
             yield
         finally:
             os.chdir(saved)
+            
+@contextlib.contextmanager
+def in_model_path():
+    """change directory to model path when executing, and change back to original directory when done
+    """
+    pix2tex_path = os.path.dirname(os.path.abspath(pix2tex.__file__))
+    model_path = os.path.join(pix2tex_path, 'model')
+    saved = os.getcwd()
+    os.chdir(model_path)
+    try:
+        yield
+    finally:
+        os.chdir(saved)
