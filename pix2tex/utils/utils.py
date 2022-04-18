@@ -158,17 +158,6 @@ def num_model_params(model):
 
 @contextlib.contextmanager
 def in_model_path():
-    from importlib.resources import path
-    with path('pix2tex', 'model') as model_path:
-        saved = os.getcwd()
-        os.chdir(model_path)
-        try:
-            yield
-        finally:
-            os.chdir(saved)
-            
-@contextlib.contextmanager
-def in_model_path():
     """change directory to model path when executing, and change back to original directory when done
     """
     pix2tex_path = os.path.dirname(os.path.abspath(pix2tex.__file__))
