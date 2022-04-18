@@ -12,7 +12,7 @@ To run the model you need Python 3.7+
 Install the package `pix2tex`: 
 
 ```
-pip install pix2tex
+pip install pix2tex[gui]
 ```
 
 Model checkpoints will be downloaded automatically.
