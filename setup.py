@@ -9,7 +9,7 @@ long_description = (this_directory / 'README.md').read_text()
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.13',
+    version='0.0.14',
     description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -38,8 +38,8 @@ setuptools.setup(
         'requests>=2.22.0',
         'einops>=0.3.0',
         'x_transformers==0.15.0',
-        'transformers==4.2.2',
-        'tokenizers==0.9.4',
+        'transformers>=4.18.0',
+        'tokenizers==0.12.1',
         'numpy>=1.19.5',
         'Pillow>=9.1.0',
         'PyYAML>=5.4.1',
