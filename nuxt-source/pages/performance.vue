@@ -1,5 +1,11 @@
 <template>
-  <v-sheet flat dark min-height="500" class="px-7 py-7">
+  <v-sheet
+    flat
+    dark
+    min-height="500"
+    max-width="1200"
+    class="px-7 py-7 mx-auto"
+  >
     <v-card-title>Examples</v-card-title>
     Here are some examples that demonstrate the performance of the model. I
     didn't just want to optimize the metrics, that can be found in the

@@ -1,5 +1,11 @@
 <template>
-  <v-sheet flat dark min-height="500" class="px-7 py-7">
+  <v-sheet
+    flat
+    dark
+    min-height="500"
+    max-width="1200"
+    class="px-7 py-7 mx-auto"
+  >
     <v-card-title>Overview</v-card-title>
     <v-img
       class="mx-auto"
