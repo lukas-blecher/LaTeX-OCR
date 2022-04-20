@@ -7,6 +7,18 @@ from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
+gui = [
+    "PyQt5",
+    "PyQtWebEngine",
+    "pynput",
+    "screeninfo",
+]
+api = [
+    "streamlit>=1.8.1",
+    "fastapi>=0.75.2",
+    "uvicorn[standard]"
+]
+
 setuptools.setup(
     name='pix2tex',
     version='0.0.12',
@@ -53,12 +65,9 @@ setuptools.setup(
         "python-Levenshtein>=0.12.2",
     ],
     extras_require={
-        "gui":  [
-            "PyQt5",
-            "PyQtWebEngine",
-            "pynput",
-            "screeninfo",
-        ]
+        "all": gui+api,
+        "gui": gui,
+        "api": api
     },
     entry_points={
         'console_scripts': [
