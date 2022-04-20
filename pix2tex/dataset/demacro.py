@@ -2,23 +2,24 @@
 
 import argparse
 import re
+from pix2tex.dataset.extract_latex import remove_labels
 
 
 def main():
     args = parse_command_line()
     data = read(args.input)
     data = convert(data)
-    if args.demacro:
-        data = unfold(data)
-    write(args.output, data)
+    data = unfold(data)
+    if args.output is not None:
+        write(args.output, data)
+    else:
+        print(data)
 
 
 def parse_command_line():
     parser = argparse.ArgumentParser(description='Replace \\def with \\newcommand where possible.')
     parser.add_argument('input', help='TeX input file with \\def')
-    parser.add_argument('--output', '-o', required=True, help='TeX output file with \\newcommand')
-    parser.add_argument('--demacro', action='store_true', help='replace all commands with their definition')
-
+    parser.add_argument('--output', '-o', default=None, help='TeX output file with \\newcommand')
     return parser.parse_args()
 
 
@@ -37,27 +38,61 @@ def convert(data):
     )
 
 
-def unfold(t):
-    cmds = re.findall(r'\\(?:re)?newcommand\*?{\\(.+?)}\s*(\[\d\])?(\[.+?\])?{(.+?)}\n', t)
-    cmds = sorted(cmds, key=lambda x: len(x[0]))
-    # print(cmds)
+def bracket_replace(string: str) -> str:
+    '''
+    replaces all layered brackets with special symbols
+    '''
+    layer = 0
+    out = list(string)
+    for i, c in enumerate(out):
+        if c == '{':
+            if layer > 0:
+                out[i] = 'Ḋ'
+            layer += 1
+        elif c == '}':
+            layer -= 1
+            if layer > 0:
+                out[i] = 'Ḍ'
+    return ''.join(out)
+
+
+def undo_bracket_replace(string):
+    return string.replace('Ḋ', '{').replace('Ḍ', '}')
+
+
+def sweep(t, cmds):
+    num_matches = 0
     for c in cmds:
         nargs = int(c[1][1]) if c[1] != r'' else 0
-        # print(c)
+        optional = c[2] != r''
         if nargs == 0:
-            #t = t.replace(r'\\%s' % c[0], c[-1])
             t = re.sub(r'\\%s([\W_^\d])' % c[0], r'%s\1' % c[-1].replace('\\', r'\\'), t)
         else:
-            matches = re.findall(r'(\\%s(?:\[(.+?)\])?' % c[0]+r'{(.+?)}'*(nargs-(1 if c[2] != r'' else 0))+r')', t)
-            # print(matches)
+            matches = re.findall(r'(\\%s(?:\[(.+?)\])?' % c[0]+r'{(.+?)}'*(nargs-(1 if optional else 0))+r')', t)
+            num_matches += len(matches)
             for i, m in enumerate(matches):
                 r = c[-1]
                 if m[1] == r'':
                     matches[i] = (m[0], c[2][1:-1], *m[2:])
                 for j in range(1, nargs+1):
-                    r = r.replace(r'#%i' % j, matches[i][j])
+                    r = r.replace(r'#%i' % j, matches[i][j+int(not optional)])
                 t = t.replace(matches[i][0], r)
-    return t
+    return t, num_matches
+
+
+def unfold(t):
+    t = remove_labels(t).replace('\n', 'Ċ')
+
+    cmds = re.findall(r'\\(?:re)?newcommand\*?{\\(.+?)}\s*(\[\d\])?(\[.+?\])?{(.+?)}Ċ', t)
+    cmds = sorted(cmds, key=lambda x: len(x[0]))
+    for _ in range(10):
+        # check for up to 10 nested commands
+        t = bracket_replace(t)
+        t, N = sweep(t, cmds)
+        t = undo_bracket_replace(t)
+        if N == 0:
+            break
+    return t.replace('Ċ', '\n')
 
 
 def replace(match):

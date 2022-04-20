@@ -12,7 +12,7 @@ To run the model you need Python 3.7+
 Install the package `pix2tex`: 
 
 ```
-pip install pix2tex
+pip install pix2tex[gui]
 ```
 
 Model checkpoints will be downloaded automatically.
@@ -73,7 +73,6 @@ In order to render the math in many different fonts we use  XeLaTeX, generate a 
 * [XeLaTeX](https://www.ctan.org/pkg/xetex)
 * [ImageMagick](https://imagemagick.org/) with [Ghostscript](https://www.ghostscript.com/index.html). (for converting pdf to png)
 * [Node.js](https://nodejs.org/) to run [KaTeX](https://github.com/KaTeX/KaTeX) (for normalizing Latex code)
-* [`de-macro`](https://www.ctan.org/pkg/de-macro) >= 1.4 (only for parsing arxiv papers)
 * Python 3.7+ & dependencies (specified in `setup.py`)
 
 ### Fonts

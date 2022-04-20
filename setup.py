@@ -5,7 +5,7 @@ import setuptools
 # read the contents of your README file
 from pathlib import Path
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
+long_description = (this_directory / 'README.md').read_text()
 
 gui = [
     "PyQt5",
@@ -21,8 +21,8 @@ api = [
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.12',
-    description="pix2tex: Using a ViT to convert images of equations into LaTeX code.",
+    version='0.0.14',
+    description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Lukas Blecher',
@@ -43,26 +43,25 @@ setuptools.setup(
         ]
     },
     install_requires=[
-        "tqdm>=4.47.0",
-        "munch>=2.5.0",
-        "torch>=1.7.1",
-        "torchvision>=0.8.1",
-        "opencv_python_headless>=4.1.1.26",
-        "requests>=2.22.0",
-        "einops>=0.3.0",
-        "chardet>=3.0.4",
-        "x_transformers==0.15.0",
-        "imagesize>=1.2.0",
-        "transformers==4.2.2",
-        "tokenizers==0.9.4",
-        "numpy>=1.19.5",
-        "Pillow>=9.1.0",
-        "PyYAML>=5.4.1",
-        "torchtext>=0.6.0",
-        "albumentations>=0.5.2",
-        "pandas>=1.0.0",
-        "timm",
-        "python-Levenshtein>=0.12.2",
+        'tqdm>=4.47.0',
+        'munch>=2.5.0',
+        'torch>=1.7.1',
+        'opencv_python_headless>=4.1.1.26',
+        'requests>=2.22.0',
+        'einops>=0.3.0',
+        'x_transformers==0.15.0',
+        'transformers>=4.18.0',
+        'tokenizers==0.12.1',
+        'numpy>=1.19.5',
+        'Pillow>=9.1.0',
+        'PyYAML>=5.4.1',
+        'pandas>=1.0.0',
+        'timm',
+        'chardet>=3.0.4',
+        'python-Levenshtein>=0.12.2',
+        'torchtext>=0.6.0',
+        'albumentations>=0.5.2',
+        'imagesize>=1.2.0',
     ],
     extras_require={
         "all": gui+api,

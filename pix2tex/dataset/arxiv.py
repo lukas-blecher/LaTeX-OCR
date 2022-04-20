@@ -8,17 +8,16 @@ import re
 import sys
 import argparse
 import logging
-import shutil
-import subprocess
 import tarfile
 import tempfile
 import chardet
 import logging
 import requests
 import urllib.request
+from tqdm import tqdm
 from urllib.error import HTTPError
-from pix2tex.dataset.extract_latex import *
-from pix2tex.dataset.scraping import *
+from pix2tex.dataset.extract_latex import find_math
+from pix2tex.dataset.scraping import recursive_search
 from pix2tex.dataset.demacro import *
 
 # logging.getLogger().setLevel(logging.INFO)
@@ -49,7 +48,7 @@ def download(url, dir_path='./'):
         return 0
 
 
-def read_tex_files(file_path, demacro=True):
+def read_tex_files(file_path):
     tex = ''
     try:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -58,18 +57,11 @@ def read_tex_files(file_path, demacro=True):
                 tf.extractall(tempdir)
                 tf.close()
                 texfiles = [os.path.abspath(x) for x in glob.glob(os.path.join(tempdir, '**', '*.tex'), recursive=True)]
-                # de-macro
-                if demacro:
-                    ret = subprocess.run(['de-macro', *texfiles], cwd=tempdir, capture_output=True)
-                    if ret.returncode == 0:
-                        texfiles = glob.glob(os.path.join(tempdir, '**', '*-clean.tex'), recursive=True)
             except tarfile.ReadError as e:
                 texfiles = [file_path]  # [os.path.join(tempdir, file_path+'.tex')]
-                #shutil.move(file_path, texfiles[0])
-
             for texfile in texfiles:
                 try:
-                    tex += open(texfile, 'r', encoding=chardet.detect(open(texfile, 'br').readline())['encoding']).read()                
+                    tex += open(texfile, 'r', encoding=chardet.detect(open(texfile, 'br').readline())['encoding']).read()
                 except UnicodeDecodeError:
                     pass
             tex = unfold(convert(tex))
@@ -85,18 +77,18 @@ def download_paper(arxiv_id, dir_path='./'):
     return download(url, dir_path)
 
 
-def read_paper(targz_path, delete=True, demacro=True):
+def read_paper(targz_path, delete=True):
     paper = ''
     if targz_path != 0:
-        paper = read_tex_files(targz_path, demacro)
+        paper = read_tex_files(targz_path)
         if delete:
             os.remove(targz_path)
     return paper
 
 
-def parse_arxiv(id, demacro=True):
+def parse_arxiv(id):
     tempdir = tempfile.gettempdir()
-    text = read_paper(download_paper(id, tempdir), demacro=demacro)
+    text = read_paper(download_paper(id, tempdir))
     #print(text, file=open('paper.tex', 'w'))
     #linked = list(set([l for l in re.findall(arxiv_id, text)]))
 
@@ -104,13 +96,13 @@ def parse_arxiv(id, demacro=True):
 
 
 if __name__ == '__main__':
+    # logging.getLogger().setLevel(logging.DEBUG)
     parser = argparse.ArgumentParser(description='Extract math from arxiv')
-    parser.add_argument('-m', '--mode', default='top100', choices=['top100', 'id', 'dir'],
+    parser.add_argument('-m', '--mode', default='top100', choices=['top100', 'ids', 'dir'],
                         help='Where to extract code from. top100: current 100 arxiv papers, id: specific arxiv ids. \
                               Usage: `python arxiv.py -m id id001 id002`, dir: a folder full of .tar.gz files. Usage: `python arxiv.py -m dir directory`')
-    parser.add_argument(nargs='+', dest='args', default=[])
+    parser.add_argument(nargs='*', dest='args', default=[])
     parser.add_argument('-o', '--out', default=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data'), help='output directory')
-    parser.add_argument('-d', '--no-demacro', dest='demacro', action='store_false', help='Use de-macro (Slows down extraction but improves quality)')
     args = parser.parse_args()
     if '.' in args.out:
         args.out = os.path.dirname(args.out)
@@ -122,7 +114,7 @@ if __name__ == '__main__':
     if args.mode == 'ids':
         visited, math = recursive_search(parse_arxiv, args.args, skip=skip, unit='paper')
     elif args.mode == 'top100':
-        url = 'https://arxiv.org/list/hep-th/2012?skip=0&show=100'  # https://arxiv.org/list/hep-th/2012?skip=0&show=100
+        url = 'https://arxiv.org/list/physics/pastweek?skip=0&show=100' #'https://arxiv.org/list/hep-th/2203?skip=0&show=100'
         ids = get_all_arxiv_ids(requests.get(url).text)
         math, visited = [], ids
         for id in tqdm(ids):
@@ -133,15 +125,16 @@ if __name__ == '__main__':
         math, visited = [], []
         for f in tqdm(dirs):
             try:
-                text = read_paper(os.path.join(args.args[0], f), False, args.demacro)
+                text = read_paper(os.path.join(args.args[0], f), False)
                 math.extend(find_math(text, wiki=False))
-                visited.append(os.path.basename(f))
+                visited.append(os.path.basename(f)) 
             except Exception as e:
                 logging.debug(e)
                 pass
     else:
         raise NotImplementedError
-
+    print('\n'.join(math))
+    sys.exit(0)
     for l, name in zip([visited, math], ['visited_arxiv.txt', 'math_arxiv.txt']):
         f = os.path.join(args.out, name)
         if not os.path.exists(f):

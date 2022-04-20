@@ -10,7 +10,7 @@ align = re.compile(r'(\\begin\{(align|alignedat|alignat|flalign|eqnarray|aligned
 displaymath = re.compile(r'(\\displaystyle)(.{%i,%i}?)(\}(?:<|"))' % (1, MAX_CHARS))
 outer_whitespace = re.compile(
     r'^\\,|\\,$|^~|~$|^\\ |\\ $|^\\thinspace|\\thinspace$|^\\!|\\!$|^\\:|\\:$|^\\;|\\;$|^\\enspace|\\enspace$|^\\quad|\\quad$|^\\qquad|\\qquad$|^\\hspace{[a-zA-Z0-9]+}|\\hspace{[a-zA-Z0-9]+}$|^\\hfill|\\hfill$')
-
+label_names = [re.compile(r'\\%s\s?\{(.*?)\}' % s) for s in ['ref', 'cite', 'label', 'caption', 'eqref']]
 
 def check_brackets(s):
     a = []
@@ -39,17 +39,18 @@ def check_brackets(s):
     else:
         return s
 
+def remove_labels(string):
+    for s in label_names:
+        string = re.sub(s, '', string)
+    return string
 
 def clean_matches(matches, min_chars=MIN_CHARS):
-    template = r'\\%s\s?\{(.*?)\}'
-    sub = [re.compile(template % s) for s in ['ref', 'cite', 'label', 'caption']]
     faulty = []
     for i in range(len(matches)):
         if 'tikz' in matches[i]:  # do not support tikz at the moment
             faulty.append(i)
             continue
-        for s in sub:
-            matches[i] = re.sub(s, '', matches[i])
+        matches[i] = remove_labels(matches[i])
         matches[i] = matches[i].replace('\n', '').replace(r'\notag', '').replace(r'\nonumber', '')
         matches[i] = re.sub(outer_whitespace, '', matches[i])
         if len(matches[i]) < min_chars:
