@@ -8,20 +8,21 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / 'README.md').read_text()
 
 gui = [
-    "PyQt5",
-    "PyQtWebEngine",
-    "pynput",
-    "screeninfo",
+    'PyQt5',
+    'PyQtWebEngine',
+    'pynput',
+    'screeninfo',
 ]
 api = [
-    "streamlit>=1.8.1",
-    "fastapi>=0.75.2",
-    "uvicorn[standard]"
+    'streamlit>=1.8.1',
+    'fastapi>=0.75.2',
+    'uvicorn[standard]',
+    'python-multipart'
 ]
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.14',
+    version='0.0.15',
     description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -64,9 +65,9 @@ setuptools.setup(
         'imagesize>=1.2.0',
     ],
     extras_require={
-        "all": gui+api,
-        "gui": gui,
-        "api": api
+        'all': gui+api,
+        'gui': gui,
+        'api': api
     },
     entry_points={
         'console_scripts': [
