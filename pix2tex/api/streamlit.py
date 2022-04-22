@@ -24,7 +24,7 @@ if __name__ == '__main__':
             with streamlit.spinner('Computing'):
                 response = requests.post('http://127.0.0.1:8000/predict/', files={'file': uploaded_file.getvalue()})
             if response.ok:
-                latex_code = response.json()['data']
+                latex_code = response.json()
                 streamlit.code(latex_code, language='latex')
                 streamlit.markdown(f'$\\displaystyle {latex_code}$')
             else:
