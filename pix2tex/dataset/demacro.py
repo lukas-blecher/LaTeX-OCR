@@ -124,25 +124,6 @@ def pydemacro(t):
     return unfold(convert(re.sub('\n+', '\n', re.sub(r'(?<!\\)%.*\n', '\n', t))))
 
 
-def pydemacro2(t, timeout=15):
-    q = multiprocessing.Queue(len(t))
-    text = convert(re.sub('\n+', '\n', re.sub(r'(?<!\\)%.*\n', '\n', t)))
-    q.put(text)
-    p = multiprocessing.Process(target=unfold, args=(q,))
-    p.start()
-    # print("main")
-    # return q.get(timeout=10)
-    # interrupt after fixed time
-    p.join(timeout)
-    if p.is_alive():
-        logging.debug('Timeout: killing demacro process')
-        p.terminate()
-        p.join()
-        return text
-    else:
-        return q.get()
-
-
 def replace(match):
     prefix = match.group(1)
     if (
