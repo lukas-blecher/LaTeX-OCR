@@ -27,7 +27,7 @@ def parse_wiki(url):
 
 
 # recursive search
-def recursive_search(parser,  seeds, depth=2, skip=[], unit='links', base_url=None):
+def recursive_search(parser,  seeds, depth=2, skip=[], unit='links', base_url=None, **kwargs):
     visited, links = set(skip), set(seeds)
     math = []
     try:
@@ -39,9 +39,9 @@ def recursive_search(parser,  seeds, depth=2, skip=[], unit='links', base_url=No
                 if not link in visited:
                     t_bar.set_description('searching %s' % (link))
                     if base_url:
-                        m, l = parser(base_url+link)
+                        m, l = parser(base_url+link, **kwargs)
                     else:
-                        m, l = parser(link)
+                        m, l = parser(link, **kwargs)
                     # check if we got any math from this wiki page and
                     # if not terminate the tree
                     if len(m) > 0:
@@ -72,9 +72,12 @@ if __name__ == '__main__':
         url = [sys.argv[1]]
     else:
         url = ['https://en.wikipedia.org/wiki/Mathematics', 'https://en.wikipedia.org/wiki/Physics']
-    visited, math = recursive_wiki(url)
+    try:
+        visited, math = recursive_wiki(url)
+    except KeyboardInterrupt:
+        pass
     for l, name in zip([visited, math], ['visited_wiki.txt', 'math_wiki.txt']):
-        f = open(os.path.join(sys.path[0], 'dataset', 'data', name), 'a', encoding='utf-8')
+        f = open(os.path.join(sys.path[0], 'data', name), 'a', encoding='utf-8')
         for element in l:
             f.write(element)
             f.write('\n')
