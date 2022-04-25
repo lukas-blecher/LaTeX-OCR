@@ -50,7 +50,6 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     for i, (seq, im) in pbar:
         if seq is None or im is None:
             continue
-        tgt_seq = seq['input_ids'][:, 1:].to(device)
         encoded = model.encoder(im.to(device))
         #loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
         dec = model.decoder.generate(torch.LongTensor([args.bos_token]*len(encoded))[:, None].to(device), args.max_seq_len,
@@ -62,12 +61,14 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
             ts = post_process(truthi)
             if len(ts) > 0:
                 edit_dists.append(distance(post_process(predi), ts)/len(ts))
+        dec = dec.cpu()
+        tgt_seq = seq['input_ids'][:, 1:]
         shape_diff = dec.shape[1]-tgt_seq.shape[1]
         if shape_diff < 0:
             dec = torch.nn.functional.pad(dec, (0, -shape_diff), "constant", args.pad_token)
         elif shape_diff > 0:
             tgt_seq = torch.nn.functional.pad(tgt_seq, (0, shape_diff), "constant", args.pad_token)
-        mask = tgt_seq == args.pad_token
+        mask = torch.logical_or(tgt_seq != args.pad_token, dec != args.pad_token)
         tok_acc = (dec == tgt_seq)[mask].float().mean().item()
         token_acc.append(tok_acc)
         pbar.set_description('BLEU: %.3f, ED: %.2e, ACC: %.3f' % (np.mean(bleus), np.mean(edit_dists), np.mean(token_acc)))
