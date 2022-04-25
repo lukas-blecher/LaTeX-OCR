@@ -207,7 +207,9 @@ groupTypes.array = function(group, options) {
 groupTypes.sqrt = function(group, options) {
     var node;
     if (group.value.index) {
-        norm_str = norm_str + "\\sqrt [ " + group.value.index + " ] ";
+        norm_str = norm_str + "\\sqrt [ ";
+        buildExpression(group.value.index.value, options);
+        norm_str = norm_str + "] ";
         buildGroup(group.value.body, options);
     } else {
         norm_str = norm_str + "\\sqrt ";
