@@ -60,9 +60,9 @@ Don't forget to update the path to the tokenizer in the config file and set `num
 The model consist of a ViT [[1](#References)] encoder with a ResNet backbone and a Transformer [[2](#References)] decoder.
 
 ### Performance
-| BLEU score | normed edit distance |
-| ---------- | -------------------- |
-| 0.88       | 0.10                 |
+| BLEU score | normed edit distance | token accuracy |
+| ---------- | -------------------- | -------------- |
+| 0.88       | 0.10                 | 0.96           |
 
 ## Data
 We need paired data for the network to learn. Luckily there is a lot of LaTeX code on the internet, e.g. [wikipedia](https://www.wikipedia.org), [arXiv](https://www.arxiv.org). We also use the formulae from the [im2latex-100k](https://zenodo.org/record/56198#.V2px0jXT6eA) [[3](#References)] dataset.
