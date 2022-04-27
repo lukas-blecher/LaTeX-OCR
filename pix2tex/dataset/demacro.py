@@ -2,14 +2,20 @@
 
 import argparse
 import re
+import logging
+from collections import Counter
+import time
 from pix2tex.dataset.extract_latex import remove_labels
+
+
+class DemacroError(Exception):
+    pass
 
 
 def main():
     args = parse_command_line()
     data = read(args.input)
-    data = convert(data)
-    data = unfold(data)
+    data = pydemacro(data)
     if args.output is not None:
         write(args.output, data)
     else:
@@ -26,16 +32,6 @@ def parse_command_line():
 def read(path):
     with open(path, mode='r') as handle:
         return handle.read()
-
-
-def convert(data):
-    return re.sub(
-        r'((?:\\(?:expandafter|global|long|outer|protected)'
-        r'(?: +|\r?\n *)?)*)?'
-        r'\\def *(\\[a-zA-Z]+) *(?:#+([0-9]))*\{',
-        replace,
-        data,
-    )
 
 
 def bracket_replace(string: str) -> str:
@@ -66,7 +62,9 @@ def sweep(t, cmds):
         nargs = int(c[1][1]) if c[1] != r'' else 0
         optional = c[2] != r''
         if nargs == 0:
-            t = re.sub(r'\\%s([\W_^\d])' % c[0], r'%s\1' % c[-1].replace('\\', r'\\'), t)
+            num_matches += len(re.findall(r'\\%s([\W_^\dĊ])' % c[0], t))
+            if num_matches > 0:
+                t = re.sub(r'\\%s([\W_^\dĊ])' % c[0], r'%s\1' % c[-1].replace('\\', r'\\'), t)
         else:
             matches = re.findall(r'(\\%s(?:\[(.+?)\])?' % c[0]+r'{(.+?)}'*(nargs-(1 if optional else 0))+r')', t)
             num_matches += len(matches)
@@ -81,18 +79,49 @@ def sweep(t, cmds):
 
 
 def unfold(t):
-    t = remove_labels(t).replace('\n', 'Ċ')
-
-    cmds = re.findall(r'\\(?:re)?newcommand\*?{\\(.+?)}\s*(\[\d\])?(\[.+?\])?{(.+?)}Ċ', t)
+    #t = queue.get()
+    t = t.replace('\n', 'Ċ')
+    t = bracket_replace(t)
+    commands_pattern = r'\\(?:re)?newcommand\*?{\\(.+?)}[\sĊ]*(\[\d\])?[\sĊ]*(\[.+?\])?[\sĊ]*{(.*?)}\s*(?:Ċ|\\)'
+    cmds = re.findall(commands_pattern, t)
+    t = re.sub(r'(?<!\\)'+commands_pattern, 'Ċ', t)
     cmds = sorted(cmds, key=lambda x: len(x[0]))
-    for _ in range(10):
-        # check for up to 10 nested commands
-        t = bracket_replace(t)
-        t, N = sweep(t, cmds)
-        t = undo_bracket_replace(t)
-        if N == 0:
-            break
-    return t.replace('Ċ', '\n')
+    cmd_names = Counter([c[0] for c in cmds])
+    for i in reversed(range(len(cmds))):
+        if cmd_names[cmds[i][0]] > 1:
+            # something went wrong here. No multiple definitions allowed
+            del cmds[i]
+        elif '\\newcommand' in cmds[i][-1]:
+            logging.debug("Command recognition pattern didn't work properly. %s" % (undo_bracket_replace(cmds[i][-1])))
+            del cmds[i]
+    start = time.time()
+    try:
+        for i in range(10):
+            # check for up to 10 nested commands
+            if i > 0:
+                t = bracket_replace(t)
+            t, N = sweep(t, cmds)
+            if time.time()-start > 5: # not optimal. more sophisticated methods didnt work or are slow
+                raise TimeoutError
+            t = undo_bracket_replace(t)
+            if N == 0 or i == 9:
+                #print("Needed %i iterations to demacro" % (i+1))
+                break
+            elif N > 4000:
+                raise ValueError("Too many matches. Processing would take too long.")
+    except ValueError:
+        pass
+    except TimeoutError:
+        pass
+    except re.error as e:
+        raise DemacroError(e)
+    t = remove_labels(t.replace('Ċ', '\n'))
+    # queue.put(t)
+    return t
+
+
+def pydemacro(t):
+    return unfold(convert(re.sub('\n+', '\n', re.sub(r'(?<!\\)%.*\n', '\n', t))))
 
 
 def replace(match):
@@ -118,6 +147,15 @@ def replace(match):
 
     result += '{'
     return result
+
+
+def convert(data):
+    data = re.sub(
+        r'((?:\\(?:expandafter|global|long|outer|protected)(?:\s+|\r?\n\s*)?)*)?\\def\s*(\\[a-zA-Z]+)\s*(?:#+([0-9]))*\{',
+        replace,
+        data,
+    )
+    return re.sub(r'\\let\s*(\\[a-zA-Z]+)\s*=?\s*(\\?\w+)*', r'\\newcommand*{\1}{\2}\n', data)
 
 
 def write(path, data):

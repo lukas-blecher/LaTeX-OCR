@@ -44,13 +44,12 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     assert len(dataset) > 0
     device = args.device
     log = {}
-    bleus, edit_dists = [], []
-    bleu_score, edit_distance = 0, 1
+    bleus, edit_dists, token_acc = [], [], []
+    bleu_score, edit_distance, token_accuracy = 0, 1, 0
     pbar = tqdm(enumerate(iter(dataset)), total=len(dataset))
     for i, (seq, im) in pbar:
         if seq is None or im is None:
             continue
-        tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
         encoded = model.encoder(im.to(device))
         #loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
         dec = model.decoder.generate(torch.LongTensor([args.bos_token]*len(encoded))[:, None].to(device), args.max_seq_len,
@@ -62,7 +61,17 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
             ts = post_process(truthi)
             if len(ts) > 0:
                 edit_dists.append(distance(post_process(predi), ts)/len(ts))
-        pbar.set_description('BLEU: %.3f, ED: %.2e' % (np.mean(bleus), np.mean(edit_dists)))
+        dec = dec.cpu()
+        tgt_seq = seq['input_ids'][:, 1:]
+        shape_diff = dec.shape[1]-tgt_seq.shape[1]
+        if shape_diff < 0:
+            dec = torch.nn.functional.pad(dec, (0, -shape_diff), "constant", args.pad_token)
+        elif shape_diff > 0:
+            tgt_seq = torch.nn.functional.pad(tgt_seq, (0, shape_diff), "constant", args.pad_token)
+        mask = torch.logical_or(tgt_seq != args.pad_token, dec != args.pad_token)
+        tok_acc = (dec == tgt_seq)[mask].float().mean().item()
+        token_acc.append(tok_acc)
+        pbar.set_description('BLEU: %.3f, ED: %.2e, ACC: %.3f' % (np.mean(bleus), np.mean(edit_dists), np.mean(token_acc)))
         if num_batches is not None and i >= num_batches:
             break
     if len(bleus) > 0:
@@ -71,6 +80,9 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     if len(edit_dists) > 0:
         edit_distance = np.mean(edit_dists)
         log[name+'/edit_distance'] = edit_distance
+    if len(token_acc) > 0:
+        token_accuracy = np.mean(token_acc)
+        log[name+'/token_acc'] = token_accuracy
     if args.wandb:
         # samples
         pred = token2str(dec, dataset.tokenizer)
@@ -83,7 +95,7 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     else:
         print('\n%s\n%s' % (truth, pred))
         print('BLEU: %.2f' % bleu_score)
-    return bleu_score, edit_distance
+    return bleu_score, edit_distance, token_accuracy
 
 
 if __name__ == '__main__':
