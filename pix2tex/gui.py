@@ -27,16 +27,10 @@ class App(QMainWindow):
     def __init__(self, args=None):
         super().__init__()
         self.args = args
-        self.initModel()
+        self.model = cli.LatexOCR(self.args)
         self.initUI()
         self.snipWidget = SnipWidget(self)
-
         self.show()
-
-    def initModel(self):
-        args, *objs = cli.initialize(self.args)
-        self.args = args
-        self.objs = objs
 
     def initUI(self):
         self.setWindowTitle("LaTeX OCR")
@@ -59,7 +53,7 @@ class App(QMainWindow):
 
         # Create temperature text input
         self.tempField = QDoubleSpinBox(self)
-        self.tempField.setValue(self.args.get('temperature', 0.25))
+        self.tempField.setValue(self.args.temperature)
         self.tempField.setRange(0, 1)
         self.tempField.setSingleStep(0.1)
 
@@ -102,6 +96,7 @@ class App(QMainWindow):
         else:
             text = 'Snip [Alt+S]'
             func = self.onClick
+            self.retryButton.setEnabled(True)
         self.shortcut.setEnabled(not self.isProcessing)
         self.snipButton.setText(text)
         self.snipButton.clicked.disconnect()
@@ -140,13 +135,13 @@ class App(QMainWindow):
 
         self.show()
         try:
-            self.args.temperature = self.tempField.value()
-            if self.args.temperature == 0:
-                self.args.temperature = 1e-8
+            self.model.args.temperature = self.tempField.value()
+            if self.model.args.temperature == 0:
+                self.model.args.temperature = 1e-8
         except:
             pass
         # Run the model in a separate thread
-        self.thread = ModelThread(img=img, args=self.args, objs=self.objs)
+        self.thread = ModelThread(img=img, model=self.model)
         self.thread.finished.connect(self.returnPrediction)
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
@@ -198,15 +193,14 @@ class App(QMainWindow):
 class ModelThread(QThread):
     finished = pyqtSignal(dict)
 
-    def __init__(self, img, args, objs):
+    def __init__(self, img, model):
         super().__init__()
         self.img = img
-        self.args = args
-        self.objs = objs
+        self.model = model
 
     def run(self):
         try:
-            prediction = cli.call_model(self.args, *self.objs, img=self.img)
+            prediction = self.model(self.img)
             # replace <, > with \lt, \gt so it won't be interpreted as html code
             prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})
