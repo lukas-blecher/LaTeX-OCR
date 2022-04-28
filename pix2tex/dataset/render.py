@@ -69,7 +69,7 @@ def render_dataset(dataset: np.ndarray, unrendered: np.ndarray, args):
             try:
                 if args.preprocess:
                     pngs, error_index = tex2pil(
-                        math, dpi=dpi, font=font, error_index=True)
+                        math, dpi=dpi, font=font, return_error_index=True)
                 else:
                     pngs, error_index = Latex(math, dpi=dpi, font=font).write(
                         return_bytes=False)
