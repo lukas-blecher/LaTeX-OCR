@@ -143,10 +143,10 @@ def tex2png(eq, **kwargs):
     return __cache[eq]
 
 
-def tex2pil(tex, error_index=False, **kwargs):
+def tex2pil(tex, return_error_index=False, **kwargs):
     pngs, error_index = Latex(tex, **kwargs).write(return_bytes=True)
     images = [Image.open(io.BytesIO(d)) for d in pngs]
-    return (images, error_index) if error_index else images
+    return (images, error_index) if return_error_index else images
 
 
 def extract(text, expression=None):
