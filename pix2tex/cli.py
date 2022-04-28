@@ -173,8 +173,8 @@ def main():
                     ''')
                 continue
             elif ins in ['show', 'katex', 'no_resize']:
-                setattr(model.args, ins, not getattr(model.args, ins, False))
-                print('set %s to %s' % (ins, getattr(model.args, ins)))
+                setattr(arguments, ins, not getattr(arguments, ins, False))
+                print('set %s to %s' % (ins, getattr(arguments, ins)))
                 continue
             elif os.path.isfile(os.path.realpath(possible_file)):
                 file = possible_file
@@ -195,7 +195,7 @@ def main():
                     except:
                         pass
                 pred = model(img)
-                output_prediction(pred, model.args)
+                output_prediction(pred, arguments)
             except KeyboardInterrupt:
                 pass
             file = None
