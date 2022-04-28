@@ -79,7 +79,7 @@ class Latex:
             # Convert the PDF file to PNG's
             pdffile = infile.replace('.tex', '.pdf')
             result, _ = extract(
-                text=sout, expression="Output written on %s \((.*)? pages\)" % pdffile)
+                text=sout, expression="Output written on %s \((\d+)? page" % pdffile)
             if int(result[0]) != len(self.math):
                 raise Exception('xelatex rendering error, generated %d formula\'s page, but the total number of formulas is %d.' % (
                     int(result[0]), len(self.math)))
@@ -118,6 +118,8 @@ class Latex:
                 else:
                     png = [(pngfile.replace('.png', '')+'.png')]
             return png, error_index
+        except Exception as e:
+            print(e)
         finally:
             # Cleanup temporaries
             basefile = infile.replace('.tex', '')
@@ -141,10 +143,10 @@ def tex2png(eq, **kwargs):
     return __cache[eq]
 
 
-def tex2pil(tex, **kwargs):
+def tex2pil(tex, error_index=False, **kwargs):
     pngs, error_index = Latex(tex, **kwargs).write(return_bytes=True)
     images = [Image.open(io.BytesIO(d)) for d in pngs]
-    return images, error_index if kwargs.get("error_index", False) else images
+    return (images, error_index) if error_index else images
 
 
 def extract(text, expression=None):
