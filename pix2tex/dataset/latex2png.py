@@ -55,12 +55,12 @@ class Latex:
                     pass
 
     def convert_file(self, infile, workdir, return_bytes=False):
-
+        infile = infile.replace('\\', '/')
         try:
             # Generate the PDF file
             #  not stop on error line, but return error line index,index start from 1
             cmd = 'xelatex -interaction nonstopmode -file-line-error -output-directory %s %s' % (
-                workdir, infile)
+                workdir.replace('\\', '/'), infile)
 
             p = subprocess.Popen(
                 shlex.split(cmd),
@@ -71,7 +71,7 @@ class Latex:
             )
             sout, serr = p.communicate()
             # extract error line from sout
-            error_index, _ = extract(text=sout, expression="%s:(\d+)" % infile)
+            error_index, _ = extract(text=sout, expression=r"%s:(\d+)" % os.path.basename(infile))
             # extract success rendered equation
             if error_index != []:
                 # offset index start from 0, same as self.math
@@ -90,6 +90,8 @@ class Latex:
                 pdffile,
                 pngfile,
             )  # -bg Transparent -z 9
+            if sys.platform == 'win32':
+                cmd = 'magick ' + cmd
             p = subprocess.Popen(
                 shlex.split(cmd),
                 stdin=subprocess.PIPE,
