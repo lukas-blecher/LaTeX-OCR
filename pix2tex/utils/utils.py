@@ -49,7 +49,7 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = True
 
 
-def parse_args(args, **kwargs):
+def parse_args(args, **kwargs) -> Munch:
     args = Munch({'epoch': 0}, **args)
     kwargs = Munch({'no_cuda': False, 'debug': False}, **kwargs)
     args.wandb = not kwargs.debug and not args.debug
@@ -61,14 +61,14 @@ def parse_args(args, **kwargs):
     return args
 
 
-def token2str(tokens, tokenizer):
+def token2str(tokens, tokenizer) -> list:
     if len(tokens.shape) == 1:
         tokens = tokens[None, :]
     dec = [tokenizer.decode(tok) for tok in tokens]
     return [''.join(detok.split(' ')).replace('Ġ', ' ').replace('[EOS]', '').replace('[BOS]', '').replace('[PAD]', '').strip() for detok in dec]
 
 
-def pad(img: Image, divable=32):
+def pad(img: Image, divable: int = 32) -> Image:
     """Pad an Image to the next full divisible value of `divable`. Also normalizes the image and invert if needed.
 
     Args:

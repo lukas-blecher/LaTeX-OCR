@@ -34,10 +34,10 @@ def prepare_data(dataloader):
     x, y = 0, 0
     for path in list(ims):
         im = Image.open(path)
-        modes = [Image.BICUBIC,
-                 Image.BILINEAR]
+        modes = [Image.Resampling.BICUBIC,
+                 Image.Resampling.BILINEAR]
         if scale < 1:
-            modes.append(Image.LANCZOS)
+            modes.append(Image.Resampling.LANCZOS)
         m = modes[int(len(modes)*np.random.random())]
         im = im.resize((int(width*scale), int(height*scale)), m)
         try:

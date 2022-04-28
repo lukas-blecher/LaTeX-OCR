@@ -22,7 +22,7 @@ from pix2tex.utils import *
 from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
 
 
-def minmax_size(img, max_dimensions=None, min_dimensions=None):
+def minmax_size(img: Image, max_dimensions: int = None, min_dimensions: int = None) -> Image:
     if max_dimensions is not None:
         ratios = [a/b for a, b in zip(img.size, max_dimensions)]
         if any([r > 1 for r in ratios]):
@@ -67,7 +67,7 @@ class LatexOCR:
         self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=self.args.tokenizer)
 
     @in_model_path()
-    def __call__(self, img=None, resize=True):
+    def __call__(self, img=None, resize=True) -> str:
         if type(img) is bool:
             img = None
         if img is None:
@@ -85,7 +85,7 @@ class LatexOCR:
                 r, w, h = 1, input_image.size[0], input_image.size[1]
                 for _ in range(10):
                     h = int(h * r)  # height to resize
-                    img = pad(minmax_size(input_image.resize((w, h), Image.BILINEAR if r > 1 else Image.LANCZOS), self.args.max_dimensions, self.args.min_dimensions))
+                    img = pad(minmax_size(input_image.resize((w, h), Image.Resampling.BILINEAR if r > 1 else Image.Resampling.LANCZOS), self.args.max_dimensions, self.args.min_dimensions))
                     t = test_transform(image=np.array(img.convert('RGB')))['image'][:1].unsqueeze(0)
                     w = (self.image_resizer(t.to(self.args.device)).argmax(-1).item()+1)*32
                     logging.info(r, img.size, (w, int(input_image.size[1]*r)))
