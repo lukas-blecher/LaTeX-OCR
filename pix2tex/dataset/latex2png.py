@@ -142,7 +142,7 @@ def tex2png(eq, **kwargs):
 def tex2pil(tex, **kwargs):
     pngs, error_index = Latex(tex, **kwargs).write(return_bytes=True)
     images = [Image.open(io.BytesIO(d)) for d in pngs]
-    return images, error_index
+    return images, error_index if kwargs.get("error_index", False) else images
 
 
 def extract(text, expression=None):
