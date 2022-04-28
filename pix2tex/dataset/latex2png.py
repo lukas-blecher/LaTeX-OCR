@@ -144,24 +144,19 @@ def tex2png(eq, **kwargs):
 def tex2pil(tex, **kwargs):
     pngs, error_index = Latex(tex, **kwargs).write(return_bytes=True)
     images = [Image.open(io.BytesIO(d)) for d in pngs]
-    return images, error_index
+    return images, error_index if kwargs.get("error_index", False) else images
 
 
-def extract(text, expression=None, type: str = None):
+def extract(text, expression=None):
     """extract text from text by regular expression
 
     Args:
         text (str): input text
         expression (str, optional): regular expression. Defaults to None.
-        type (str, optional): type of extracted text. Defaults to None.
 
     Returns:
         str: extracted text
     """
-    if type is not None:
-        type2expression = {"en": r"[a-zA-Z]+", "zh": r"[\u4e00-\u9fa5]+", "num": r"\d+",
-                           "punctuation": u"[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b]"}
-        expression = type2expression[type]
     try:
         pattern = re.compile(expression)
         results = re.findall(pattern, text)
