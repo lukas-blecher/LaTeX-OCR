@@ -25,7 +25,7 @@ def get_installed_fonts(tex_path: str):
     if process.returncode != 0:
         raise Exception(stderr)
     fonts = [_.split(os.sep)[-1] for _ in stdout.split('\n')][:-1]
-    fonts.append("Latin Modern Math")
+    fonts.extend(["Latin Modern Math"]*len(fonts))
     return fonts
 
 
@@ -71,7 +71,8 @@ def render_dataset(dataset: np.ndarray, unrenders: np.ndarray, args):
             valid_idx = valid_idx.astype(np.int32)
             try:
                 if args.preprocess:
-                    pngs, error_index = tex2pil(math, dpi=dpi, font=font, error_index=True)
+                    pngs, error_index = tex2pil(
+                        math, dpi=dpi, font=font, error_index=True)
                 else:
                     pngs, error_index = Latex(math, dpi=dpi, font=font).write(
                         return_bytes=False)
