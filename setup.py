@@ -22,7 +22,7 @@ api = [
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.21',
+    version='0.0.22',
     description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',

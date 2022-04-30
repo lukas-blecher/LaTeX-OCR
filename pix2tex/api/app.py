@@ -1,6 +1,5 @@
 # Adapted from https://github.com/kingyiusuen/image-to-latex/blob/main/api/app.py
 
-from ctypes import resize
 from http import HTTPStatus
 from fastapi import FastAPI, File, UploadFile, Form
 from PIL import Image

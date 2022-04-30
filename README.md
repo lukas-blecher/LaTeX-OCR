@@ -17,17 +17,22 @@ pip install pix2tex[gui]
 
 Model checkpoints will be downloaded automatically.
 
-There are two ways to get a prediction from an image. 
+There are three ways to get a prediction from an image. 
 1. You can use the command line tool by calling `pix2tex`. Here you can parse already existing images from the disk and images in your clipboard.
 
 2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
     Under linux, it is possible to use the GUI with `gnome-screenshot` which comes with multiple monitor support. You just need to run `latexocr --gnome` (**Note:** you should install `gnome-screenshot` beforehand).
 
-![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
+    ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 
-If the model is unsure about the what's in the image it might output a different prediction every time you click "Retry". With the `temperature` parameter you can control this behavior (low temperature will produce the same result).
+    If the model is unsure about the what's in the image it might output a different prediction every time you click "Retry". With the `temperature` parameter you can control this behavior (low temperature will produce the same result).
 
+3. You can use an API. This has additional dependencies. Install via `pip install -U pix2tex[api]` and run
+    ```bash
+    python -m pix2tex.api.run
+    ```
+    to start a [Streamlit](https://streamlit.io/) demo that connects to the API at port 8502.
 
 The model works best with images of smaller resolution. That's why I added a preprocessing step where another neural network predicts the optimal resolution of the input image. This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. Still it's not perfect and might not be able to handle huge images optimally, so don't zoom in all the way before taking a picture. 
 

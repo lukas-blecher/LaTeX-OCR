@@ -22,7 +22,7 @@ if __name__ == '__main__':
     if streamlit.button('Convert'):
         if uploaded_file is not None and image is not None:
             with streamlit.spinner('Computing'):
-                response = requests.post('http://127.0.0.1:8000/predict/', files={'file': uploaded_file.getvalue()})
+                response = requests.post('http://127.0.0.1:8502/predict/', files={'file': uploaded_file.getvalue()})
             if response.ok:
                 latex_code = response.json()
                 streamlit.code(latex_code, language='latex')
