@@ -82,7 +82,7 @@ def unfold(t):
     #t = queue.get()
     t = t.replace('\n', 'Ċ')
     t = bracket_replace(t)
-    commands_pattern = r'\\(?:re)?newcommand\*?{\\(.+?)}[\sĊ]*(\[\d\])?[\sĊ]*(\[.+?\])?[\sĊ]*{(.*?)}\s*(?:Ċ|\\)'
+    commands_pattern = r'\\(?:re)?newcommand\*?{\\(.+?)}[\sĊ]*(\[\d\])?[\sĊ]*(\[.+?\])?[\sĊ]*{(.*?)}'
     cmds = re.findall(commands_pattern, t)
     t = re.sub(r'(?<!\\)'+commands_pattern, 'Ċ', t)
     cmds = sorted(cmds, key=lambda x: len(x[0]))
@@ -155,7 +155,7 @@ def convert(data):
         replace,
         data,
     )
-    return re.sub(r'\\let\s*(\\[a-zA-Z]+)\s*=?\s*(\\?\w+)*', r'\\newcommand*{\1}{\2}\n', data)
+    return re.sub(r'\\let[\sĊ]*(\\[a-zA-Z]+)\s*=?[\sĊ]*(\\?\w+)*', r'\\newcommand*{\1}{\2}\n', data)
 
 
 def write(path, data):
