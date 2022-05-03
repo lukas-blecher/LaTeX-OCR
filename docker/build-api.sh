@@ -1,1 +1,4 @@
-docker build -t pix2tex-api -f ./api.dockerfile .
+# cd into proj. root
+cd $(dirname $0)
+cd ..
+docker build -t lukasblecher/pix2tex:api -f docker/api.dockerfile .

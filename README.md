@@ -34,7 +34,17 @@ There are three ways to get a prediction from an image.
     ```bash
     python -m pix2tex.api.run
     ```
-    to start a [Streamlit](https://streamlit.io/) demo that connects to the API at port 8502.
+    to start a [Streamlit](https://streamlit.io/) demo that connects to the API at port 8502. There is also a docker image available for the API: https://hub.docker.com/r/lukasblecher/pix2tex
+
+    ```
+    docker pull lukasblecher/pix2tex:api
+    docker run -p 8502:8502 lukasblecher/pix2tex:api
+    ```
+    To also run the streamlit demo run
+    ```
+    docker run -it -p 8501:8501 --entrypoint python lukasblecher/pix2tex:api pix2tex/api/run.py
+    ```
+    and navigate to http://localhost:8501/
 
 The model works best with images of smaller resolution. That's why I added a preprocessing step where another neural network predicts the optimal resolution of the input image. This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. Still it's not perfect and might not be able to handle huge images optimally, so don't zoom in all the way before taking a picture. 
 
