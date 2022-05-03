@@ -40,6 +40,7 @@ Always double check the result carefully. You can try to redo the prediction wit
 
 ## Training the model [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lukas-blecher/LaTeX-OCR/blob/main/notebooks/LaTeX_OCR_training.ipynb)
 
+Install a couple of dependencies `pip install pix2tex[train]`.
 1. First we need to combine the images with their ground truth labels. I wrote a dataset class (which needs further improving) that saves the relative paths to the images with the LaTeX code they were rendered with. To generate the dataset pickle file run 
 
 ```
