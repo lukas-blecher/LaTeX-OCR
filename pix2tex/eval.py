@@ -39,7 +39,7 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
         name (str, optional): name of the test e.g. val or test for wandb. Defaults to 'test'.
 
     Returns:
-        bleu_score: BLEU score of validation set.
+        Tuple[float, float, float]: BLEU score of validation set, normed edit distance, token accuracy
     """
     assert len(dataset) > 0
     device = args.device

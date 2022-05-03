@@ -1,4 +1,3 @@
-from msilib.schema import Icon
 import requests
 from PIL import Image
 import streamlit
