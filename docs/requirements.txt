@@ -1,2 +1,2 @@
 myst_parser
-pix2tex[all]
+torch>=1.7.1
