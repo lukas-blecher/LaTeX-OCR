@@ -87,6 +87,8 @@ class CustomVisionTransformer(VisionTransformer):
 
 
 class Model(nn.Module):
+    """ViT encoder, transformer decoder architecture"""
+
     def __init__(self, encoder: CustomVisionTransformer, decoder: CustomARWrapper, args, temp: float = .333):
         super().__init__()
         self.encoder = encoder

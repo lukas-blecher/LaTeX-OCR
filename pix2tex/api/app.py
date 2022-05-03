@@ -34,14 +34,30 @@ def root():
 
 
 @app.post('/predict/')
-async def predict(file: UploadFile = File(...)):
+async def predict(file: UploadFile = File(...)) -> str:
+    """Predict the Latex code from an image file.
+
+    Args:
+        file (UploadFile, optional): Image to predict. Defaults to File(...).
+
+    Returns:
+        str: Latex prediction
+    """
     global model
     image = Image.open(file.file)
     return model(image)
 
 
 @app.post('/bytes/')
-async def predict_from_bytes(file: bytes = File(...)): #, size: str = Form(...)
+async def predict_from_bytes(file: bytes = File(...)) -> str:  # , size: str = Form(...)
+    """Predict the Latex code from a byte array
+
+    Args:
+        file (bytes, optional): Image as byte array. Defaults to File(...).
+
+    Returns:
+        str: Latex prediction
+    """
     global model
     #size = tuple(int(a) for a in size.split(','))
     image = Image.open(BytesIO(file))

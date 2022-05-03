@@ -28,17 +28,19 @@ def get_installed_fonts(tex_path: str):
     return fonts
 
 
-def render_dataset(dataset: np.ndarray, unrendered: np.ndarray, args):
-    '''Renders a list of tex equations
+def render_dataset(dataset: np.ndarray, unrendered: np.ndarray, args) -> np.ndarray:
+    """Renders a list of tex equations
+
     Args:
         dataset (numpy.ndarray): List of equations
         unrendered (numpy.ndarray): List of integers of size `dataset` that give the name of the saved image
         args (Union[Namespace, Munch]): additional arguments: mode (equation or inline), out (output directory), divable (common factor )
                                         batchsize (how many samples to render at once), dpi, font (Math font), preprocess (crop, alpha off)
                                         shuffle (bool)
+
     Returns:
-        list: equation indices that could not be rendered. 
-    '''
+        numpy.ndarray: equation indices that could not be rendered
+    """
     assert len(unrendered) == len(dataset), 'unrendered and dataset must be of equal size'
     math_mode = '$$'if args.mode == 'equation' else '$'
     os.makedirs(args.out, exist_ok=True)
