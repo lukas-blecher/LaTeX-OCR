@@ -5,6 +5,7 @@ from tqdm import tqdm
 import html
 import requests
 import re
+from typing import Callable, List, Tuple
 from pix2tex.dataset.extract_latex import find_math
 
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
@@ -27,7 +28,20 @@ def parse_wiki(url):
 
 
 # recursive search
-def recursive_search(parser,  seeds, depth=2, skip=[], unit='links', base_url=None, **kwargs):
+def recursive_search(parser: Callable,  seeds: List[str], depth: int = 2, skip: List[str] = [], unit: str = 'links', base_url: str = None, **kwargs) -> Tuple[List[str], List[str]]:
+    """Find math recursively. Look in `seeds` for math and further sites to look.
+
+    Args:
+        parser (Callable): A function that returns a `Tuple[List[str], List[str]]` of math and ids (for `base_url`) respectively.
+        seeds (List[str]): Fist set of ids.
+        depth (int, optional): How many iterations to look for. Defaults to 2.
+        skip (List[str], optional): List of alreadly visited ids. Defaults to [].
+        unit (str, optional): Tqdm verbose unit description. Defaults to 'links'.
+        base_url (str, optional): Base url to add ids to. Defaults to None.
+
+    Returns:
+        Tuple[List[str],List[str]]: Returns list of found math and visited ids respectively.
+    """
     visited, links = set(skip), set(seeds)
     math = []
     try:

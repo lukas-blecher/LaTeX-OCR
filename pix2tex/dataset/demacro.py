@@ -120,7 +120,16 @@ def unfold(t):
     return t
 
 
-def pydemacro(t):
+def pydemacro(t: str) -> str:
+    r"""Replaces all occurences of newly defined Latex commands in a document.
+    Can replace `\newcommand`, `\def` and `\let` definitions in the code.
+
+    Args:
+        t (str): Latex document
+
+    Returns:
+        str: Document without custom commands
+    """
     return unfold(convert(re.sub('\n+', '\n', re.sub(r'(?<!\\)%.*\n', '\n', t))))
 
 

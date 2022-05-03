@@ -19,10 +19,15 @@ api = [
     'uvicorn[standard]',
     'python-multipart'
 ]
+train = [
+    'python-Levenshtein>=0.12.2',
+    'torchtext>=0.6.0',
+    'imagesize>=1.2.0',
+]
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.22',
+    version='0.0.23',
     description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -58,15 +63,13 @@ setuptools.setup(
         'PyYAML>=5.4.1',
         'pandas>=1.0.0',
         'timm',
-        'python-Levenshtein>=0.12.2',
-        'torchtext>=0.6.0',
         'albumentations>=0.5.2',
-        'imagesize>=1.2.0',
     ],
     extras_require={
-        'all': gui+api,
+        'all': gui+api+train,
         'gui': gui,
-        'api': api
+        'api': api,
+        'train': train
     },
     entry_points={
         'console_scripts': [

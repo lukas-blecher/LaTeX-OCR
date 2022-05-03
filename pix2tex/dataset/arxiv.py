@@ -47,7 +47,16 @@ def download(url, dir_path='./'):
         return 0
 
 
-def read_tex_files(file_path, demacro=False):
+def read_tex_files(file_path:str, demacro:bool=False)->str:
+    """Read all tex files in the latex source at `file_path`. If it is not a `tar.gz` file try to read it as text file.
+
+    Args:
+        file_path (str): Path to latex source
+        demacro (bool, optional): Deprecated. Call external `de-macro` program. Defaults to False.
+
+    Returns:
+        str: All Latex files concatenated into one string.
+    """    
     tex = ''
     try:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -105,7 +114,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Extract math from arxiv')
     parser.add_argument('-m', '--mode', default='top100', choices=['top', 'ids', 'dirs'],
                         help='Where to extract code from. top: current 100 arxiv papers (-m top int for any other number of papers), id: specific arxiv ids. \
-                              Usage: `python arxiv.py -m id id001 id002`, dirs: a folder full of .tar.gz files. Usage: `python arxiv.py -m dir directory`')
+                              Usage: `python arxiv.py -m ids id001 [id002 ...]`, dirs: a folder full of .tar.gz files. Usage: `python arxiv.py -m dirs directory [dir2 ...]`')
     parser.add_argument(nargs='*', dest='args', default=[])
     parser.add_argument('-o', '--out', default=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data'), help='output directory')
     parser.add_argument('-d', '--demacro', dest='demacro', action='store_true',

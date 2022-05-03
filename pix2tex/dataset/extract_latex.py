@@ -1,5 +1,6 @@
 import re
 import numpy as np
+from typing import List
 
 MIN_CHARS = 20
 MAX_CHARS = 3000
@@ -11,6 +12,7 @@ displaymath = re.compile(r'(\\displaystyle)(.{%i,%i}?)(\}(?:<|"))' % (1, MAX_CHA
 outer_whitespace = re.compile(
     r'^\\,|\\,$|^~|~$|^\\ |\\ $|^\\thinspace|\\thinspace$|^\\!|\\!$|^\\:|\\:$|^\\;|\\;$|^\\enspace|\\enspace$|^\\quad|\\quad$|^\\qquad|\\qquad$|^\\hspace{[a-zA-Z0-9]+}|\\hspace{[a-zA-Z0-9]+}$|^\\hfill|\\hfill$')
 label_names = [re.compile(r'\\%s\s?\{(.*?)\}' % s) for s in ['ref', 'cite', 'label', 'eqref']]
+
 
 def check_brackets(s):
     a = []
@@ -39,10 +41,12 @@ def check_brackets(s):
     else:
         return s
 
+
 def remove_labels(string):
     for s in label_names:
         string = re.sub(s, '', string)
     return string
+
 
 def clean_matches(matches, min_chars=MIN_CHARS):
     faulty = []
@@ -67,7 +71,16 @@ def clean_matches(matches, min_chars=MIN_CHARS):
     return list(set(matches))
 
 
-def find_math(s, wiki=False):
+def find_math(s: str, wiki=False) -> List[str]:
+    r"""Find all occurences of math in a Latex-like document. 
+
+    Args:
+        s (str): String to search
+        wiki (bool, optional): Search for `\displaymath` as it can be found in the wikipedia page source code. Defaults to False.
+
+    Returns:
+        List[str]: List of all found mathematical expressions
+    """
     matches = []
     x = re.findall(inline, s)
     matches.extend([(g[1] if g[1] != '' else g[-1]) for g in x])

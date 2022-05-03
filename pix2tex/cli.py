@@ -1,9 +1,9 @@
-from pix2tex.dataset.dataset import test_transform
+from pix2tex.dataset.transforms import test_transform
 import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
 import os
-import sys
+from typing import Tuple
 import argparse
 import logging
 import yaml
@@ -22,7 +22,17 @@ from pix2tex.utils import *
 from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
 
 
-def minmax_size(img: Image, max_dimensions: int = None, min_dimensions: int = None) -> Image:
+def minmax_size(img: Image, max_dimensions: Tuple[int, int] = None, min_dimensions: Tuple[int, int] = None) -> Image:
+    """Resize or pad an image to fit into given dimensions
+
+    Args:
+        img (Image): Image to scale up/down.
+        max_dimensions (Tuple[int, int], optional): Maximum dimensions. Defaults to None.
+        min_dimensions (Tuple[int, int], optional): Minimum dimensions. Defaults to None.
+
+    Returns:
+        Image: Image with correct dimensionality
+    """
     if max_dimensions is not None:
         ratios = [a/b for a, b in zip(img.size, max_dimensions)]
         if any([r > 1 for r in ratios]):
@@ -39,11 +49,18 @@ def minmax_size(img: Image, max_dimensions: int = None, min_dimensions: int = No
 
 
 class LatexOCR:
+    '''Get a prediction of an image in the easiest way'''
+
     image_resizer = None
     last_pic = None
 
     @in_model_path()
     def __init__(self, arguments=None):
+        """Initialize a LatexOCR model
+
+        Args:
+            arguments (Union[Namespace, Munch], optional): Special model parameters. Defaults to None.
+        """
         if arguments is None:
             arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
         logging.getLogger().setLevel(logging.FATAL)
@@ -68,6 +85,15 @@ class LatexOCR:
 
     @in_model_path()
     def __call__(self, img=None, resize=True) -> str:
+        """Get a prediction from an image
+
+        Args:
+            img (Image, optional): Image to predict. Defaults to None.
+            resize (bool, optional): Whether to call the resize model. Defaults to True.
+
+        Returns:
+            str: predicted Latex code
+        """
         if type(img) is bool:
             img = None
         if img is None:
