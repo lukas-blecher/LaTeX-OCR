@@ -13,7 +13,7 @@ from pix2tex.dataset.extract_latex import find_math
 htmltags = re.compile(r'<(noscript|script)>.*?<\/\1>', re.S)
 wikilinks = re.compile(r'href="/wiki/(.*?)"')
 wiki_base = 'https://en.wikipedia.org/wiki/'
-stackexchangelinks = re.compile(r'\/questions\/(\d+\/[\w\d\/-]+)')
+stackexchangelinks = re.compile(r'(?:(https:\/\/\w+)\.stack\w+\.com|)\/questions\/(\d+\/[\w\d\/-]+)')
 math_stack_exchange_base = 'https://math.stackexchange.com/questions/'
 physics_stack_exchange_base = 'https://physics.stackexchange.com/questions/'
 
@@ -81,7 +81,7 @@ def parse_wiki(url):
 
 def parse_stack_exchange(url):
     text = parse_url(url)
-    linked = list(set([l for l in re.findall(stackexchangelinks, text) if not ':' in l]))
+    linked = list(set([l[1] for l in re.findall(stackexchangelinks, text) if url.startswith(l[0])]))
     return find_math(text, wiki=False), linked
 
 # recursive wiki search

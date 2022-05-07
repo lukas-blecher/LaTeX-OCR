@@ -1,8 +1,10 @@
+import argparse
+import os
 import re
 import numpy as np
 from typing import List
 
-MIN_CHARS = 20
+MIN_CHARS = 1
 MAX_CHARS = 3000
 dollar = re.compile(r'((?<!\$)\${1,2}(?!\$))(.{%i,%i}?)(?<!\\)(?<!\$)\1(?!\$)' % (1, MAX_CHARS))
 inline = re.compile(r'(\\\((.*?)(?<!\\)\\\))|(\\\[(.{%i,%i}?)(?<!\\)\\\])' % (1, MAX_CHARS))
@@ -95,3 +97,22 @@ def find_math(s: str, wiki=False) -> List[str]:
         matches.extend([g[i] for g in x])
 
     return clean_matches(matches)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(dest='file', type=str, help='file to find equations in')
+    parser.add_argument('--out','-o', type=str, default=None, help='file to save equations to. If none provided, print all equations.')
+    parser.add_argument('--wiki', action='store_true', help='only look for math starting with \\displaymath')
+    args = parser.parse_args()
+
+    if not os.path.exists(args.file):
+        raise ValueError('File can not be found. %s' % args.file)
+
+    s = open(args.file, 'r').read()
+    math = '\n'.join(find_math(s, args.wiki))
+    if args.out is None:
+        print(math)
+    else:
+        with open(args.out, 'w') as f:
+            f.write(math)
+    
