@@ -1,4 +1,5 @@
 import argparse
+import html
 import os
 import re
 import numpy as np
@@ -10,7 +11,7 @@ dollar = re.compile(r'((?<!\$)\${1,2}(?!\$))(.{%i,%i}?)(?<!\\)(?<!\$)\1(?!\$)' %
 inline = re.compile(r'(\\\((.*?)(?<!\\)\\\))|(\\\[(.{%i,%i}?)(?<!\\)\\\])' % (1, MAX_CHARS))
 equation = re.compile(r'\\begin\{(equation|math|displaymath)\*?\}(.{%i,%i}?)\\end\{\1\*?\}' % (1, MAX_CHARS), re.S)
 align = re.compile(r'(\\begin\{(align|alignedat|alignat|flalign|eqnarray|aligned|split|gather)\*?\}(.{%i,%i}?)\\end\{\2\*?\})' % (1, MAX_CHARS), re.S)
-displaymath = re.compile(r'(\\displaystyle)(.{%i,%i}?)(\}(?:<|"))' % (1, MAX_CHARS))
+displaymath = re.compile(r'(?:\\displaystyle)(.{%i,%i}?)((?<!\\)\}?(?:\"|<))' % (1, MAX_CHARS), re.S)
 outer_whitespace = re.compile(
     r'^\\,|\\,$|^~|~$|^\\ |\\ $|^\\thinspace|\\thinspace$|^\\!|\\!$|^\\:|\\:$|^\\;|\\;$|^\\enspace|\\enspace$|^\\quad|\\quad$|^\\qquad|\\qquad$|^\\hspace{[a-zA-Z0-9]+}|\\hspace{[a-zA-Z0-9]+}$|^\\hfill|\\hfill$')
 label_names = [re.compile(r'\\%s\s?\{(.*?)\}' % s) for s in ['ref', 'cite', 'label', 'eqref']]
@@ -78,7 +79,7 @@ def find_math(s: str, wiki=False) -> List[str]:
 
     Args:
         s (str): String to search
-        wiki (bool, optional): Search for `\displaymath` as it can be found in the wikipedia page source code. Defaults to False.
+        wiki (bool, optional): Search for `\displaystyle` as it can be found in the wikipedia page source code. Defaults to False.
 
     Returns:
         List[str]: List of all found mathematical expressions
@@ -91,7 +92,7 @@ def find_math(s: str, wiki=False) -> List[str]:
         groups = [1, 1, 0]
     else:
         patterns = [displaymath]
-        groups = [1]
+        groups = [0]
     for i, pattern in zip(groups, patterns):
         x = re.findall(pattern, s)
         matches.extend([g[i] for g in x])
@@ -102,14 +103,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(dest='file', type=str, help='file to find equations in')
     parser.add_argument('--out','-o', type=str, default=None, help='file to save equations to. If none provided, print all equations.')
-    parser.add_argument('--wiki', action='store_true', help='only look for math starting with \\displaymath')
+    parser.add_argument('--wiki', action='store_true', help='only look for math starting with \\displaystyle')
+    parser.add_argument('--unescape', action='store_true', help='call `html.unescape` on input')
     args = parser.parse_args()
 
     if not os.path.exists(args.file):
         raise ValueError('File can not be found. %s' % args.file)
 
-    s = open(args.file, 'r').read()
-    math = '\n'.join(find_math(s, args.wiki))
+    from pix2tex.dataset.demacro import pydemacro
+    s = pydemacro(open(args.file, 'r', encoding='utf-8').read())
+    if args.unescape:
+        s = html.unescape(s)
+    math = '\n'.join(sorted(find_math(s, args.wiki)))
     if args.out is None:
         print(math)
     else:
