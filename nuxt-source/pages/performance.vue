@@ -53,13 +53,15 @@
           <th class="tg-0kls"></th>
           <th class="tg-0kls">BLEU</th>
           <th class="tg-0kls">normed edit distance</th>
+          <th class="tg-0kls">token accuracy</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td class="tg-0kls">Performance</td>
-          <td class="tg-0kls">0.88</td>
-          <td class="tg-0kls">0.10</td>
+          <td class="tg-0kls" align="center">0.88</td>
+          <td class="tg-0kls" align="center">0.10</td>
+          <td class="tg-0kls" align="center">0.60</td>
         </tr>
       </tbody>
     </table>

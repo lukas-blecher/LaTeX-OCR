@@ -29,8 +29,10 @@
     <a href="https://pytorch.org">PyTorch</a> to use the model. <br />
     Easy installation:
     <div class="pl-5 py-4">
-      <code>pip install pix2tex</code>
+      <code>pip install pix2tex[gui]</code>
     </div>
+    If you get an error, try to install
+    <a href="https://pytorch.org/get-started/locally/">PyTorch</a> first. <br />
     For more information go to the
     <v-btn
       icon
@@ -44,7 +46,7 @@
       >GitHub repository</a
     >.<br />A standalone version is planned. For Linux an AppImage is in
     development (<a href="https://github.com/lukas-blecher/LaTeX-OCR/pull/120"
-      >link</a
+      >PR</a
     >).
     <v-card-title>Troubleshooting</v-card-title>
     If you run into problems, please see if you can find the solution in the
