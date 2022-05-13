@@ -36,6 +36,10 @@ def train(args):
 
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
     scheduler = get_scheduler(args.scheduler)(opt, step_size=args.lr_step, gamma=args.gamma)
+
+    microbatch = args.get('micro_batchsize', -1)
+    if microbatch == -1:
+        microbatch = args.batchsize
     try:
         for e in range(args.epoch, args.epochs):
             args.epoch = e
@@ -43,11 +47,13 @@ def train(args):
             for i, (seq, im) in enumerate(dset):
                 if seq is not None and im is not None:
                     opt.zero_grad()
-                    tgt_seq, tgt_mask = seq['input_ids'].to(device), seq['attention_mask'].bool().to(device)
-                    encoded = encoder(im.to(device))
-                    loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                    for j in range(0, len(im), microbatch):
+                        # print("microbatch",j)
+                        tgt_seq, tgt_mask = seq['input_ids'][j:j+microbatch].to(device), seq['attention_mask'][j:j+microbatch].bool().to(device)
+                        encoded = encoder(im[j:j+microbatch].to(device))
+                        loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
+                        loss.backward()
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
                     scheduler.step()
                     dset.set_description('Loss: %.4f' % loss.item())
