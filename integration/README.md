@@ -25,8 +25,8 @@ Currently, the integration use the api hosted on your local machine or a remote 
 
 ### Raycast on macOS
 
-![raycast preview](raycast.gif)
+![raycast preview](https://zeqiang-lai.github.io/blog/docs/imgs/raycast.gif)
 
 ### Wox on Windows
 
-![wox preview](wox.gif)
+![wox preview](https://zeqiang-lai.github.io/blog/docs/imgs/wox.gif)
