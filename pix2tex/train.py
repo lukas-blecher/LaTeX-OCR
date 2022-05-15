@@ -48,10 +48,9 @@ def train(args):
                 if seq is not None and im is not None:
                     opt.zero_grad()
                     for j in range(0, len(im), microbatch):
-                        # print("microbatch",j)
                         tgt_seq, tgt_mask = seq['input_ids'][j:j+microbatch].to(device), seq['attention_mask'][j:j+microbatch].bool().to(device)
                         encoded = encoder(im[j:j+microbatch].to(device))
-                        loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
+                        loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
                         loss.backward()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
