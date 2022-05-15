@@ -47,17 +47,19 @@ def train(args):
             for i, (seq, im) in enumerate(dset):
                 if seq is not None and im is not None:
                     opt.zero_grad()
+                    total_loss = 0
                     for j in range(0, len(im), microbatch):
                         tgt_seq, tgt_mask = seq['input_ids'][j:j+microbatch].to(device), seq['attention_mask'][j:j+microbatch].bool().to(device)
                         encoded = encoder(im[j:j+microbatch].to(device))
                         loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
                         loss.backward()
+                        total_loss += loss.item()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
                     scheduler.step()
-                    dset.set_description('Loss: %.4f' % loss.item())
+                    dset.set_description('Loss: %.4f' % total_loss)
                     if args.wandb:
-                        wandb.log({'train/loss': loss.item()})
+                        wandb.log({'train/loss': total_loss})
                 if (i+1) % args.sample_freq == 0:
                     evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
             if (e+1) % args.save_freq == 0:
