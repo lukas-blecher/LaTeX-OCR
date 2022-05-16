@@ -10,8 +10,10 @@ from tqdm.auto import tqdm
 import wandb
 
 from pix2tex.eval import evaluate
-from pix2tex.models import get_model
-from pix2tex.utils import *
+from pix2tex.structures.hybrid import get_model
+# from pix2tex.utils import *
+from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler
+
 
 
 def train(args):
@@ -26,12 +28,12 @@ def train(args):
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
-
+    max_bleu, max_token_acc = 0, 0
     out_path = os.path.join(args.model_path, args.name)
     os.makedirs(out_path, exist_ok=True)
 
-    def save_models(e):
-        torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d.pth' % (args.name, e+1)))
+    def save_models(e, step=0):
+        torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d_step$02d.pth' % (args.name, e+1, step)))
         yaml.dump(dict(args), open(os.path.join(out_path, 'config.yaml'), 'w+'))
 
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
@@ -40,6 +42,7 @@ def train(args):
     microbatch = args.get('micro_batchsize', -1)
     if microbatch == -1:
         microbatch = args.batchsize
+    
     try:
         for e in range(args.epoch, args.epochs):
             args.epoch = e
@@ -52,7 +55,8 @@ def train(args):
                         tgt_seq, tgt_mask = seq['input_ids'][j:j+microbatch].to(device), seq['attention_mask'][j:j+microbatch].bool().to(device)
                         encoded = encoder(im[j:j+microbatch].to(device))
                         loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
-                        loss.backward()
+                        # loss.backward()
+                        loss.mean().backward()# data parallism loss is a vector
                         total_loss += loss.item()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
@@ -61,7 +65,10 @@ def train(args):
                     if args.wandb:
                         wandb.log({'train/loss': total_loss})
                 if (i+1) % args.sample_freq == 0:
-                    evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
+                    bleu_score, edit_distance, token_accuracy = evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
+                    if bleu_score > max_bleu and token_accuracy > max_token_acc:
+                        max_bleu, max_token_acc = bleu_score, token_accuracy
+                        save_models(e, step=i+1)
             if (e+1) % args.save_freq == 0:
                 save_models(e)
             if args.wandb:

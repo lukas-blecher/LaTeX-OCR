@@ -17,7 +17,7 @@ from timm.models.resnetv2 import ResNetV2
 from timm.models.layers import StdConv2dSame
 
 from pix2tex.dataset.latex2png import tex2pil
-from pix2tex.models import get_model
+from pix2tex.structures.hybrid import get_model
 from pix2tex.utils import *
 from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
 

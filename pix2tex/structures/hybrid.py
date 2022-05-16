@@ -1,3 +1,4 @@
+# taken and modified from https://github.com/lukas-blecher/LaTeX-OCR/blob/720978d8c469780ed070d041d5795c55b705ac1b/pix2tex/models.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -126,7 +127,7 @@ def get_model(args, training=False):
                                       depth=args.encoder_depth,
                                       num_heads=args.heads,
                                       embed_layer=embed_layer
-                                      ).to(args.device)
+                                      )
 
     decoder = CustomARWrapper(
         TransformerWrapper(
@@ -139,10 +140,19 @@ def get_model(args, training=False):
                 **args.decoder_args
             )),
         pad_value=args.pad_token
-    ).to(args.device)
+    )
+    #to device
+    available_gpus = torch.cuda.device_count()
+    if available_gpus > 1:
+        encoder = nn.DataParallel(encoder)
+        decoder = nn.DataParallel(decoder)
+    encoder.to(args.device)
+    decoder.to(args.device)
     if 'wandb' in args and args.wandb:
         import wandb
-        wandb.watch((encoder, decoder.net.attn_layers))
+        en_attn_layers = encoder.module.attn_layers if available_gpus > 1 else encoder.attn_layers
+        de_attn_layers = decoder.module.net.attn_layers if available_gpus > 1 else decoder.net.attn_layers
+        wandb.watch((en_attn_layers, de_attn_layers))
     model = Model(encoder, decoder, args)
     if training:
         # check if largest batch can be handled by system
