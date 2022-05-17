@@ -29,6 +29,7 @@ lr_step: 30
 max_height: 192
 max_seq_len: 512
 max_width: 672
+micro_batchsize: -1
 min_height: 32
 min_width: 32
 model_path: checkpoints
