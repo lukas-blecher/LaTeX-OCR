@@ -44,14 +44,10 @@ def get_model(args, training=False):
         decoder = nn.DataParallel(decoder)
     encoder.to(args.device)
     decoder.to(args.device)
+    model = Model(encoder, decoder, args)
     if args.wandb:
         import wandb
-        en_attn_layers = encoder
-        if args.encoder_structure.lower() == 'vit':
-            en_attn_layers = encoder.module.attn_layers if available_gpus > 1 else encoder.attn_layers
-        de_attn_layers = decoder.module.net.attn_layers if available_gpus > 1 else decoder.net.attn_layers
-        wandb.watch((en_attn_layers, de_attn_layers))
-    model = Model(encoder, decoder, args)
+        wandb.watch(model)
     if training:
         # check if largest batch can be handled by system
         batchsize = args.batchsize if args.get(
