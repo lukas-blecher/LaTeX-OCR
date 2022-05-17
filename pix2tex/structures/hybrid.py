@@ -150,9 +150,8 @@ def get_model(args, training=False):
     decoder.to(args.device)
     if 'wandb' in args and args.wandb:
         import wandb
-        en_attn_layers = encoder.module.attn_layers if available_gpus > 1 else encoder.attn_layers
         de_attn_layers = decoder.module.net.attn_layers if available_gpus > 1 else decoder.net.attn_layers
-        wandb.watch((en_attn_layers, de_attn_layers))
+        wandb.watch((encoder, de_attn_layers))
     model = Model(encoder, decoder, args)
     if training:
         # check if largest batch can be handled by system

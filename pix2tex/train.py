@@ -10,11 +10,16 @@ from tqdm.auto import tqdm
 import wandb
 
 from pix2tex.eval import evaluate
-from pix2tex.structures.hybrid import get_model
+from pix2tex.structures import hybrid, vit
 # from pix2tex.utils import *
 from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler
 
 
+def get_model(structure_name: str):
+    """currently support ViT and Hybrid structure"""
+    structures = {"hybrid": hybrid.get_model,
+                  "vit": vit.get_model}
+    return structures[structure_name]
 
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
@@ -24,7 +29,7 @@ def train(args):
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     valdataloader.update(**valargs)
     device = args.device
-    model = get_model(args, training=True)
+    model = get_model(args.structure)(args, training=True)
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
@@ -33,7 +38,7 @@ def train(args):
     os.makedirs(out_path, exist_ok=True)
 
     def save_models(e, step=0):
-        torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d_step$02d.pth' % (args.name, e+1, step)))
+        torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d_step%02d.pth' % (args.name, e+1, step)))
         yaml.dump(dict(args), open(os.path.join(out_path, 'config.yaml'), 'w+'))
 
     opt = get_optimizer(args.optimizer)(model.parameters(), args.lr, betas=args.betas)
@@ -57,7 +62,7 @@ def train(args):
                         loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
                         # loss.backward()
                         loss.mean().backward()# data parallism loss is a vector
-                        total_loss += loss.item()
+                        total_loss += loss.mean().item()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
                     scheduler.step()
@@ -68,7 +73,7 @@ def train(args):
                     bleu_score, edit_distance, token_accuracy = evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
                     if bleu_score > max_bleu and token_accuracy > max_token_acc:
                         max_bleu, max_token_acc = bleu_score, token_accuracy
-                        save_models(e, step=i+1)
+                        save_models(e, step=i)
             if (e+1) % args.save_freq == 0:
                 save_models(e)
             if args.wandb:
@@ -85,6 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', default=None, help='path to yaml config file', type=str)
     parser.add_argument('--no_cuda', action='store_true', help='Use CPU')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
+    parser.add_argument('--structure', default="hybrid", help='model structure, vit or hybrid', type=str)
     parser.add_argument('--resume', help='path to checkpoint folder', action='store_true')
     parsed_args = parser.parse_args()
     if parsed_args.config is None:
