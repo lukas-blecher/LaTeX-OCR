@@ -10,16 +10,11 @@ from tqdm.auto import tqdm
 import wandb
 
 from pix2tex.eval import evaluate
-from pix2tex.structures import hybrid, vit
+from pix2tex.models import get_model
 # from pix2tex.utils import *
 from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler
 
 
-def get_model(structure_name: str):
-    """currently support ViT and Hybrid structure"""
-    structures = {"hybrid": hybrid.get_model,
-                  "vit": vit.get_model}
-    return structures[structure_name]
 
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
@@ -29,7 +24,7 @@ def train(args):
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     valdataloader.update(**valargs)
     device = args.device
-    model = get_model(args.structure)(args, training=True)
+    model = get_model(args, training=True)
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
     encoder, decoder = model.encoder, model.decoder
@@ -90,7 +85,6 @@ if __name__ == '__main__':
     parser.add_argument('--config', default=None, help='path to yaml config file', type=str)
     parser.add_argument('--no_cuda', action='store_true', help='Use CPU')
     parser.add_argument('--debug', action='store_true', help='DEBUG')
-    parser.add_argument('--structure', default="hybrid", help='model structure, vit or hybrid', type=str)
     parser.add_argument('--resume', help='path to checkpoint folder', action='store_true')
     parsed_args = parser.parse_args()
     if parsed_args.config is None:

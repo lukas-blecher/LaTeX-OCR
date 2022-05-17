@@ -1,10 +1,7 @@
-# taken and modified from https://github.com/lukas-blecher/LaTeX-OCR/blob/720978d8c469780ed070d041d5795c55b705ac1b/pix2tex/models.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# from x_transformers import *
-from x_transformers import TransformerWrapper, Decoder
 from x_transformers.autoregressive_wrapper import AutoregressiveWrapper, top_k, top_p, entmax, ENTMAX_ALPHA
 from timm.models.vision_transformer import VisionTransformer
 from timm.models.vision_transformer_hybrid import HybridEmbed
@@ -108,7 +105,7 @@ class Model(nn.Module):
         return dec
 
 
-def get_model(args, training=False):
+def get_encoder(args, training=False):
     backbone = ResNetV2(
         layers=args.backbone_layers, num_classes=0, global_pool='', in_chans=args.channels,
         preact=False, stem_type='same', conv_layer=StdConv2dSame)
@@ -128,38 +125,4 @@ def get_model(args, training=False):
                                       num_heads=args.heads,
                                       embed_layer=embed_layer
                                       )
-
-    decoder = CustomARWrapper(
-        TransformerWrapper(
-            num_tokens=args.num_tokens,
-            max_seq_len=args.max_seq_len,
-            attn_layers=Decoder(
-                dim=args.dim,
-                depth=args.num_layers,
-                heads=args.heads,
-                **args.decoder_args
-            )),
-        pad_value=args.pad_token
-    )
-    #to device
-    available_gpus = torch.cuda.device_count()
-    if available_gpus > 1:
-        encoder = nn.DataParallel(encoder)
-        decoder = nn.DataParallel(decoder)
-    encoder.to(args.device)
-    decoder.to(args.device)
-    if 'wandb' in args and args.wandb:
-        import wandb
-        de_attn_layers = decoder.module.net.attn_layers if available_gpus > 1 else decoder.net.attn_layers
-        wandb.watch((encoder, de_attn_layers))
-    model = Model(encoder, decoder, args)
-    if training:
-        # check if largest batch can be handled by system
-        batchsize = args.batchsize if args.get('micro_batchsize', -1) == -1 else args.micro_batchsize
-        im = torch.empty(batchsize, args.channels, args.max_height, args.min_height, device=args.device).float()
-        seq = torch.randint(0, args.num_tokens, (batchsize, args.max_seq_len), device=args.device).long()
-        decoder(seq, context=encoder(im)).sum().backward()
-        model.zero_grad()
-        torch.cuda.empty_cache()
-        del im, seq
-    return model
+    return encoder

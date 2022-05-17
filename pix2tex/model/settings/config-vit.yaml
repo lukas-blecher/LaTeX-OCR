@@ -13,6 +13,7 @@ decoder_args:
   rel_pos_bias: false
   use_scalenorm: false
 dim: 256
+emb_dropout: 0
 encoder_depth: 4
 eos_token: 2
 epochs: 10
@@ -41,6 +42,7 @@ sample_freq: 1000
 save_freq: 5
 scheduler: StepLR
 seed: 42
+encoder_structure: vit
 temperature: 0.2
 test_samples: 5
 testbatchsize: 20

@@ -56,7 +56,6 @@ def parse_args(args, **kwargs) -> Munch:
     args.device = 'cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu'
     args.max_dimensions = [args.max_width, args.max_height]
     args.min_dimensions = [args.get('min_width', 32), args.get('min_height', 32)]
-    args.structure = kwargs.get('structure', None)
     if 'decoder_args' not in args or args.decoder_args is None:
         args.decoder_args = {}
     return args

@@ -45,6 +45,7 @@ sample_freq: 3000
 save_freq: 5
 scheduler: StepLR
 seed: 42
+encoder_structure: hybrid
 temperature: 0.2
 test_samples: 5
 testbatchsize: 20

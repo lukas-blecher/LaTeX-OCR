@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 import wandb
 from Levenshtein import distance
 
-from pix2tex.structures.hybrid import get_model, Model
+from pix2tex.models import get_model, Model
 from pix2tex.utils import *
 
 

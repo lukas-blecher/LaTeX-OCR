@@ -14,7 +14,7 @@ Welcome to LaTeX-OCR's documentation!
    pix2tex.gui
    pix2tex.api
    pix2tex.dataset
-   pix2tex.structures.hybrid
+   pix2tex.models
    pix2tex.utils
 
 

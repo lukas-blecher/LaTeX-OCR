@@ -51,6 +51,7 @@ decoder_args:
 heads: 8
 num_tokens: 8000
 max_seq_len: 1024
+encoder_structure: hybrid
 
 # Other
 seed: 42
