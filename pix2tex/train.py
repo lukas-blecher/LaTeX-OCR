@@ -70,7 +70,7 @@ def train(args):
                         max_bleu, max_token_acc = bleu_score, token_accuracy
                         save_models(e, step=i)
             if (e+1) % args.save_freq == 0:
-                save_models(e)
+                save_models(e, step=len(dataloader))
             if args.wandb:
                 wandb.log({'train/epoch': e+1})
     except KeyboardInterrupt:
