@@ -6,16 +6,17 @@
 Welcome to LaTeX-OCR's documentation!
 =====================================
 
+.. |ico| image:: https://img.shields.io/badge/LaTeX--OCR-visit-a?style=social&logo=github
+   :target: https://github.com/lukas-blecher/LaTeX-OCR
+This is the documentation for LaTeX-OCR |ico|. The goal of this project is to find a corresponding LaTeX code for a given image of an equation.
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   pix2tex.cli
-   pix2tex.gui
-   pix2tex.api
-   pix2tex.dataset
-   pix2tex.models
-   pix2tex.utils
+   installation
+   pix2tex
 
 
 Indices and tables
