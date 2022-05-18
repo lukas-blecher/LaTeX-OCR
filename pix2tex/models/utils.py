@@ -38,11 +38,14 @@ def get_model(args, training=False):
         wandb.watch(model)
     if training:
         # check if largest batch can be handled by system
-        batchsize = args.batchsize if args.get('micro_batchsize', -1) == -1 else args.micro_batchsize
-        im = torch.empty(batchsize, args.channels, args.max_height,
-                         args.min_height, device=args.device).float()
-        seq = torch.randint(0, args.num_tokens, (batchsize, args.max_seq_len), device=args.device).long()
-        decoder(seq, context=encoder(im)).sum().backward()
+        try:
+            batchsize = args.batchsize if args.get('micro_batchsize', -1) == -1 else args.micro_batchsize
+            for _ in range(5):
+                im = torch.empty(batchsize, args.channels, args.max_height, args.min_height, device=args.device).float()
+                seq = torch.randint(0, args.num_tokens, (batchsize, args.max_seq_len), device=args.device).long()
+                decoder(seq, context=encoder(im)).sum().backward()
+        except RuntimeError:
+            raise RuntimeError("The system cannot handle a batch size of %i for the maximum image size (%i, %i). Try to use a smaller micro batchsize."%(batchsize, args.max_height, args.max_width))
         model.zero_grad()
         torch.cuda.empty_cache()
         del im, seq

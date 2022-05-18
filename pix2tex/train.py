@@ -64,7 +64,7 @@ def train(args):
                     dset.set_description('Loss: %.4f' % total_loss)
                     if args.wandb:
                         wandb.log({'train/loss': total_loss})
-                if (i+1) % args.sample_freq == 0:
+                if (i+1+len(dataloader)*e) % args.sample_freq == 0:
                     bleu_score, edit_distance, token_accuracy = evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
                     if bleu_score > max_bleu and token_accuracy > max_token_acc:
                         max_bleu, max_token_acc = bleu_score, token_accuracy
