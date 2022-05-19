@@ -53,12 +53,22 @@ def parse_args(args, **kwargs) -> Munch:
     args = Munch({'epoch': 0}, **args)
     kwargs = Munch({'no_cuda': False, 'debug': False}, **kwargs)
     args.wandb = not kwargs.debug and not args.debug
-    args.device = 'cuda' if torch.cuda.is_available() and not kwargs.no_cuda else 'cpu'
+    args.device = get_device(args, kwargs)
     args.max_dimensions = [args.max_width, args.max_height]
     args.min_dimensions = [args.get('min_width', 32), args.get('min_height', 32)]
     if 'decoder_args' not in args or args.decoder_args is None:
         args.decoder_args = {}
     return args
+
+
+def get_device(args, kwargs):
+    device = 'cpu'
+    available_gpus = torch.cuda.device_count()
+    if available_gpus > 0 and not kwargs.no_cuda:
+        device = 'cuda:%d' % args.gpu_devices[0] if args.gpu_devices else 0
+        assert available_gpus > = len(args.gpu_devices), "Available %d gpu, but specified gpu %s." % (available_gpus, ','.join(map(str, args.gpu_devices)))
+        assert max(args.gpu_devices) < available_gpus, "legal gpu_devices should in [%s], received [%s]" % (','.join(map(str, range(available_gpus))),','.join(map(str, args.gpu_devices)))
+    return device
 
 
 def token2str(tokens, tokenizer) -> list:
