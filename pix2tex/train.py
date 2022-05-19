@@ -21,8 +21,8 @@ def data_parallel(module, inputs, device_ids, output_device=None, **kwargs):
     if output_device is None:
         output_device = device_ids[0]
     replicas = nn.parallel.replicate(module, device_ids)
-    inputs = nn.parallel.scatter(inputs, device_ids) #Slices tensors into approximately equal chunks and distributes them across given GPUs.
-    kwargs = nn.parallel.scatter(kwargs, device_ids) # Duplicates references to objects that are not tensors.
+    inputs = nn.parallel.scatter(inputs, device_ids)  # Slices tensors into approximately equal chunks and distributes them across given GPUs.
+    kwargs = nn.parallel.scatter(kwargs, device_ids)  # Duplicates references to objects that are not tensors.
     replicas = replicas[:len(inputs)]
     kwargs = kwargs[:len(inputs)]
     outputs = nn.parallel.parallel_apply(replicas, inputs, kwargs)
@@ -41,7 +41,7 @@ def gpu_memory_check(model, args):
             loss = data_parallel(model.decoder, inputs=seq, device_ids=args.gpu_devices, context=encoded)
             loss.sum().backward()
     except RuntimeError:
-        raise RuntimeError("The system cannot handle a batch size of %i for the maximum image size (%i, %i). Try to use a smaller micro batchsize."%(batchsize, args.max_height, args.max_width))
+        raise RuntimeError("The system cannot handle a batch size of %i for the maximum image size (%i, %i). Try to use a smaller micro batchsize." % (batchsize, args.max_height, args.max_width))
     model.zero_grad()
     torch.cuda.empty_cache()
     del im, seq
@@ -74,7 +74,7 @@ def train(args):
     microbatch = args.get('micro_batchsize', -1)
     if microbatch == -1:
         microbatch = args.batchsize
-    
+
     try:
         for e in range(args.epoch, args.epochs):
             args.epoch = e
@@ -88,9 +88,9 @@ def train(args):
                         # encoded = encoder(im[j:j+microbatch].to(device))
                         encoded = data_parallel(encoder, inputs=im[j:j+microbatch].to(device), device_ids=args.gpu_devices)
                         # loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
-                        loss = data_parallel(module=decoder, inputs=tgt_seq, device_ids=args.gpu_devices, mask=tgt_mask, context=encoded)*microbatch/args.batchsize 
+                        loss = data_parallel(module=decoder, inputs=tgt_seq, device_ids=args.gpu_devices, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
                         # loss.backward()
-                        loss.mean().backward()# data parallism loss is a vector
+                        loss.mean().backward()  # data parallism loss is a vector
                         total_loss += loss.mean().item()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
