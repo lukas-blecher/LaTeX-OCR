@@ -112,4 +112,5 @@ if __name__ == '__main__':
         if not parsed_args.resume:
             args.id = wandb.util.generate_id()
         wandb.init(config=dict(args), resume='allow', name=args.name, id=args.id)
+        args = Munch(wandb.config)
     train(args)
