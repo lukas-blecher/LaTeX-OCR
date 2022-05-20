@@ -75,6 +75,7 @@ class LatexOCR:
             download_checkpoints()
         self.model = get_model(self.args)
         self.model.load_state_dict(torch.load(self.args.checkpoint, map_location=self.args.device))
+        self.model.eval()
 
         if 'image_resizer.pth' in os.listdir(os.path.dirname(self.args.checkpoint)) and not arguments.no_resize:
             self.image_resizer = ResNetV2(layers=[2, 3, 3], num_classes=max(self.args.max_dimensions)//32, global_pool='avg', in_chans=1, drop_rate=.05,
@@ -123,13 +124,8 @@ class LatexOCR:
             t = test_transform(image=img)['image'][:1].unsqueeze(0)
         im = t.to(self.args.device)
 
-        with torch.no_grad():
-            self.model.eval()
-            device = self.args.device
-            encoded = self.model.encoder(im.to(device))
-            dec = self.model.decoder.generate(torch.LongTensor([self.args.bos_token])[:, None].to(device), self.args.max_seq_len,
-                                              eos_token=self.args.eos_token, context=encoded.detach(), temperature=self.args.get('temperature', .25))
-            pred = post_process(token2str(dec, self.tokenizer)[0])
+        dec = self.model.generate(im.to(self.args.device), temperature=self.args.get('temperature', .25))
+        pred = post_process(token2str(dec, self.tokenizer)[0])
         try:
             clipboard.copy(pred)
         except:
@@ -220,7 +216,7 @@ def main():
                         img = ImageGrab.grabclipboard()
                     except:
                         pass
-                pred = model.generate(img)
+                pred = model(img)
                 output_prediction(pred, arguments)
             except KeyboardInterrupt:
                 pass

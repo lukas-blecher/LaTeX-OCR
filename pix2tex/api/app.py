@@ -45,7 +45,7 @@ async def predict(file: UploadFile = File(...)) -> str:
     """
     global model
     image = Image.open(file.file)
-    return model.generate(image)
+    return model(image)
 
 
 @app.post('/bytes/')
@@ -61,4 +61,4 @@ async def predict_from_bytes(file: bytes = File(...)) -> str:  # , size: str = F
     global model
     #size = tuple(int(a) for a in size.split(','))
     image = Image.open(BytesIO(file))
-    return model.generate(image, resize=False)
+    return model(image, resize=False)

@@ -15,20 +15,6 @@ from pix2tex.models import get_model
 from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler
 
 
-def data_parallel(module, x:torch.Tensor, device_ids, output_device=None, **kwargs):
-    if not device_ids or len(device_ids) == 1:
-        return module(x, **kwargs)
-    if output_device is None:
-        output_device = device_ids[0]
-    replicas = nn.parallel.replicate(module, device_ids)
-    inputs = nn.parallel.scatter(x, device_ids)  # Slices tensors into approximately equal chunks and distributes them across given GPUs.
-    kwargs = nn.parallel.scatter(kwargs, device_ids)  # Duplicates references to objects that are not tensors.
-    replicas = replicas[:len(inputs)]
-    kwargs = kwargs[:len(inputs)]
-    outputs = nn.parallel.parallel_apply(replicas, inputs, kwargs)
-    return nn.parallel.gather(outputs, output_device)
-
-
 def gpu_memory_check(model, args):
     # check if largest batch can be handled by system
     try:
@@ -36,10 +22,7 @@ def gpu_memory_check(model, args):
         for _ in range(5):
             im = torch.empty(batchsize, args.channels, args.max_height, args.min_height, device=args.device).float()
             seq = torch.randint(0, args.num_tokens, (batchsize, args.max_seq_len), device=args.device).long()
-            # model.decoder(seq, context=model.encoder(im)).sum().backward()
-            # encoded = data_parallel(model.encoder, inputs=im, device_ids=args.gpu_devices)
-            # loss = data_parallel(model.decoder, inputs=seq, device_ids=args.gpu_devices, context=encoded)
-            loss = data_parallel(model, im, device_ids=args.gpu_devices, tgt_seq=seq)
+            loss = model.data_parallel(im, device_ids=args.gpu_devices, tgt_seq=seq)
             loss.sum().backward()
     except RuntimeError:
         raise RuntimeError("The system cannot handle a batch size of %i for the maximum image size (%i, %i). Try to use a smaller micro batchsize." % (batchsize, args.max_height, args.max_width))
@@ -60,7 +43,6 @@ def train(args):
     gpu_memory_check(model, args)
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
-    encoder, decoder = model.encoder, model.decoder
     max_bleu, max_token_acc = 0, 0
     out_path = os.path.join(args.model_path, args.name)
     os.makedirs(out_path, exist_ok=True)
@@ -86,14 +68,9 @@ def train(args):
                     total_loss = 0
                     for j in range(0, len(im), microbatch):
                         tgt_seq, tgt_mask = seq['input_ids'][j:j+microbatch].to(device), seq['attention_mask'][j:j+microbatch].bool().to(device)
-                        # encoded = encoder(im[j:j+microbatch].to(device))
-                        # encoded = data_parallel(encoder, inputs=im[j:j+microbatch].to(device), device_ids=args.gpu_devices)
-                        # loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
-                        # loss = data_parallel(module=decoder, inputs=tgt_seq, device_ids=args.gpu_devices, mask=tgt_mask, context=encoded)*microbatch/args.batchsize
-                        # loss.backward()
-                        loss = data_parallel(model,im[j:j+microbatch].to(device), device_ids=args.gpu_devices, tgt_seq=tgt_seq, mask=tgt_mask)*microbatch/args.batchsize
-                        loss.mean().backward()  # data parallism loss is a vector
-                        total_loss += loss.mean().item()
+                        loss = model.data_parallel(im[j:j+microbatch].to(device), device_ids=args.gpu_devices, tgt_seq=tgt_seq, mask=tgt_mask)*microbatch/args.batchsize
+                        loss.backward()  # data parallism loss is a vector
+                        total_loss += loss.item()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                     opt.step()
                     scheduler.step()

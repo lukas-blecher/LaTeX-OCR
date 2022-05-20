@@ -50,10 +50,8 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     for i, (seq, im) in pbar:
         if seq is None or im is None:
             continue
-        encoded = model.encoder(im.to(device))
         #loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
-        dec = model.decoder.generate(torch.LongTensor([args.bos_token]*len(encoded))[:, None].to(device), args.max_seq_len,
-                                     eos_token=args.pad_token, context=encoded, temperature=args.get('temperature', .2))
+        dec = model.generate(im.to(device), temperature=args.get('temperature', .2))
         pred = detokenize(dec, dataset.tokenizer)
         truth = detokenize(seq['input_ids'], dataset.tokenizer)
         bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
