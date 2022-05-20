@@ -13,7 +13,13 @@ class Model(nn.Module):
         self.decoder = decoder
         self.args = args
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, tgt_seq: torch.Tensor, **kwargs):
+        encoded = self.encoder(x)
+        out = self.decoder(tgt_seq, context=encoded, **kwargs)
+        return out
+
+    @torch.no_grad()
+    def generate(self, x: torch.Tensor):
         return self.decoder.generate(torch.LongTensor([self.args.bos_token]*len(x)).to(x.device),
                                      self.args.max_seq_len, eos_token=self.args.eos_token, context=self.encoder(x))
 

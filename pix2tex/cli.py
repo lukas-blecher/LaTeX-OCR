@@ -220,7 +220,7 @@ def main():
                         img = ImageGrab.grabclipboard()
                     except:
                         pass
-                pred = model(img)
+                pred = model.generate(img)
                 output_prediction(pred, arguments)
             except KeyboardInterrupt:
                 pass
