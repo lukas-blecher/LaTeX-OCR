@@ -33,7 +33,7 @@ class Model(nn.Module):
 
     @torch.no_grad()
     def generate(self, x: torch.Tensor, temperature: float = 0.25):
-        return self.decoder.generate(torch.LongTensor([self.args.bos_token]*len(x)).to(x.device), self.args.max_seq_len,
+        return self.decoder.generate((torch.LongTensor([self.args.bos_token]*len(x))[:, None]).to(x.device), self.args.max_seq_len,
                                      eos_token=self.args.eos_token, context=self.encoder(x), temperature=temperature)
 
 
