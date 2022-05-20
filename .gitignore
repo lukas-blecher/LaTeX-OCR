@@ -138,3 +138,5 @@ pix2tex/model/checkpoints/**
 !**/.gitkeep
 .vscode
 .DS_Store
+test/*
+
