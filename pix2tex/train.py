@@ -27,7 +27,7 @@ def gpu_memory_check(model, args):
     except RuntimeError:
         raise RuntimeError("The system cannot handle a batch size of %i for the maximum image size (%i, %i). Try to use a smaller micro batchsize." % (batchsize, args.max_height, args.max_width))
     model.zero_grad()
-    torch.cuda.empty_cache()
+    with torch.cuda.device(args.device):torch.cuda.empty_cache()
     del im, seq
 
 
