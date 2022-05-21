@@ -68,7 +68,7 @@ def get_encoder(args):
         emb_dropout=args.get('emb_dropout', 0),
         attn_layers=Encoder(
             dim=args.dim,
-            depth=args.num_layers,
+            depth=args.encoder_depth,
             heads=args.heads,
         )
     )
