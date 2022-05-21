@@ -29,7 +29,7 @@ max_seq_len: 512
 max_width: 672
 min_height: 32
 min_width: 32
-micro_batchsize: 64
+micro_batchsize: -1
 model_path: checkpoints_add
 name: pix2tex-vit
 num_layers: 4

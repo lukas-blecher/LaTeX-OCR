@@ -12,23 +12,7 @@ import torch.nn as nn
 from pix2tex.eval import evaluate
 from pix2tex.models import get_model
 # from pix2tex.utils import *
-from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler
-
-
-def gpu_memory_check(model, args):
-    # check if largest batch can be handled by system
-    try:
-        batchsize = args.batchsize if args.get('micro_batchsize', -1) == -1 else args.micro_batchsize
-        for _ in range(5):
-            im = torch.empty(batchsize, args.channels, args.max_height, args.min_height, device=args.device).float()
-            seq = torch.randint(0, args.num_tokens, (batchsize, args.max_seq_len), device=args.device).long()
-            loss = model.data_parallel(im, device_ids=args.gpu_devices, tgt_seq=seq)
-            loss.sum().backward()
-    except RuntimeError:
-        raise RuntimeError("The system cannot handle a batch size of %i for the maximum image size (%i, %i). Try to use a smaller micro batchsize." % (batchsize, args.max_height, args.max_width))
-    model.zero_grad()
-    with torch.cuda.device(args.device):torch.cuda.empty_cache()
-    del im, seq
+from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler, gpu_memory_check
 
 
 def train(args):
@@ -40,12 +24,14 @@ def train(args):
     valdataloader.update(**valargs)
     device = args.device
     model = get_model(args)
-    gpu_memory_check(model, args)
-    if args.load_chkpt is not None:
-        model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
+    if torch.cuda.is_available() and not args.no_cuda:
+        gpu_memory_check(model, args)
     max_bleu, max_token_acc = 0, 0
     out_path = os.path.join(args.model_path, args.name)
     os.makedirs(out_path, exist_ok=True)
+
+    if args.load_chkpt is not None:
+        model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
 
     def save_models(e, step=0):
         torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d_step%02d.pth' % (args.name, e+1, step)))
@@ -88,9 +74,9 @@ def train(args):
                 wandb.log({'train/epoch': e+1})
     except KeyboardInterrupt:
         if e >= 2:
-            save_models(e)
+            save_models(e, step=i)
         raise KeyboardInterrupt
-    save_models(e)
+    save_models(e, step=len(dataloader))
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ backbone_layers:
 betas:
 - 0.9
 - 0.999
-batchsize: 10
+batchsize: 64
 bos_token: 1
 channels: 1
 data: dataset/data/train.pkl
