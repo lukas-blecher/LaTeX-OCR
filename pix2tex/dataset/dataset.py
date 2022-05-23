@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import IterableDataset
 import numpy as np
 import imagesize
 import logging
@@ -15,10 +16,10 @@ from tqdm.auto import tqdm
 
 from pix2tex.utils.utils import in_model_path
 from pix2tex.dataset.transforms import train_transform, test_transform
+import math
 
 
-
-class Im2LatexDataset:
+class Im2LatexDataset(IterableDataset):
     keep_smaller_batches = False
     shuffle = True
     batchsize = 16
@@ -75,13 +76,14 @@ class Im2LatexDataset:
                         self.data[(width, height)].append((eqs[self.indices[i]], im))
             except KeyboardInterrupt:
                 pass
+            # formula&image pairs grouped by image size
             self.data = dict(self.data)
             self._get_size()
 
             iter(self)
 
     def __len__(self):
-        return self.size
+        return self.size  # total number of batches given the batchsize
 
     def __iter__(self):
         self.i = 0
@@ -101,6 +103,7 @@ class Im2LatexDataset:
             self.pairs = np.random.permutation(np.array(self.pairs, dtype=object))
         else:
             self.pairs = np.array(self.pairs, dtype=object)
+        self.pairs = self.pairs[self.start:self.end]
         self.size = len(self.pairs)
         return self
 
@@ -121,6 +124,8 @@ class Im2LatexDataset:
         """
 
         eqs, ims = batch.T
+        # for im in ims:
+        #     print(im,self.img_list.index(im), len([_ for _ in self.img_list if _ ==im]),len(self.img_list),hash("".join(self.img_list)))
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
@@ -169,6 +174,9 @@ class Im2LatexDataset:
                     filename = os.path.realpath(tempf)
         with open(filename, 'rb') as file:
             x = pickle.load(file)
+            x.start = 0
+            x.end = x.size
+            # x.img_list = [_[1] for ele in x.pairs for _ in ele]
         return x
 
     def combine(self, x):
@@ -228,6 +236,20 @@ def generate_tokenizer(equations, output, vocab_size):
     trainer = BpeTrainer(special_tokens=["[PAD]", "[BOS]", "[EOS]"], vocab_size=vocab_size, show_progress=True)
     tokenizer.train(equations, trainer)
     tokenizer.save(path=output, pretty=False)
+
+
+def worker_init_fn(worker_id):
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset  # the dataset copy in this worker process
+    overall_start = dataset.start
+    overall_end = dataset.size
+    # configure the dataset to only process the split workload
+    per_worker = int(math.ceil((overall_end - overall_start) /
+                     float(worker_info.num_workers)))
+    worker_id = worker_info.id
+    dataset.start = overall_start + worker_id * per_worker
+    dataset.end = min(dataset.start + per_worker, overall_end)
+
 
 
 if __name__ == '__main__':
