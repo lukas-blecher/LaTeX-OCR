@@ -68,6 +68,7 @@ class Im2LatexDataset(IterableDataset):
             self.pad = pad
             self.keep_smaller_batches = keep_smaller_batches
             self.test = test
+            self.subprocess = False
             # check the image dimension for every image and group them together
             try:
                 for i, im in tqdm(enumerate(self.images), total=len(self.images)):
@@ -88,22 +89,23 @@ class Im2LatexDataset(IterableDataset):
     def __iter__(self):
         self.i = 0
         self.transform = test_transform if self.test else train_transform
-        self.pairs = []
-        for k in self.data:
-            info = np.array(self.data[k], dtype=object)
-            p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
-            for i in range(0, len(info), self.batchsize):
-                batch = info[p[i:i+self.batchsize]]
-                if len(batch.shape) == 1:
-                    batch = batch[None, :]
-                if len(batch) < self.batchsize and not self.keep_smaller_batches:
-                    continue
-                self.pairs.append(batch)
+        if not self.subprocess:
+            self.pairs = []
+            for k in self.data:
+                info = np.array(self.data[k], dtype=object)
+                p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
+                for i in range(0, len(info), self.batchsize):
+                    batch = info[p[i:i+self.batchsize]]
+                    if len(batch.shape) == 1:
+                        batch = batch[None, :]
+                    if len(batch) < self.batchsize and not self.keep_smaller_batches:
+                        continue
+                    self.pairs.append(batch)
+        self.pairs = self.pairs[self.start:self.end]
         if self.shuffle:
             self.pairs = np.random.permutation(np.array(self.pairs, dtype=object))
         else:
             self.pairs = np.array(self.pairs, dtype=object)
-        self.pairs = self.pairs[self.start:self.end]
         self.size = len(self.pairs)
         return self
 
@@ -125,7 +127,7 @@ class Im2LatexDataset(IterableDataset):
 
         eqs, ims = batch.T
         # for im in ims:
-        #     print(im,self.img_list.index(im), len([_ for _ in self.img_list if _ ==im]),len(self.img_list),hash("".join(self.img_list)))
+        #     print(im)
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
@@ -176,7 +178,7 @@ class Im2LatexDataset(IterableDataset):
             x = pickle.load(file)
             x.start = 0
             x.end = x.size
-            # x.img_list = [_[1] for ele in x.pairs for _ in ele]
+            x.subprocess = False
         return x
 
     def combine(self, x):
@@ -249,6 +251,7 @@ def worker_init_fn(worker_id):
     worker_id = worker_info.id
     dataset.start = overall_start + worker_id * per_worker
     dataset.end = min(dataset.start + per_worker, overall_end)
+    dataset.subprocess=True
 
 
 
