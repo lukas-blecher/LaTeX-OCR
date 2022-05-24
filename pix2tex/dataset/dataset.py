@@ -237,14 +237,14 @@ class Im2LatexDataset(IterableDataset):
                     tokenizer_file = os.path.realpath(tokenizer_file)
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_file)
         self._get_size()
-        iter(self)
+        return iter(self)
 
 
 class Dataloader(DataLoader):
-    def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, *args, **kwargs):
+    def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, drop_last=True, num_workers=0):
         self.dataset = dataset
-        self.dataset.update(batchsize=batch_size, shuffle=shuffle, *args, **kwargs)
-        super().__init__(self.dataset, *args, shuffle=False, batch_size=None, **kwargs)
+        self.dataset.update(batchsize=batch_size, shuffle=shuffle, keep_smaller_batches=not drop_last)
+        super().__init__(self.dataset, num_workers=num_workers, shuffle=False, batch_size=None)
 
     def __iter__(self):
         self.dataset._shuffle()

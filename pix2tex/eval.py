@@ -46,7 +46,7 @@ def evaluate(model: Model, dataset: Dataloader, args: Munch, num_batches: int = 
     log = {}
     bleus, edit_dists, token_acc = [], [], []
     bleu_score, edit_distance, token_accuracy = 0, 1, 0
-    pbar = tqdm(enumerate(iter(dataset)), total=len(dataset))
+    pbar = tqdm(enumerate(dataset), total=len(dataset))
     for i, (seq, im) in pbar:
         if seq is None or im is None:
             continue

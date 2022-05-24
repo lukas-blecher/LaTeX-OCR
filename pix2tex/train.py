@@ -16,12 +16,10 @@ from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimi
 
 
 def train(args):
-    train_dataset = Im2LatexDataset().load(args.data)
-    train_dataloader = Dataloader(train_dataset, **args, test=False)
-    val_dataset = Im2LatexDataset().load(args.valdata)
-    valargs = args.copy()
-    valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
-    val_dataloader = Dataloader(val_dataset, **valargs)
+    train_dataset = Im2LatexDataset().load(args.data).update(**args, test=False)
+    train_dataloader = Dataloader(train_dataset, batch_size=args.batchsize, num_workers=args.num_workers)
+    val_dataset = Im2LatexDataset().load(args.valdata).update(**args, test=True)
+    val_dataloader = Dataloader(val_dataset, batch_size=args.testbatchsize, num_workers=args.num_workers, drop_last=False)
     device = args.device
     model = get_model(args)
     if torch.cuda.is_available() and not args.no_cuda:
@@ -47,7 +45,7 @@ def train(args):
     try:
         for e in range(args.epoch, args.epochs):
             args.epoch = e
-            dset = tqdm(iter(train_dataloader))
+            dset = tqdm(train_dataloader)
             for i, (seq, im) in enumerate(dset):
                 if seq is not None and im is not None:
                     opt.zero_grad()
