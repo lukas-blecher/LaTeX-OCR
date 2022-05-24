@@ -243,7 +243,7 @@ class Im2LatexDataset(IterableDataset):
 class Dataloader(DataLoader):
     def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, *args, **kwargs):
         self.dataset = dataset
-        self.dataset.update(batchsize=batch_size, shuffle=shuffle)
+        self.dataset.update(batchsize=batch_size, shuffle=shuffle, *args, **kwargs)
         super().__init__(self.dataset, *args, shuffle=False, batch_size=None, **kwargs)
 
     def __iter__(self):
