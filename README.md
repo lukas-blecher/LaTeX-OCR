@@ -1,6 +1,6 @@
 # pix2tex - LaTeX OCR
 
-[![GitHub](https://img.shields.io/github/license/lukas-blecher/LaTeX-OCR)](https://github.com/lukas-blecher/LaTeX-OCR) [![Documentation Status](https://readthedocs.org/projects/pix2tex/badge/?version=latest)](https://pix2tex.readthedocs.io/en/latest/?badge=latest) [![PyPI](https://img.shields.io/pypi/v/pix2tex?logo=pypi)](https://pypi.org/project/pix2tex) [![PyPI - Downloads](https://img.shields.io/pypi/dm/pix2tex?logo=pypi)](https://pypi.org/project/pix2tex) [![GitHub all releases](https://img.shields.io/github/downloads/lukas-blecher/LaTeX-OCR/total?color=blue&logo=github)](https://github.com/lukas-blecher/LaTeX-OCR/releases) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lukas-blecher/LaTeX-OCR/blob/main/notebooks/LaTeX_OCR_test.ipynb) 
+[![GitHub](https://img.shields.io/github/license/lukas-blecher/LaTeX-OCR)](https://github.com/lukas-blecher/LaTeX-OCR) [![Documentation Status](https://readthedocs.org/projects/pix2tex/badge/?version=latest)](https://pix2tex.readthedocs.io/en/latest/?badge=latest) [![PyPI](https://img.shields.io/pypi/v/pix2tex?logo=pypi)](https://pypi.org/project/pix2tex) [![PyPI - Downloads](https://img.shields.io/pypi/dm/pix2tex?logo=pypi)](https://pypi.org/project/pix2tex) [![GitHub all releases](https://img.shields.io/github/downloads/lukas-blecher/LaTeX-OCR/total?color=blue&logo=github)](https://github.com/lukas-blecher/LaTeX-OCR/releases) [![Docker Pulls](https://img.shields.io/docker/pulls/lukasblecher/pix2tex?logo=docker)](https://hub.docker.com/r/lukasblecher/pix2tex) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lukas-blecher/LaTeX-OCR/blob/main/notebooks/LaTeX_OCR_test.ipynb) 
 
 The goal of this project is to create a learning based system that takes an image of a math formula and returns corresponding LaTeX code. 
 
@@ -34,15 +34,15 @@ There are three ways to get a prediction from an image.
     ```bash
     python -m pix2tex.api.run
     ```
-    to start a [Streamlit](https://streamlit.io/) demo that connects to the API at port 8502. There is also a docker image available for the API: https://hub.docker.com/r/lukasblecher/pix2tex
+    to start a [Streamlit](https://streamlit.io/) demo that connects to the API at port 8502. There is also a docker image  available for the API: https://hub.docker.com/r/lukasblecher/pix2tex [![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/lukasblecher/pix2tex?logo=docker)](https://hub.docker.com/r/lukasblecher/pix2tex)
 
     ```
     docker pull lukasblecher/pix2tex:api
-    docker run -p 8502:8502 lukasblecher/pix2tex:api
+    docker run --rm -p 8502:8502 lukasblecher/pix2tex:api
     ```
     To also run the streamlit demo run
     ```
-    docker run -it -p 8501:8501 --entrypoint python lukasblecher/pix2tex:api pix2tex/api/run.py
+    docker run --rm -it -p 8501:8501 --entrypoint python lukasblecher/pix2tex:api pix2tex/api/run.py
     ```
     and navigate to http://localhost:8501/
 
