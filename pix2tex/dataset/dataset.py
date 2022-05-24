@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import IterableDataset
+from torch.utils.data import IterableDataset, DataLoader
 import numpy as np
 import imagesize
 import logging
@@ -238,6 +238,17 @@ class Im2LatexDataset(IterableDataset):
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_file)
         self._get_size()
         iter(self)
+
+
+class Dataloader(DataLoader):
+    def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, *args, **kwargs):
+        self.dataset = dataset
+        self.dataset.update(batchsize=batch_size, shuffle=shuffle)
+        super().__init__(self.dataset, *args, shuffle=False, batch_size=None, **kwargs)
+
+    def __iter__(self):
+        self.dataset._shuffle()
+        return super().__iter__()
 
 
 def generate_tokenizer(equations, output, vocab_size):
