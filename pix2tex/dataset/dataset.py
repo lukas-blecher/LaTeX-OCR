@@ -241,10 +241,11 @@ class Im2LatexDataset(IterableDataset):
 
 
 class Dataloader(DataLoader):
-    def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, drop_last=True, num_workers=0):
+    def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, drop_last=True, num_workers=0, pin_memory=False):
         self.dataset = dataset
+        self.tokenizer = dataset.tokenizer
         self.dataset.update(batchsize=batch_size, shuffle=shuffle, keep_smaller_batches=not drop_last)
-        super().__init__(self.dataset, num_workers=num_workers, shuffle=False, batch_size=None)
+        super().__init__(self.dataset, num_workers=num_workers, shuffle=False, batch_size=None, pin_memory=pin_memory)
 
     def __iter__(self):
         self.dataset._shuffle()
