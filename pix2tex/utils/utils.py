@@ -55,6 +55,8 @@ def parse_args(args, **kwargs) -> Munch:
     args.update(kwargs)
     args.wandb = not kwargs.debug and not args.debug
     args.device = get_device(args, kwargs.no_cuda)
+    args.num_workers = args.get('num_workers', 0)
+    args.pin_memory = args.get('pin_memory', False)
     args.max_dimensions = [args.max_width, args.max_height]
     args.min_dimensions = [args.get('min_width', 32), args.get('min_height', 32)]
     if 'decoder_args' not in args or args.decoder_args is None:

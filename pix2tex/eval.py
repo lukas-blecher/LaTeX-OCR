@@ -1,4 +1,4 @@
-from pix2tex.dataset.dataset import Im2LatexDataset
+from pix2tex.dataset.dataset import Im2LatexDataset, Dataloader
 import argparse
 import logging
 import yaml
@@ -28,12 +28,12 @@ def detokenize(tokens, tokenizer):
 
 
 @torch.no_grad()
-def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: int = None, name: str = 'test'):
+def evaluate(model: Model, dataset: Dataloader, args: Munch, num_batches: int = None, name: str = 'test'):
     """evaluates the model. Returns bleu score on the dataset
 
     Args:
         model (torch.nn.Module): the model
-        dataset (Im2LatexDataset): test dataset
+        dataset (Dataloader): test dataset
         args (Munch): arguments
         num_batches (int): How many batches to evaluate on. Defaults to None (all batches).
         name (str, optional): name of the test e.g. val or test for wandb. Defaults to 'test'.
@@ -46,7 +46,7 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     log = {}
     bleus, edit_dists, token_acc = [], [], []
     bleu_score, edit_distance, token_accuracy = 0, 1, 0
-    pbar = tqdm(enumerate(iter(dataset)), total=len(dataset))
+    pbar = tqdm(enumerate(dataset), total=len(dataset))
     for i, (seq, im) in pbar:
         if seq is None or im is None:
             continue

@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import IterableDataset, DataLoader
 import numpy as np
 import imagesize
 import logging
@@ -15,10 +16,10 @@ from tqdm.auto import tqdm
 
 from pix2tex.utils.utils import in_model_path
 from pix2tex.dataset.transforms import train_transform, test_transform
+import math
 
 
-
-class Im2LatexDataset:
+class Im2LatexDataset(IterableDataset):
     keep_smaller_batches = False
     shuffle = True
     batchsize = 16
@@ -33,6 +34,7 @@ class Im2LatexDataset:
     eos_token_id = 2
     transform = train_transform
     data = defaultdict(lambda: [])
+    permutation = None
 
     def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_seq_len=1024,
                  max_dimensions=(1024, 512), min_dimensions=(32, 32), pad=False, keep_smaller_batches=False, test=False):
@@ -42,7 +44,7 @@ class Im2LatexDataset:
             equations (str, optional): Path to equations. Defaults to None.
             images (str, optional): Directory where images are saved. Defaults to None.
             tokenizer (str, optional): Path to saved tokenizer. Defaults to None.
-            shuffle (bool, opitonal): Defaults to True. 
+            shuffle (bool, opitonal): Defaults to True.
             batchsize (int, optional): Defaults to 16.
             max_seq_len (int, optional): Defaults to 1024.
             max_dimensions (tuple(int, int), optional): Maximal dimensions the model can handle
@@ -75,13 +77,14 @@ class Im2LatexDataset:
                         self.data[(width, height)].append((eqs[self.indices[i]], im))
             except KeyboardInterrupt:
                 pass
+            # formula&image pairs grouped by image size
             self.data = dict(self.data)
             self._get_size()
-
+            self._shuffle()
             iter(self)
 
     def __len__(self):
-        return self.size
+        return self.size  # total number of batches given the batchsize
 
     def __iter__(self):
         self.i = 0
@@ -89,18 +92,24 @@ class Im2LatexDataset:
         self.pairs = []
         for k in self.data:
             info = np.array(self.data[k], dtype=object)
-            p = torch.randperm(len(info)) if self.shuffle else torch.arange(len(info))
             for i in range(0, len(info), self.batchsize):
-                batch = info[p[i:i+self.batchsize]]
+                batch = info[i:i+self.batchsize]
                 if len(batch.shape) == 1:
                     batch = batch[None, :]
                 if len(batch) < self.batchsize and not self.keep_smaller_batches:
                     continue
                 self.pairs.append(batch)
-        if self.shuffle:
-            self.pairs = np.random.permutation(np.array(self.pairs, dtype=object))
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is not None:
+            # configure the dataset to only process the split workload
+            per_worker = int(math.ceil(self.size/float(worker_info.num_workers)))
+            worker_id = worker_info.id
+            self.start = worker_id * per_worker
+            self.end = min(self.start + per_worker, self.size)
         else:
-            self.pairs = np.array(self.pairs, dtype=object)
+            self.start, self.end = 0, self.size
+
+        self.pairs = np.array(self.pairs, dtype=object)[self.permutation[self.start:self.end]]
         self.size = len(self.pairs)
         return self
 
@@ -121,6 +130,8 @@ class Im2LatexDataset:
         """
 
         eqs, ims = batch.T
+        # for im in ims:
+        #     print(im)
         tok = self.tokenizer(list(eqs), return_token_type_ids=False)
         # pad with bos and eos token
         for k, p in zip(tok, [[self.bos_token_id, self.eos_token_id], [1, 1]]):
@@ -155,6 +166,15 @@ class Im2LatexDataset:
         for k in self.data:
             div, mod = divmod(len(self.data[k]), self.batchsize)
             self.size += div  # + (1 if mod > 0 else 0)
+        if self.permutation is None or len(self.permutation) != self.size:
+            self._shuffle()
+
+    def _shuffle(self):
+        if self.shuffle:
+            self.permutation = np.random.permutation(self.size)
+        else:
+            self.permutation = np.arange(self.size)
+        return self
 
     def load(self, filename, args=[]):
         """returns a pickled version of a dataset
@@ -169,6 +189,7 @@ class Im2LatexDataset:
                     filename = os.path.realpath(tempf)
         with open(filename, 'rb') as file:
             x = pickle.load(file)
+            x._get_size()
         return x
 
     def combine(self, x):
@@ -216,7 +237,19 @@ class Im2LatexDataset:
                     tokenizer_file = os.path.realpath(tokenizer_file)
             self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_file)
         self._get_size()
-        iter(self)
+        return iter(self)
+
+
+class Dataloader(DataLoader):
+    def __init__(self, dataset: Im2LatexDataset, batch_size=1, shuffle=False, drop_last=True, num_workers=0, pin_memory=False):
+        self.dataset = dataset
+        self.tokenizer = dataset.tokenizer
+        self.dataset.update(batchsize=batch_size, shuffle=shuffle, keep_smaller_batches=not drop_last)
+        super().__init__(self.dataset, num_workers=num_workers, shuffle=False, batch_size=None, pin_memory=pin_memory)
+
+    def __iter__(self):
+        self.dataset._shuffle()
+        return super().__iter__()
 
 
 def generate_tokenizer(equations, output, vocab_size):
