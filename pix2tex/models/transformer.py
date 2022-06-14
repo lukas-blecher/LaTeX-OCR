@@ -1,7 +1,11 @@
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
+from typing import Optional
 from x_transformers.autoregressive_wrapper import AutoregressiveWrapper, top_k, top_p
 from x_transformers import TransformerWrapper, Decoder
+
+from .embed import AbsolutePositionalEmbedding
 
 
 class CustomARWrapper(AutoregressiveWrapper):
@@ -49,6 +53,54 @@ class CustomARWrapper(AutoregressiveWrapper):
             out = out.squeeze(0)
 
         self.net.train(was_training)
+        return out
+
+
+class LatexTransformerDecoder(nn.Module):
+    """
+        Transformer Decoder implemented by PyTorch's Transformer
+        NOTE: 
+            The deoder's output is the logits, not the loss.
+            If using this decoder, loss function should be followed,
+            I removed loss from decoder because this makes it more 
+            convenient to convert the model to ONNX format.
+    """
+    def __init__(self, model_dim: int=512, nhead: int=8, ff_dim: int=2048,
+                 dropout: float=0.0, depth: int=4, num_tokens: int=8000,
+                 max_seq_len: int=512, norm_eps: float=1e-6, activation=F.gelu,
+                 ):
+        super().__init__()
+        self.token_emb = nn.Embedding(num_tokens, model_dim, padding_idx=0)
+        self.pos_emb = AbsolutePositionalEmbedding(max_seq_len, model_dim)
+        norm_layer = nn.LayerNorm(model_dim, eps=norm_eps)
+
+        self.transformer = nn.TransformerDecoder(
+            nn.TransformerDecoderLayer(
+                d_model=model_dim,
+                nhead=nhead,
+                dim_feedforward=ff_dim,
+                dropout=dropout,
+                activation=activation,
+                batch_first=True,
+            ),
+            num_layers=depth,
+            norm=norm_layer,
+        )
+
+        self.to_logits = nn.Linear(model_dim, num_tokens)
+
+    def forward(self, tgt: torch.Tensor, memory: torch.Tensor, tgt_mask: Optional[torch.Tensor] = None,
+                memory_mask: Optional[torch.Tensor] = None, tgt_key_padding_mask: Optional[torch.Tensor] = None,
+                memory_key_padding_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """
+            memory here is the output of encoder, shape:
+            tgt: (B, T)
+            tgt_mask: (T, T)
+        """
+        tgt = self.token_emb(tgt)
+        tgt += self.pos_emb(tgt)
+        out = self.transformer(tgt, memory, tgt_mask, memory_mask, tgt_key_padding_mask, memory_key_padding_mask)
+        out = self.to_logits(out)  # B * num_tokens
         return out
 
 

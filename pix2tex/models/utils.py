@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from . import hybrid
 from . import vit
+from . import convnext
 from . import transformer
 
 
@@ -42,6 +43,8 @@ def get_model(args):
         encoder = vit.get_encoder(args)
     elif args.encoder_structure.lower() == 'hybrid':
         encoder = hybrid.get_encoder(args)
+    elif args.encoder_structure.lower() == "convnext":
+        encoder = convnext.get_encoder(args)
     else:
         raise NotImplementedError('Encoder structure "%s" not supported.' % args.encoder_structure)
     decoder = transformer.get_decoder(args)

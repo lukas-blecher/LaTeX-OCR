@@ -1,0 +1,56 @@
+gpu_devices: null #[0,1,2,3,4,5,6,7]
+betas:
+- 0.9
+- 0.999
+batchsize: 16
+bos_token: 1
+channels: 1
+checkpoint: checkpoints_add/pix2tex-convnext/pix2tex-convnext_e10_step45883.pth
+data: dataset/data/train.pkl
+debug: false
+decoder_args:
+  attn_on_attn: true
+  cross_attend: true
+  ff_glu: true
+  rel_pos_bias: false
+  use_scalenorm: false
+dec_drop: 0.0
+dec_ff_dim: 2048
+dim: 512
+emb_dropout: 0
+encoder_dims: [64, 128, 256, 512]  # the last dim must be equal to `dim` which was used in decoder
+encoder_depths: [3, 3, 9, 3]
+eos_token: 2
+epochs: 10
+gamma: 0.9995
+heads: 8
+id: null
+load_chkpt: null
+lr: 0.0001
+lr_step: 30
+max_seq_len: 512
+max_height: 192
+max_width: 896
+min_height: 32
+min_width: 32
+micro_batchsize: -1
+model_path: checkpoints_add
+name: pix2tex-convnext
+num_layers: 4
+num_tokens: 8000
+optimizer: Adam
+output_path: outputs
+pad: false
+pad_token: 0
+patch_size: 16
+sample_freq: 1000
+save_freq: 5
+scheduler: StepLR
+seed: 42
+encoder_structure: convnext
+temperature: 0.2
+test_samples: 5
+testbatchsize: 20
+tokenizer: dataset/tokenizer.json
+valbatches: 100
+valdata: dataset/data/val.pkl
