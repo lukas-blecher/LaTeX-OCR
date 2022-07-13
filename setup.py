@@ -27,7 +27,7 @@ train = [
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.26',
+    version='0.0.27',
     description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -62,7 +62,7 @@ setuptools.setup(
         'Pillow>=9.1.0',
         'PyYAML>=5.4.1',
         'pandas>=1.0.0',
-        'timm',
+        'timm==0.5.4',
         'albumentations>=0.5.2',
     ],
     extras_require={
