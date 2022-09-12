@@ -24,6 +24,7 @@ train = [
     'torchtext>=0.6.0',
     'imagesize>=1.2.0',
 ]
+highlight = ['pygments']
 
 setuptools.setup(
     name='pix2tex',
@@ -66,10 +67,11 @@ setuptools.setup(
         'albumentations>=0.5.2',
     ],
     extras_require={
-        'all': gui+api+train,
+        'all': gui+api+train+highlight,
         'gui': gui,
         'api': api,
-        'train': train
+        'train': train,
+        'highlight': highlight,
     },
     entry_points={
         'console_scripts': [
