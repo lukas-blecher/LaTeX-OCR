@@ -17,7 +17,7 @@ api = [
     'streamlit>=1.8.1',
     'fastapi>=0.75.2',
     'uvicorn[standard]',
-    'python-multipart'
+    'python-multipart',
 ]
 train = [
     'python-Levenshtein>=0.12.2',
@@ -25,6 +25,7 @@ train = [
     'imagesize>=1.2.0',
 ]
 highlight = ['pygments']
+completion = ['shtab']
 
 setuptools.setup(
     name='pix2tex',
@@ -67,11 +68,12 @@ setuptools.setup(
         'albumentations>=0.5.2',
     ],
     extras_require={
-        'all': gui+api+train+highlight,
+        'all': gui + api + train + highlight + completion,
         'gui': gui,
         'api': api,
         'train': train,
         'highlight': highlight,
+        'completion': completion,
     },
     entry_points={
         'console_scripts': [
