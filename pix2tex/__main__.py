@@ -5,7 +5,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
     parser.add_argument('-c', '--config', type=str, default='settings/config.yaml', help='path to config file')
-    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth', help='path to weights file')
+    parser.add_argument('-m', '--checkpoint', type=str, default='', help='path to weights file')
     parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
     parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
 
