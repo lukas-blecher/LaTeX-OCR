@@ -73,10 +73,10 @@ setuptools.setup(
     },
     entry_points={
         'console_scripts': [
-            'pix2tex_gui = pix2tex.gui:main',
-            'pix2tex_cli = pix2tex.cli:main',
-            'latexocr = pix2tex.gui:main',
-            'pix2tex = pix2tex.cli:main',
+            'pix2tex_gui = pix2tex.__main__:main',
+            'pix2tex_cli = pix2tex.__main__:main',
+            'latexocr = pix2tex.__main__:main',
+            'pix2tex = pix2tex.__main__:main',
         ],
     },
     classifiers=[
