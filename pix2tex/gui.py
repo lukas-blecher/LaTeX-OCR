@@ -1,6 +1,5 @@
 import sys
 import os
-import argparse
 import tempfile
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
@@ -298,20 +297,8 @@ class SnipWidget(QMainWindow):
         self.parent.returnSnip(img)
 
 
-def main():
-    parser = argparse.ArgumentParser(description='GUI arguments')
-    parser.add_argument('-t', '--temperature', type=float, default=.2, help='Softmax sampling frequency')
-    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml', help='path to config file')
-    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth', help='path to weights file')
-    parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
-    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
-    parser.add_argument('--gnome', action='store_true', help='Use gnome-screenshot to capture screenshot')
-    arguments = parser.parse_args()
+def main(arguments):
     with in_model_path():
         app = QApplication(sys.argv)
         ex = App(arguments)
         sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()

@@ -4,7 +4,6 @@ from PIL import ImageGrab
 from PIL import Image
 import os
 from typing import Tuple
-import argparse
 import logging
 import yaml
 import re
@@ -150,17 +149,7 @@ def output_prediction(pred, args):
             webbrowser.open(url)
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Use model')
-    parser.add_argument('-t', '--temperature', type=float, default=.333, help='Softmax sampling frequency')
-    parser.add_argument('-c', '--config', type=str, default='settings/config.yaml')
-    parser.add_argument('-m', '--checkpoint', type=str, default='checkpoints/weights.pth')
-    parser.add_argument('-s', '--show', action='store_true', help='Show the rendered predicted latex code')
-    parser.add_argument('-f', '--file', type=str, default=None, help='Predict LaTeX code from image file instead of clipboard')
-    parser.add_argument('-k', '--katex', action='store_true', help='Render the latex code in the browser')
-    parser.add_argument('--no-cuda', action='store_true', help='Compute on CPU')
-    parser.add_argument('--no-resize', action='store_true', help='Resize the image beforehand')
-    arguments = parser.parse_args()
+def main(arguments):
     with in_model_path():
         model = LatexOCR(arguments)
         file = None
@@ -221,7 +210,3 @@ def main():
             except KeyboardInterrupt:
                 pass
             file = None
-
-
-if __name__ == "__main__":
-    main()
