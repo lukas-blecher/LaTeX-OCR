@@ -124,10 +124,11 @@ class LatexOCR:
         if type(img) is bool:
             img = None
         if img is None:
+            print('Please provide an image.', end='')
             if self.last_pic is None:
-                print('Provide an image.')
                 return ''
             else:
+                print(' Last image is:')
                 img = self.last_pic.copy()
         else:
             self.last_pic = img.copy()
@@ -176,6 +177,21 @@ def output_prediction(pred, args):
             webbrowser.open(url)
 
 
+def file2tex(file, model, arguments):
+    file = os.path.expanduser(file)
+    img = None
+    if file == '':
+        try:
+            img = ImageGrab.grabclipboard()
+        except NotImplementedError:
+            print('NotImplemented')
+    else:
+        with suppress(FileNotFoundError):
+            img = Image.open(file)
+    pred = model(img)
+    output_prediction(pred, arguments)
+
+
 def main(arguments):
     path = user_data_dir('pix2tex')
     os.makedirs(path, exist_ok=True)
@@ -185,12 +201,17 @@ def main(arguments):
     atexit.register(readline.write_history_file, history_file)
     with in_model_path():
         model = LatexOCR(arguments)
-        file = None
+        file = arguments.file
+        if arguments.file:
+            file2tex(file, model, arguments)
+            readline.add_history(file)
+            exit()
+        pat = re.compile(r't=([\.\d]+)')
         while True:
             try:
                 instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
-                possible_file = instructions.strip()
-                ins = possible_file.lower()
+                file = instructions.strip()
+                ins = file.lower()
                 if ins == 'x':
                     break
                 elif ins in ['?', 'h', 'help']:
@@ -200,27 +221,14 @@ def main(arguments):
                     setattr(arguments, ins, not getattr(arguments, ins, False))
                     print('set %s to %s' % (ins, getattr(arguments, ins)))
                     continue
-                elif os.path.isfile(os.path.realpath(os.path.expanduser(possible_file))):
-                    file = os.path.expanduser(possible_file)
-                    readline.add_history(possible_file)
                 else:
-                    t = re.match(r't=([\.\d]+)', ins)
+                    t = pat.match(ins)
                     if t is not None:
                         t = t.groups()[0]
                         model.args.temperature = float(t)+1e-8
                         print('new temperature: T=%.3f' % model.args.temperature)
                         continue
-                img = None
-                if file:
-                    img = Image.open(file)
-                else:
-                    try:
-                        img = ImageGrab.grabclipboard()
-                    except:
-                        pass
-                pred = model(img)
-                output_prediction(pred, arguments)
-                file = None
+                file2tex(file, model, arguments)
             except KeyboardInterrupt:
                 # TODO: make the last line gray
                 print("")
