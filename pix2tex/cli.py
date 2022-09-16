@@ -28,12 +28,14 @@ from PIL import Image
 import os
 import sys
 from typing import Tuple
-import readline
 import atexit
 from contextlib import suppress
 import logging
 import yaml
 import re
+
+with suppress(ImportError):
+    import readline
 
 import numpy as np
 import torch
@@ -218,15 +220,17 @@ def main(arguments):
     path = user_data_dir('pix2tex')
     os.makedirs(path, exist_ok=True)
     history_file = os.path.join(path, 'history.txt')
-    with suppress(OSError):
-        readline.read_history_file(history_file)
-    atexit.register(readline.write_history_file, history_file)
+    with suppress(ImportError):
+        with suppress(OSError):
+            readline.read_history_file(history_file)
+        atexit.register(readline.write_history_file, history_file)
     with in_model_path():
         model = LatexOCR(arguments)
         file = arguments.file
         if arguments.file:
             file2tex(file, model, arguments)
-            readline.add_history(file)
+            with suppress(ImportError):
+                readline.add_history(file)
             exit()
         pat = re.compile(r't=([\.\d]+)')
         while True:
