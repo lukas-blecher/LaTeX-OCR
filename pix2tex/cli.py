@@ -4,12 +4,18 @@ from PIL import ImageGrab
 from PIL import Image
 import os
 from typing import Tuple
+import atexit
+from contextlib import suppress
 import logging
 import yaml
 import re
 
+with suppress(ImportError):
+    import readline
+
 import numpy as np
 import torch
+from torch._appdirs import user_data_dir
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
 from timm.models.resnetv2 import ResNetV2
@@ -150,11 +156,27 @@ def output_prediction(pred, args):
 
 
 def main(arguments):
+    path = user_data_dir('pix2tex')
+    os.makedirs(path, exist_ok=True)
+    history_file = os.path.join(path, 'history.txt')
+    with suppress(NameError):
+        # user can `ln -s /dev/null ~/.local/share/pix2tex/history.txt` to
+        # disable history record
+        with suppress(OSError):
+            readline.read_history_file(history_file)
+        atexit.register(readline.write_history_file, history_file)
     with in_model_path():
         model = LatexOCR(arguments)
         file = None
         while True:
-            instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+            try:
+                instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+            except KeyboardInterrupt:
+                # TODO: make the last line gray
+                print("")
+                continue
+            except EOFError:
+                break
             possible_file = instructions.strip()
             ins = possible_file.lower()
             if ins == 'x':
