@@ -14,7 +14,6 @@ def main():
     parser.add_argument('-k', '--katex', action='store_true', help='Render the latex code in the browser (cli only)')
 
     parser.add_argument('--gui', action='store_true', help='Use GUI (gui only)')
-    parser.add_argument('--gnome', action='store_true', help='Use gnome-screenshot to capture screenshot (gui only)')
 
     arguments = parser.parse_args()
 
