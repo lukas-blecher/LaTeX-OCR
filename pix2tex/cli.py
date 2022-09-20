@@ -3,6 +3,7 @@ import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
 import os
+import sys
 from typing import Tuple
 import atexit
 from contextlib import suppress
@@ -139,7 +140,28 @@ class LatexOCR:
 
 
 def output_prediction(pred, args):
-    print(pred, '\n')
+    TERM = os.getenv('TERM', 'xterm')
+    if not sys.stdout.isatty():
+        TERM = 'dumb'
+    try:
+        from pygments import highlight
+        from pygments.lexers import get_lexer_by_name
+        from pygments.formatters import get_formatter_by_name
+
+        if TERM.split('-')[-1] == '256color':
+            formatter_name = 'terminal256'
+        elif TERM != 'dumb':
+            formatter_name = 'terminal'
+        else:
+            formatter_name = None
+        if formatter_name:
+            formatter = get_formatter_by_name(formatter_name)
+            lexer = get_lexer_by_name('tex')
+            print(highlight(pred, lexer, formatter), end='')
+    except ImportError:
+        TERM = 'dumb'
+    if TERM == 'dumb':
+        print(pred)
     if args.show or args.katex:
         try:
             if args.katex:
