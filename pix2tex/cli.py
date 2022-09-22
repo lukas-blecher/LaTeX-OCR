@@ -178,6 +178,7 @@ def output_prediction(pred, args):
 
 
 def main(arguments):
+    file = arguments.file
     path = user_data_dir('pix2tex')
     os.makedirs(path, exist_ok=True)
     history_file = os.path.join(path, 'history.txt')
@@ -189,68 +190,13 @@ def main(arguments):
         atexit.register(readline.write_history_file, history_file)
     with in_model_path():
         model = LatexOCR(arguments)
-        file = None
-        while True:
+        img = None
+        if file:
+            img = Image.open(file)
+        else:
             try:
-                instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
-            except KeyboardInterrupt:
-                # TODO: make the last line gray
-                print("")
-                continue
-            except EOFError:
-                break
-            possible_file = instructions.strip()
-            ins = possible_file.lower()
-            if ins == 'x':
-                break
-            elif ins in ['?', 'h', 'help']:
-                print('''pix2tex help:
-
-    Usage:
-        On Windows and macOS you can copy the image into memory and just press ENTER to get a prediction.
-        Alternatively you can paste the image file path here and submit.
-
-        You might get a different prediction every time you submit the same image. If the result you got was close you
-        can just predict the same image by pressing ENTER again. If that still does not work you can change the temperature
-        or you have to take another picture with another resolution (e.g. zoom out and take a screenshot with lower resolution). 
-
-        Press "x" to close the program.
-        You can interrupt the model if it takes too long by pressing Ctrl+C.
-
-    Visualization:
-        You can either render the code into a png using XeLaTeX (see README) to get an image file back.
-        This is slow and requires a working installation of XeLaTeX. To activate type 'show' or set the flag --show
-        Alternatively you can render the expression in the browser using katex.org. Type 'katex' or set --katex
-
-    Settings:
-        to toggle one of these settings: 'show', 'katex', 'no_resize' just type it into the console
-        Change the temperature (default=0.333) type: "t=0.XX" to set a new temperature.
-                    ''')
-                continue
-            elif ins in ['show', 'katex', 'no_resize']:
-                setattr(arguments, ins, not getattr(arguments, ins, False))
-                print('set %s to %s' % (ins, getattr(arguments, ins)))
-                continue
-            elif os.path.isfile(os.path.realpath(possible_file)):
-                file = possible_file
-            else:
-                t = re.match(r't=([\.\d]+)', ins)
-                if t is not None:
-                    t = t.groups()[0]
-                    model.args.temperature = float(t)+1e-8
-                    print('new temperature: T=%.3f' % model.args.temperature)
-                    continue
-            try:
-                img = None
-                if file:
-                    img = Image.open(file)
-                else:
-                    try:
-                        img = ImageGrab.grabclipboard()
-                    except:
-                        pass
-                pred = model(img)
-                output_prediction(pred, arguments)
-            except KeyboardInterrupt:
+                img = ImageGrab.grabclipboard()
+            except:
                 pass
-            file = None
+        pred = model(img)
+        output_prediction(pred, arguments)
