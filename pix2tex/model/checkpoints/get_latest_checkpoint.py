@@ -1,7 +1,5 @@
 import requests
 import os
-import tqdm
-import io
 
 from torch.hub import download_url_to_file, get_dir
 
@@ -17,14 +15,14 @@ def get_latest_tag():
 
 
 def download_checkpoints():
-    pix2tex_dir = os.path.join(get_dir(), 'pix2tex')
-    os.makedirs(pix2tex_dir, exist_ok=True)
+    checkpoints_dir = os.path.join(get_dir(), 'checkpoints')
+    os.makedirs(checkpoints_dir, exist_ok=True)
     tag = 'v0.0.1'  # get_latest_tag()
     weights = 'https://github.com/lukas-blecher/LaTeX-OCR/releases/download/%s/weights.pth' % tag
     resizer = 'https://github.com/lukas-blecher/LaTeX-OCR/releases/download/%s/image_resizer.pth' % tag
     cached_files = []
     for url in [weights, resizer]:
-        cached_file = os.path.join(pix2tex_dir, os.path.split(url)[-1])
+        cached_file = os.path.join(checkpoints_dir, os.path.split(url)[-1])
         if not os.path.exists(cached_file):
             download_url_to_file(url, cached_file)
         cached_files += [cached_file]
