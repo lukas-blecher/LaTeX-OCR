@@ -24,7 +24,7 @@ There are three ways to get a prediction from an image.
 
 2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
-    Under linux, it is possible to use the GUI with `gnome-screenshot` which comes with multiple monitor support. You just need to run `latexocr --gnome` (**Note:** you should install `gnome-screenshot` beforehand).
+    Under linux, it is possible to use the GUI with `gnome-screenshot` which comes with multiple monitor support if `gnome-screenshot` was installed beforehand.
 
     ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 

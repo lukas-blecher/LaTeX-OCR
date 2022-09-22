@@ -1,3 +1,4 @@
+from shutil import which
 import sys
 import os
 import tempfile
@@ -104,7 +105,7 @@ class App(QMainWindow):
     @pyqtSlot()
     def onClick(self):
         self.close()
-        if self.args.gnome:
+        if which('gnome-screenshot'):
             self.snip_using_gnome_screenshot()
         else:
             self.snipWidget.snip()

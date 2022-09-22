@@ -3,13 +3,20 @@ import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
 import os
+import sys
 from typing import Tuple
+import atexit
+from contextlib import suppress
 import logging
 import yaml
 import re
 
+with suppress(ImportError):
+    import readline
+
 import numpy as np
 import torch
+from torch._appdirs import user_data_dir
 from munch import Munch
 from transformers import PreTrainedTokenizerFast
 from timm.models.resnetv2 import ResNetV2
@@ -133,7 +140,28 @@ class LatexOCR:
 
 
 def output_prediction(pred, args):
-    print(pred, '\n')
+    TERM = os.getenv('TERM', 'xterm')
+    if not sys.stdout.isatty():
+        TERM = 'dumb'
+    try:
+        from pygments import highlight
+        from pygments.lexers import get_lexer_by_name
+        from pygments.formatters import get_formatter_by_name
+
+        if TERM.split('-')[-1] == '256color':
+            formatter_name = 'terminal256'
+        elif TERM != 'dumb':
+            formatter_name = 'terminal'
+        else:
+            formatter_name = None
+        if formatter_name:
+            formatter = get_formatter_by_name(formatter_name)
+            lexer = get_lexer_by_name('tex')
+            print(highlight(pred, lexer, formatter), end='')
+    except ImportError:
+        TERM = 'dumb'
+    if TERM == 'dumb':
+        print(pred)
     if args.show or args.katex:
         try:
             if args.katex:
@@ -150,11 +178,27 @@ def output_prediction(pred, args):
 
 
 def main(arguments):
+    path = user_data_dir('pix2tex')
+    os.makedirs(path, exist_ok=True)
+    history_file = os.path.join(path, 'history.txt')
+    with suppress(NameError):
+        # user can `ln -s /dev/null ~/.local/share/pix2tex/history.txt` to
+        # disable history record
+        with suppress(OSError):
+            readline.read_history_file(history_file)
+        atexit.register(readline.write_history_file, history_file)
     with in_model_path():
         model = LatexOCR(arguments)
         file = None
         while True:
-            instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+            try:
+                instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+            except KeyboardInterrupt:
+                # TODO: make the last line gray
+                print("")
+                continue
+            except EOFError:
+                break
             possible_file = instructions.strip()
             ins = possible_file.lower()
             if ins == 'x':
