@@ -2,11 +2,11 @@ import sys
 import os
 import tempfile
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QObject, Qt, pyqtSlot, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QShortcut,\
-    QPushButton, QTextEdit, QLineEdit, QFormLayout, QHBoxLayout, QCheckBox, QSpinBox, QDoubleSpinBox
+    QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
 from pix2tex.resources import resources
 from pynput.mouse import Controller
 
@@ -100,7 +100,6 @@ class App(QMainWindow):
         self.snipButton.setText(text)
         self.snipButton.clicked.disconnect()
         self.snipButton.clicked.connect(func)
-        self.displayPrediction()
 
     @pyqtSlot()
     def onClick(self):
@@ -299,6 +298,8 @@ class SnipWidget(QMainWindow):
 
 def main(arguments):
     with in_model_path():
+        if os.name != 'nt':
+            os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = '1'
         app = QApplication(sys.argv)
         ex = App(arguments)
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
