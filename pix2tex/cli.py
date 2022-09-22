@@ -3,8 +3,9 @@ import pandas.io.clipboard as clipboard
 from PIL import ImageGrab
 from PIL import Image
 import os
+from pathlib import Path
 import sys
-from typing import Tuple
+from typing import List, Optional, Tuple
 import atexit
 from contextlib import suppress
 import logging
@@ -105,9 +106,9 @@ class LatexOCR:
             img = None
         if img is None:
             if self.last_pic is None:
-                print('Provide an image.')
                 return ''
             else:
+                print('\nLast image is: ', end='')
                 img = self.last_pic.copy()
         else:
             self.last_pic = img.copy()
@@ -177,6 +178,36 @@ def output_prediction(pred, args):
             webbrowser.open(url)
 
 
+def predict(model, file, arguments):
+    img = None
+    if file:
+        try:
+            img = Image.open(os.path.expanduser(file))
+        except Exception as e:
+            print(e, end='')
+    else:
+        try:
+            img = ImageGrab.grabclipboard()
+        except NotImplementedError as e:
+            print(e, end='')
+    pred = model(img)
+    output_prediction(pred, arguments)
+
+def check_file_path(paths:List[Path], wdir:Optional[Path]=None)->List[str]:
+    files = []
+    for path in paths:
+        if type(path)==str:
+            if path=='':
+                continue
+            path=Path(path)
+        pathsi = ([path] if wdir is None else [path, wdir/path])
+        for p in pathsi:
+            if p.exists():
+                files.append(str(p.resolve()))
+            elif '*' in path.name:
+                files.extend([str(pi.resolve()) for pi in p.parent.glob(p.name)])
+    return list(set(files))
+
 def main(arguments):
     path = user_data_dir('pix2tex')
     os.makedirs(path, exist_ok=True)
@@ -187,20 +218,31 @@ def main(arguments):
         with suppress(OSError):
             readline.read_history_file(history_file)
         atexit.register(readline.write_history_file, history_file)
+    files = check_file_path(arguments.file)
+    wdir = Path(os.getcwd())
     with in_model_path():
         model = LatexOCR(arguments)
-        file = None
+        if files:
+            for file in check_file_path(arguments.file, wdir):
+                print(file + ': ', end='')
+                predict(model, file, arguments)
+                model.last_pic = None
+                with suppress(NameError):
+                    readline.add_history(file)
+            exit()
+        pat = re.compile(r't=([\.\d]+)')
         while True:
             try:
-                instructions = input('Predict LaTeX code for image ("?"/"h" for help). ')
+                instructions = input('Predict LaTeX code for image ("h" for help). ')
             except KeyboardInterrupt:
                 # TODO: make the last line gray
                 print("")
                 continue
             except EOFError:
                 break
-            possible_file = instructions.strip()
-            ins = possible_file.lower()
+            file = instructions.strip()
+            ins = file.lower()
+            t = pat.match(ins)
             if ins == 'x':
                 break
             elif ins in ['?', 'h', 'help']:
@@ -231,26 +273,18 @@ def main(arguments):
                 setattr(arguments, ins, not getattr(arguments, ins, False))
                 print('set %s to %s' % (ins, getattr(arguments, ins)))
                 continue
-            elif os.path.isfile(os.path.realpath(possible_file)):
-                file = possible_file
-            else:
-                t = re.match(r't=([\.\d]+)', ins)
-                if t is not None:
-                    t = t.groups()[0]
-                    model.args.temperature = float(t)+1e-8
-                    print('new temperature: T=%.3f' % model.args.temperature)
-                    continue
-            try:
-                img = None
-                if file:
-                    img = Image.open(file)
+            elif t is not None:
+                t = t.groups()[0]
+                model.args.temperature = float(t)+1e-8
+                print('new temperature: T=%.3f' % model.args.temperature)
+                continue
+            files = check_file_path(file.split(' '), wdir)
+            with suppress(KeyboardInterrupt):
+                if files:
+                    for file in files:
+                        if len(files)>1:
+                            print(file + ': ', end='')
+                        predict(model, file, arguments)
                 else:
-                    try:
-                        img = ImageGrab.grabclipboard()
-                    except:
-                        pass
-                pred = model(img)
-                output_prediction(pred, arguments)
-            except KeyboardInterrupt:
-                pass
+                    predict(model, file, arguments)
             file = None
