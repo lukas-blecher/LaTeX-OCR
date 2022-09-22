@@ -20,8 +20,10 @@ def main():
     import os
     import sys
 
+    print(arguments)
+
     name = os.path.split(sys.argv[0])[-1]
-    if arguments.gui or arguments.gnome or name in ['pix2tex_gui', 'latexocr']:
+    if arguments.gui or name in ['pix2tex_gui', 'latexocr']:
         from .gui import main
     else:
         from .cli import main
