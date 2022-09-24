@@ -276,10 +276,10 @@ class SnipWidget(QMainWindow):
         # account for retina display. #TODO how to check if device is actually using retina display
         factor = 2 if sys.platform == "darwin" else 1
 
-        x1 = int(min(startPos[0], endPos[0])*factor)
-        y1 = int(min(startPos[1], endPos[1])*factor)
-        x2 = int(max(startPos[0], endPos[0])*factor)
-        y2 = int(max(startPos[1], endPos[1])*factor)
+        x1 = int(min(startPos[0], endPos[0]))
+        y1 = int(min(startPos[1], endPos[1]))
+        x2 = int(max(startPos[0], endPos[0]))
+        y2 = int(max(startPos[1], endPos[1]))
 
         self.repaint()
         QApplication.processEvents()
@@ -296,6 +296,9 @@ class SnipWidget(QMainWindow):
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
         self.parent.returnSnip(img)
+        
+        
+        img.show() #this line is used only to check what part of the screen is captured. It can be deleted later
 
 
 def main(arguments):
