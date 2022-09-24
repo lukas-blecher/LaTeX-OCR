@@ -58,11 +58,19 @@ class App(QMainWindow):
         self.tempField.setSingleStep(0.1)
 
         # Create snip button
-        self.snipButton = QPushButton('Snip [Alt+S]', self)
-        self.snipButton.clicked.connect(self.onClick)
+        if sys.platform == "darwin":
+                self.snipButton = QPushButton('Snip [Option+S]', self)
+                self.snipButton.clicked.connect(self.onClick) 
+        else:
+                self.snipButton = QPushButton('Snip [Alt+S]', self)
+                self.snipButton.clicked.connect(self.onClick)
 
-        self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
-        self.shortcut.activated.connect(self.onClick)
+        if sys.platform == "darwin":
+                self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
+                self.shortcut.activated.connect(self.onClick)
+        else:
+                self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
+                self.shortcut.activated.connect(self.onClick)
 
         # Create retry button
         self.retryButton = QPushButton('Retry', self)
