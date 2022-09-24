@@ -102,7 +102,10 @@ class App(QMainWindow):
             text = 'Interrupt'
             func = self.interrupt
         else:
-            text = 'Snip [Alt+S]'
+            if sys.platform == "darwin":
+                text = 'Snip [Option+S]'
+            else: 
+                text = 'Snip [Alt+S]'
             func = self.onClick
             self.retryButton.setEnabled(True)
         self.shortcut.setEnabled(not self.isProcessing)
