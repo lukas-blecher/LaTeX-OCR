@@ -296,6 +296,7 @@ class SnipWidget(QMainWindow):
                 img = ImageGrab.grab(bbox=(x1//self.args.factor, y1//self.args.factor, x2//self.args.factor, y2//self.args.factor), all_screens=True)
             else:
                 raise e
+        img.show()
         QApplication.processEvents()
 
         self.close()
