@@ -65,12 +65,8 @@ class App(QMainWindow):
                 self.snipButton = QPushButton('Snip [Alt+S]', self)
                 self.snipButton.clicked.connect(self.onClick)
 
-        if sys.platform == "darwin":
-                self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
-                self.shortcut.activated.connect(self.onClick)
-        else:
-                self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
-                self.shortcut.activated.connect(self.onClick)
+        self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
+        self.shortcut.activated.connect(self.onClick)
 
         # Create retry button
         self.retryButton = QPushButton('Retry', self)
