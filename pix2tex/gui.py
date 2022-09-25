@@ -296,10 +296,6 @@ class SnipWidget(QMainWindow):
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
         self.parent.returnSnip(img)
-        
-        
-        img.show() #this line is used only to check what part of the screen is captured. It can be deleted later
-
 
 def main(arguments):
     with in_model_path():
