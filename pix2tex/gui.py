@@ -101,6 +101,7 @@ class App(QMainWindow):
         self.snipButton.setText(text)
         self.snipButton.clicked.disconnect()
         self.snipButton.clicked.connect(func)
+        self.displayPrediction() 
 
     @pyqtSlot()
     def onClick(self):
