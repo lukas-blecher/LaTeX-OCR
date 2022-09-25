@@ -29,7 +29,7 @@ class App(QMainWindow):
         self.args = args
         self.model = cli.LatexOCR(self.args)
         self.initUI()
-        self.snipWidget = SnipWidget(self)
+        self.snipWidget = SnipWidget(self, args.factor)
         self.show()
 
     def initUI(self):
@@ -220,9 +220,10 @@ class ModelThread(QThread):
 class SnipWidget(QMainWindow):
     isSnipping = False
 
-    def __init__(self, parent):
+    def __init__(self, parent, factor=1):
         super().__init__()
         self.parent = parent
+        self.factor = factor
 
         monitos = get_monitors()
         bboxes = np.array([[m.x, m.y, m.width, m.height] for m in monitos])
@@ -282,10 +283,10 @@ class SnipWidget(QMainWindow):
         endPos = self.mouse.position
         # account for retina display. 
 
-        x1 = int(min(startPos[0], endPos[0])*self.args.factor)
-        y1 = int(min(startPos[1], endPos[1])*self.args.factor)
-        x2 = int(max(startPos[0], endPos[0])*self.args.factor)
-        y2 = int(max(startPos[1], endPos[1])*self.args.factor)
+        x1 = int(min(startPos[0], endPos[0])*self.factor)
+        y1 = int(min(startPos[1], endPos[1])*self.factor)
+        x2 = int(max(startPos[0], endPos[0])*self.factor)
+        y2 = int(max(startPos[1], endPos[1])*self.factor)
 
         self.repaint()
         QApplication.processEvents()
@@ -293,7 +294,7 @@ class SnipWidget(QMainWindow):
             img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
         except Exception as e:
             if sys.platform == "darwin":
-                img = ImageGrab.grab(bbox=(x1//self.args.factor, y1//self.args.factor, x2//self.args.factor, y2//self.args.factor), all_screens=True)
+                img = ImageGrab.grab(bbox=(x1//self.factor, y1//self.factor, x2//self.factor, y2//self.factor), all_screens=True)
             else:
                 raise e
         img.show()
