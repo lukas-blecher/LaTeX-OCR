@@ -16,6 +16,7 @@ import numpy as np
 from screeninfo import get_monitors
 from pix2tex import cli
 from pix2tex.utils import in_model_path
+import pyperclip
 
 QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
@@ -211,6 +212,7 @@ class ModelThread(QThread):
             # replace <, > with \lt, \gt so it won't be interpreted as html code
             prediction = prediction.replace('<', '\\lt ').replace('>', '\\gt ')
             self.finished.emit({"success": True, "prediction": prediction})
+            pyperclip.copy(prediction)
         except Exception as e:
             import traceback
             traceback.print_exc()
