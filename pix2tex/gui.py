@@ -17,10 +17,6 @@ from screeninfo import get_monitors
 from pix2tex import cli
 from pix2tex.utils import in_model_path
 
-QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-
-
 class App(QMainWindow):
     isProcessing = False
 
