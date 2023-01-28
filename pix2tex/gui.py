@@ -5,10 +5,8 @@ import tempfile
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
     QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
-from pix2tex.resources import resources
 from pynput.mouse import Controller
 
 from PIL import ImageGrab, Image
@@ -17,6 +15,7 @@ from screeninfo import get_monitors
 from pix2tex import cli
 from pix2tex.utils import in_model_path
 
+import pix2tex.resources.resources
 class App(QMainWindow):
     isProcessing = False
 
@@ -233,8 +232,8 @@ class SnipWidget(QMainWindow):
 
     def snip(self):
         self.isSnipping = True
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CrossCursor))
+        self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
 
         self.show()
 
