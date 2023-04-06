@@ -12,7 +12,7 @@ import logging
 import yaml
 import re
 
-with suppress(ImportError):
+with suppress(ImportError, AttributeError):
     import readline
 
 import numpy as np
