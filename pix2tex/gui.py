@@ -2,13 +2,11 @@ from shutil import which
 import sys
 import os
 import tempfile
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QThread
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, QShortcut,\
+from PyQt6 import QtCore, QtGui
+from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
     QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
-from pix2tex.resources import resources
 from pynput.mouse import Controller
 
 from PIL import ImageGrab, Image
@@ -17,10 +15,7 @@ from screeninfo import get_monitors
 from pix2tex import cli
 from pix2tex.utils import in_model_path
 
-QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-
-
+import pix2tex.resources.resources
 class App(QMainWindow):
     isProcessing = False
 
@@ -65,7 +60,7 @@ class App(QMainWindow):
                 self.snipButton = QPushButton('Snip [Alt+S]', self)
                 self.snipButton.clicked.connect(self.onClick)
 
-        self.shortcut = QShortcut(QKeySequence("Alt+S"), self)
+        self.shortcut = QtGui.QShortcut(QtGui.QKeySequence('Alt+S'), self)
         self.shortcut.activated.connect(self.onClick)
 
         # Create retry button
@@ -237,8 +232,8 @@ class SnipWidget(QMainWindow):
 
     def snip(self):
         self.isSnipping = True
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CrossCursor))
+        self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
 
         self.show()
 
