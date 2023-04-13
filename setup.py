@@ -66,6 +66,7 @@ setuptools.setup(
         'pandas>=1.0.0',
         'timm==0.5.4',
         'albumentations>=0.5.2',
+        'pyreadline3>=3.4.1; platform_system=="Windows"',
     ],
     extras_require={
         'all': gui+api+train+highlight,
