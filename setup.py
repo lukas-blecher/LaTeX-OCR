@@ -10,6 +10,7 @@ long_description = (this_directory / 'README.md').read_text(encoding='utf-8')
 gui = [
     'PyQt6',
     'PyQt6-WebEngine',
+    'pyside6',
     'pynput',
     'screeninfo',
 ]
@@ -28,7 +29,7 @@ highlight = ['pygments']
 
 setuptools.setup(
     name='pix2tex',
-    version='0.0.29',
+    version='0.0.31',
     description='pix2tex: Using a ViT to convert images of equations into LaTeX code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
