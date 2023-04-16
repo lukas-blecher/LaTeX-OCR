@@ -160,7 +160,7 @@ class App(QMainWindow):
             msg = QMessageBox()
             msg.setWindowTitle(" ")
             msg.setText("Prediction failed.")
-            msg.exec_()
+            msg.exec()
 
     def displayPrediction(self, prediction=None):
         if self.isProcessing:
