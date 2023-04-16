@@ -1,4 +1,6 @@
 from shutil import which
+import io
+import subprocess
 import sys
 import os
 import tempfile
@@ -54,11 +56,11 @@ class App(QMainWindow):
 
         # Create snip button
         if sys.platform == "darwin":
-                self.snipButton = QPushButton('Snip [Option+S]', self)
-                self.snipButton.clicked.connect(self.onClick) 
+            self.snipButton = QPushButton('Snip [Option+S]', self)
+            self.snipButton.clicked.connect(self.onClick)
         else:
-                self.snipButton = QPushButton('Snip [Alt+S]', self)
-                self.snipButton.clicked.connect(self.onClick)
+            self.snipButton = QPushButton('Snip [Alt+S]', self)
+            self.snipButton.clicked.connect(self.onClick)
 
         self.shortcut = QtGui.QShortcut(QtGui.QKeySequence('Alt+S'), self)
         self.shortcut.activated.connect(self.onClick)
@@ -95,7 +97,7 @@ class App(QMainWindow):
         else:
             if sys.platform == "darwin":
                 text = 'Snip [Option+S]'
-            else: 
+            else:
                 text = 'Snip [Alt+S]'
             func = self.onClick
             self.retryButton.setEnabled(True)
@@ -103,13 +105,15 @@ class App(QMainWindow):
         self.snipButton.setText(text)
         self.snipButton.clicked.disconnect()
         self.snipButton.clicked.connect(func)
-        self.displayPrediction() 
+        self.displayPrediction()
 
     @pyqtSlot()
     def onClick(self):
         self.close()
         if which('gnome-screenshot'):
             self.snip_using_gnome_screenshot()
+        elif which('grim') and which('slurp'):
+            self.snip_using_grim()
         else:
             self.snipWidget.snip()
 
@@ -123,12 +127,29 @@ class App(QMainWindow):
     def snip_using_gnome_screenshot(self):
         try:
             with tempfile.NamedTemporaryFile() as tmp:
-                os.system(f"gnome-screenshot --area --file={tmp.name}")
+                subprocess.run(["gnome-screenshot", "--area", f"--file={tmp.name}"])
                 # Use `tmp.name` instead of `tmp.file` due to compatability issues between Pillow and tempfile
                 self.returnSnip(Image.open(tmp.name))
         except:
             print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
             print("If you don't have gnome-screenshot installed, please install it.")
+            self.returnSnip()
+
+    def snip_using_grim(self):
+        try:
+            p = subprocess.run('slurp',
+                               check=True,
+                               capture_output=True,
+                               text=True)
+            geometry = p.stdout.strip()
+
+            p = subprocess.run(['grim', '-g', geometry, '-'],
+                               check=True,
+                               capture_output=True)
+            self.returnSnip(Image.open(io.BytesIO(p.stdout)))
+        except:
+            print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
+            print("If you don't have slurp and grim installed, please install them.")
             self.returnSnip()
 
     def returnSnip(self, img=None):
