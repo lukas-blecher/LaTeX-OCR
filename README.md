@@ -46,6 +46,16 @@ There are three ways to get a prediction from an image.
     ```
     and navigate to http://localhost:8501/
 
+4. Use from within Python
+    ```python
+    from PIL import Image
+    from pix2tex.cli import LatexOCR
+    
+    img = Image.open('path/to/image.png')
+    model = LatexOCR()
+    print(model(img))
+    ```
+
 The model works best with images of smaller resolution. That's why I added a preprocessing step where another neural network predicts the optimal resolution of the input image. This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. Still it's not perfect and might not be able to handle huge images optimally, so don't zoom in all the way before taking a picture. 
 
 Always double check the result carefully. You can try to redo the prediction with an other resolution if the answer was wrong.
