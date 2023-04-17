@@ -5,9 +5,10 @@ import sys
 import os
 import tempfile
 from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QTimer
+from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget,\
+from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, \
     QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
 from pynput.mouse import Controller
 
@@ -251,6 +252,25 @@ class SnipWidget(QMainWindow):
 
         self.mouse = Controller()
 
+        # Create and start the timer
+        self.factor = QGuiApplication.primaryScreen().devicePixelRatio()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_geometry_based_on_cursor_position)
+        self.timer.start(500)
+
+    def update_geometry_based_on_cursor_position(self):
+        if not self.isSnipping:
+            return
+
+        # Update the geometry of the SnipWidget based on the current screen
+        mouse_pos = QtGui.QCursor.pos()
+        screen = QGuiApplication.screenAt(mouse_pos)
+        if screen:
+            self.factor = screen.devicePixelRatio()
+            screen_geometry = screen.geometry()
+            self.setGeometry(screen_geometry)
+
+
     def snip(self):
         self.isSnipping = True
         self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
@@ -273,7 +293,7 @@ class SnipWidget(QMainWindow):
         qp.drawRect(QtCore.QRect(self.begin, self.end))
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key.Key_Escape.value:
             QApplication.restoreOverrideCursor()
             self.close()
             self.parent.show()
@@ -296,8 +316,6 @@ class SnipWidget(QMainWindow):
 
         startPos = self.startPos
         endPos = self.mouse.position
-        # account for retina display. #TODO how to check if device is actually using retina display
-        factor = 2 if sys.platform == "darwin" else 1
 
         x1 = int(min(startPos[0], endPos[0]))
         y1 = int(min(startPos[1], endPos[1]))
@@ -310,7 +328,8 @@ class SnipWidget(QMainWindow):
             img = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
         except Exception as e:
             if sys.platform == "darwin":
-                img = ImageGrab.grab(bbox=(x1//factor, y1//factor, x2//factor, y2//factor), all_screens=True)
+                img = ImageGrab.grab(bbox=(x1//self.factor, y1//self.factor,
+                                           x2//self.factor, y2//self.factor), all_screens=True)
             else:
                 raise e
         QApplication.processEvents()
