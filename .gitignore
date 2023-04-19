@@ -139,4 +139,4 @@ pix2tex/model/checkpoints/**
 .vscode
 .DS_Store
 test/*
-
+*.prf
