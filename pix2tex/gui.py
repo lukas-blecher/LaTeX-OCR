@@ -111,7 +111,13 @@ class App(QMainWindow):
     @pyqtSlot()
     def onClick(self):
         self.close()
-        if which('gnome-screenshot'):
+        if os.environ.get('SCREENSHOT_TOOL') == "gnome-screenshot":
+            self.snip_using_gnome_screenshot()
+        elif os.environ.get('SCREENSHOT_TOOL') == "grim":
+            self.snip_using_grim()
+        elif os.environ.get('SCREENSHOT_TOOL') == "pil":
+            self.snipWidget.snip()
+        elif which('gnome-screenshot'):
             self.snip_using_gnome_screenshot()
         elif which('grim') and which('slurp'):
             self.snip_using_grim()
