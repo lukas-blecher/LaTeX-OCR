@@ -2,7 +2,7 @@
 
 from http import HTTPStatus
 from fastapi import FastAPI, File, UploadFile, Form
-from PIL import Image
+from PIL import Image, ImageGrab
 from io import BytesIO
 from pix2tex.cli import LatexOCR
 
@@ -62,3 +62,14 @@ async def predict_from_bytes(file: bytes = File(...)) -> str:  # , size: str = F
     #size = tuple(int(a) for a in size.split(','))
     image = Image.open(BytesIO(file))
     return model(image, resize=False)
+
+@app.post("/clipboard/")
+async def clipboard() -> str:
+    """Predict the Latex code from clipboard contents.
+
+    Returns:
+        str: Latex prediction
+    """
+    global model
+    image = ImageGrab.grabclipboard()
+    return model(image)
