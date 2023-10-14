@@ -11,6 +11,7 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, \
     QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
 from pynput.mouse import Controller
+from pynput.keyboard import Listener, HotKey
 
 from PIL import ImageGrab, Image
 import numpy as np
@@ -21,6 +22,7 @@ from pix2tex.utils import in_model_path
 import pix2tex.resources.resources
 class App(QMainWindow):
     isProcessing = False
+    hotkey_signal = pyqtSignal()
 
     def __init__(self, args=None):
         super().__init__()
@@ -28,6 +30,7 @@ class App(QMainWindow):
         self.model = cli.LatexOCR(self.args)
         self.initUI()
         self.snipWidget = SnipWidget(self)
+        self.hotkey_signal.connect(self.onClick)
         self.show()
 
     def initUI(self):
@@ -63,8 +66,6 @@ class App(QMainWindow):
             self.snipButton = QPushButton('Snip [Alt+S]', self)
             self.snipButton.clicked.connect(self.onClick)
 
-        self.shortcut = QtGui.QShortcut(QtGui.QKeySequence('Alt+S'), self)
-        self.shortcut.activated.connect(self.onClick)
 
         # Create retry button
         self.retryButton = QPushButton('Retry', self)
@@ -86,6 +87,22 @@ class App(QMainWindow):
         settings = QFormLayout()
         settings.addRow('Temperature:', self.tempField)
         lay.addLayout(settings)
+        
+    def hotkey(self):
+        def on_activate():
+            self.hotkey_signal.emit()
+        
+        def for_canonical(f):
+            return lambda k: f(l.canonical(k))
+
+        hotkey = HotKey(
+            HotKey.parse('<alt>+s'),
+            on_activate)
+        l = Listener(
+                on_press=for_canonical(hotkey.press),
+                on_release=for_canonical(hotkey.release)
+        )
+        l.start()
 
     def toggleProcessing(self, value=None):
         if value is None:
@@ -102,7 +119,6 @@ class App(QMainWindow):
                 text = 'Snip [Alt+S]'
             func = self.onClick
             self.retryButton.setEnabled(True)
-        self.shortcut.setEnabled(not self.isProcessing)
         self.snipButton.setText(text)
         self.snipButton.clicked.disconnect()
         self.snipButton.clicked.connect(func)
@@ -351,4 +367,5 @@ def main(arguments):
             os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = '1'
         app = QApplication(sys.argv)
         ex = App(arguments)
+        ex.hotkey()
         sys.exit(app.exec())
