@@ -31,6 +31,7 @@ class App(QMainWindow):
         self.initUI()
         self.snipWidget = SnipWidget(self)
         self.hotkey_signal.connect(self.onClick)
+        self.clipboard = QApplication.clipboard()
         self.show()
 
     def initUI(self):
@@ -199,6 +200,8 @@ class App(QMainWindow):
         if success:
             self.displayPrediction(prediction)
             self.retryButton.setEnabled(True)
+            self.clipboard.setText(prediction)
+            
         else:
             self.webView.setHtml("")
             msg = QMessageBox()
