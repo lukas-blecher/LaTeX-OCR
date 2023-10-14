@@ -91,7 +91,8 @@ class App(QMainWindow):
         
     def hotkey(self):
         def on_activate():
-            self.hotkey_signal.emit()
+            if not self.isProcessing:
+                self.hotkey_signal.emit()
         
         def for_canonical(f):
             return lambda k: f(l.canonical(k))
