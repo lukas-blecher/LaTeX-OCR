@@ -224,7 +224,8 @@ def main(arguments):
         model = LatexOCR(arguments)
         if files:
             for file in check_file_path(arguments.file, wdir):
-                print(file + ': ', end='')
+                if len(files)>1:
+                    print(file + ': ', end='')
                 predict(model, file, arguments)
                 model.last_pic = None
                 with suppress(NameError):
