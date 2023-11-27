@@ -5,7 +5,7 @@ import sys
 import os
 import tempfile
 from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QTimer
+from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QTimer, QEvent
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, \
@@ -19,6 +19,26 @@ from pix2tex import cli
 from pix2tex.utils import in_model_path
 
 import pix2tex.resources.resources
+
+ACCEPTED_IMAGE_SUFFIX = ['png', 'jpg', 'jpeg']
+
+
+class WebView(QWebEngineView):
+    def __init__(self, app) -> None:
+        super().__init__()
+        self.setAcceptDrops(True)
+        self._app = app
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().urls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        urls = event.mimeData().urls()
+        self._app.returnFromMimeData(urls)
+
 class App(QMainWindow):
     isProcessing = False
 
@@ -40,7 +60,8 @@ class App(QMainWindow):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         # Create LaTeX display
-        self.webView = QWebEngineView()
+        # self.webView = QWebEngineView()
+        self.webView = WebView(self)
         self.webView.setHtml("")
         self.webView.setMinimumHeight(80)
 
@@ -87,6 +108,8 @@ class App(QMainWindow):
         settings.addRow('Temperature:', self.tempField)
         lay.addLayout(settings)
 
+        self.installEventFilter(self)
+
     def toggleProcessing(self, value=None):
         if value is None:
             self.isProcessing = not self.isProcessing
@@ -107,6 +130,18 @@ class App(QMainWindow):
         self.snipButton.clicked.disconnect()
         self.snipButton.clicked.connect(func)
         self.displayPrediction()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.KeyRelease:
+            if event.key() == Qt.Key.Key_V and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+                clipboard = QApplication.clipboard()
+                img = clipboard.image()
+                if not img.isNull():
+                    self.returnSnip(Image.fromqimage(img))
+                else:
+                    self.returnFromMimeData(clipboard.mimeData().urls())
+
+        return super().eventFilter(obj, event)
 
     @pyqtSlot()
     def onClick(self):
@@ -158,6 +193,15 @@ class App(QMainWindow):
             print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
             print("If you don't have slurp and grim installed, please install them.")
             self.returnSnip()
+
+    def returnFromMimeData(self, urls):
+        if not urls or not urls[0]:
+            return
+
+        image_url = urls[0]
+        if image_url and image_url.scheme() == 'file' and image_url.fileName().split('.')[-1] in ACCEPTED_IMAGE_SUFFIX:
+            image_path = image_url.toLocalFile()
+            return self.returnSnip(Image.open(image_path))
 
     def returnSnip(self, img=None):
         self.toggleProcessing(True)
