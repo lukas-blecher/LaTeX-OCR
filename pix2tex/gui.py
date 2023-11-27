@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout,
     QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
 from pynput.mouse import Controller
 
-from PIL import ImageGrab, Image
+from PIL import ImageGrab, Image, ImageEnhance
 import numpy as np
 from screeninfo import get_monitors
 from pix2tex import cli
@@ -162,6 +162,24 @@ class App(QMainWindow):
     def returnSnip(self, img=None):
         self.toggleProcessing(True)
         self.retryButton.setEnabled(False)
+
+        if img:
+            width, height = img.size
+            if width <= 0 or height <= 0:
+                self.toggleProcessing(False)
+                self.retryButton.setEnabled(True)
+                self.show()
+                return
+
+            if width < 100 or height < 100: # too small size will make OCR wrong
+                scale_factor = max(100 / width, 100 / height)
+                new_width = int(width * scale_factor)
+                new_height = int(height * scale_factor)
+                img = img.resize((new_width,new_height), Image.Resampling.LANCZOS)
+                contrast = ImageEnhance.Contrast(img)
+                img = contrast.enhance(1.5)
+                sharpness = ImageEnhance.Sharpness(img)
+                img = sharpness.enhance(1.5)
 
         self.show()
         try:
