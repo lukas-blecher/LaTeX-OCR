@@ -13,6 +13,7 @@ gui = [
     'pyside6',
     'pynput',
     'screeninfo',
+    'latex2sympy2',
 ]
 api = [
     'streamlit>=1.8.1',
