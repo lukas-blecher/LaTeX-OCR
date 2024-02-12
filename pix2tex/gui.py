@@ -113,6 +113,8 @@ class App(QMainWindow):
         self.close()
         if os.environ.get('SCREENSHOT_TOOL') == "gnome-screenshot":
             self.snip_using_gnome_screenshot()
+        elif os.environ.get('SCREENSHOT_TOOL') == "spectacle":
+            self.snip_using_spectacle()
         elif os.environ.get('SCREENSHOT_TOOL') == "grim":
             self.snip_using_grim()
         elif os.environ.get('SCREENSHOT_TOOL') == "pil":
@@ -140,6 +142,16 @@ class App(QMainWindow):
         except:
             print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
             print("If you don't have gnome-screenshot installed, please install it.")
+            self.returnSnip()
+
+    def snip_using_spectacle(self):
+        try:
+            with tempfile.NamedTemporaryFile() as tmp:
+                subprocess.run(["spectacle", "-r", "-b", "-n", "-o", f"{tmp.name}"])
+                self.returnSnip(Image.open(tmp.name))
+        except:
+            print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
+            print("If you don't have spectacle installed, please install it.")
             self.returnSnip()
 
     def snip_using_grim(self):
