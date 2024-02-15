@@ -140,3 +140,5 @@ pix2tex/model/checkpoints/**
 .DS_Store
 test/*
 
+resources/
+resources/*
