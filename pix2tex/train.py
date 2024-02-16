@@ -71,9 +71,11 @@ def train(args):
             if (e+1) % args.save_freq == 0:
                 save_models(e, step=len(dataloader))
             if args.wandb:
+                # TODO: here we can add more metrics to log
                 wandb.log({'train/epoch': e+1})
     except KeyboardInterrupt:
         if e >= 2:
+            # save the model if we have trained for more than 2 epochs
             save_models(e, step=i)
         raise KeyboardInterrupt
     save_models(e, step=len(dataloader))
