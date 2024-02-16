@@ -43,7 +43,7 @@ pad: false
 pad_token: 0
 patch_size: 16
 sample_freq: 3000
-save_freq: 5
+save_freq: 50
 scheduler: StepLR
 seed: 42
 encoder_structure: hybrid

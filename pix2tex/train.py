@@ -54,7 +54,8 @@ def train(args):
                     total_loss = 0
                     for j in range(0, len(im), microbatch):
                         tgt_seq, tgt_mask = seq['input_ids'][j:j+microbatch].to(device), seq['attention_mask'][j:j+microbatch].bool().to(device)
-                        loss = model.data_parallel(im[j:j+microbatch].to(device), device_ids=args.gpu_devices, tgt_seq=tgt_seq, mask=tgt_mask)*microbatch/args.batchsize
+                        loss = model.data_parallel(im[j:j+microbatch].to(device),
+                                                    device_ids=args.gpu_devices, tgt_seq=tgt_seq, mask=tgt_mask)*microbatch/args.batchsize
                         loss.backward()  # data parallism loss is a vector
                         total_loss += loss.item()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
@@ -67,6 +68,13 @@ def train(args):
                     bleu_score, edit_distance, token_accuracy = evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
                     if bleu_score > max_bleu and token_accuracy > max_token_acc:
                         max_bleu, max_token_acc = bleu_score, token_accuracy
+                        # log into wandb
+                        if args.wandb:
+                            wandb.log({'val/bleu': bleu_score,
+                                       'val/edit_distance': edit_distance,
+                                       'val/token_accuracy': token_accuracy})
+                        # save the model if BLEU performance is better
+                        # ensures we end up saving hte best model
                         save_models(e, step=i)
             if (e+1) % args.save_freq == 0:
                 save_models(e, step=len(dataloader))
@@ -78,6 +86,7 @@ def train(args):
             # save the model if we have trained for more than 2 epochs
             save_models(e, step=i)
         raise KeyboardInterrupt
+    # save the model at the end of training, ensures we save the last model
     save_models(e, step=len(dataloader))
 
 

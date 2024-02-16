@@ -142,3 +142,10 @@ test/*
 
 resources/
 resources/*
+
+pix2tex/dataset/CROHME/
+pix2tex/dataset/CROHME/*
+pix2tex/dataset/formulae/
+pix2tex/dataset/formulae/*
+pix2tex/dataset/handwritten/
+pix2tex/dataset/handwritten/*
