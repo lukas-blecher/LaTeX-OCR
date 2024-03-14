@@ -151,3 +151,6 @@ pix2tex/dataset/handwritten/*
 
 # remove all zip files
 *.zip
+
+*.png
+notebooks/visuals/comparison-mergedexample.png
