@@ -35,7 +35,7 @@ class Im2LatexDataset:
     data = defaultdict(lambda: [])
 
     def __init__(self, equations=None, images=None, tokenizer=None, shuffle=True, batchsize=16, max_seq_len=1024,
-                 max_dimensions=(1024, 512), min_dimensions=(32, 32), pad=False, keep_smaller_batches=False, test=False):
+                 max_dimensions=(1024, 512), min_dimensions=(32, 32), pad=True, keep_smaller_batches=False, test=False):
         """Generates a torch dataset from pairs of `equations` and `images`.
 
         Args:

@@ -27,6 +27,7 @@ from pix2tex.dataset.latex2png import tex2pil
 from pix2tex.models import get_model
 from pix2tex.utils import *
 from pix2tex.model.checkpoints.get_latest_checkpoint import download_checkpoints
+from pix2tex.eval import detokenize
 
 
 def minmax_size(img: Image, max_dimensions: Tuple[int, int] = None, min_dimensions: Tuple[int, int] = None) -> Image:
@@ -134,11 +135,61 @@ class LatexOCR:
 
         dec = self.model.generate(im.to(self.args.device), temperature=self.args.get('temperature', .25))
         pred = post_process(token2str(dec, self.tokenizer)[0])
-        try:
-            clipboard.copy(pred)
-        except:
-            pass
+        # try:
+        #     clipboard.copy(pred)
+        # except:
+        #     pass
         return pred
+    
+    @in_model_path()
+    def get_tokenized_prediction(self, tokenizer, label, resize=True):
+        """Get a prediction from an image
+
+        Args:
+            img (Image, optional): Image to predict. Defaults to None.
+            resize (bool, optional): Whether to call the resize model. Defaults to True.
+
+        Returns:
+            str: predicted Latex code
+        """
+        if type(img) is bool:
+            img = None
+        if img is None:
+            if self.last_pic is None:
+                return ''
+            else:
+                print('\nLast image is: ', end='')
+                img = self.last_pic.copy()
+        else:
+            self.last_pic = img.copy()
+        img = minmax_size(pad(img), self.args.max_dimensions, self.args.min_dimensions)
+        if (self.image_resizer is not None and not self.args.no_resize) and resize:
+            with torch.no_grad():
+                input_image = img.convert('RGB').copy()
+                r, w, h = 1, input_image.size[0], input_image.size[1]
+                for _ in range(10):
+                    h = int(h * r)  # height to resize
+                    img = pad(minmax_size(input_image.resize((w, h), Image.Resampling.BILINEAR if r > 1 else Image.Resampling.LANCZOS), self.args.max_dimensions, self.args.min_dimensions))
+                    t = test_transform(image=np.array(img.convert('RGB')))['image'][:1].unsqueeze(0)
+                    w = (self.image_resizer(t.to(self.args.device)).argmax(-1).item()+1)*32
+                    logging.info(r, img.size, (w, int(input_image.size[1]*r)))
+                    if (w == img.size[0]):
+                        break
+                    r = w/img.size[0]
+        else:
+            img = np.array(pad(img).convert('RGB'))
+            t = test_transform(image=img)['image'][:1].unsqueeze(0)
+        im = t.to(self.args.device)
+
+        dec = self.model.generate(im.to(self.args.device), temperature=self.args.get('temperature', .25))
+        pred = detokenize(dec, tokenizer)
+        truth = detokenize(label, tokenizer)
+        # try:
+        #     clipboard.copy(pred)
+        # except:
+        #     pass
+        return dec, pred, truth
+        
 
 
 def output_prediction(pred, args):

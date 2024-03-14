@@ -151,3 +151,9 @@ pix2tex/dataset/handwritten/*
 
 # remove all zip files
 *.zip
+
+# remove all images
+*.png
+pix2tex/dataset/multiline/train/*.png
+pix2tex/dataset/multiline/val/*.png
+pix2tex/dataset/multiline/test/*.png

@@ -96,6 +96,73 @@ def evaluate(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: i
     return bleu_score, edit_distance, token_accuracy
 
 
+@torch.no_grad()
+def evaluate_everything(model: Model, dataset: Im2LatexDataset, args: Munch, num_batches: int = None, name: str = 'test'):
+    """evaluates the model. Returns bleu score on the dataset
+
+    Args:
+        model (torch.nn.Module): the model
+        dataset (Im2LatexDataset): test dataset
+        args (Munch): arguments
+        num_batches (int): How many batches to evaluate on. Defaults to None (all batches).
+        name (str, optional): name of the test e.g. val or test for wandb. Defaults to 'test'.
+
+    Returns:
+        Tuple[float, float, float]: BLEU score of validation set, normed edit distance, token accuracy
+    """
+    assert len(dataset) > 0
+    device = args.device
+    log = {}
+    bleus, edit_dists, token_acc = [], [], []
+    bleu_score, edit_distance, token_accuracy = 0, 1, 0
+    pbar = tqdm(enumerate(iter(dataset)), total=len(dataset))
+    failure_count = 0
+    for i, (seq, im) in pbar:
+        if seq is None or im is None:
+            continue
+        #loss = decoder(tgt_seq, mask=tgt_mask, context=encoded)
+        try:
+            dec = model.generate(im.to(device), temperature=args.get('temperature', .2))
+            pred = detokenize(dec, dataset.tokenizer)
+            truth = detokenize(seq['input_ids'], dataset.tokenizer)
+            
+            bleus.append(metrics.bleu_score(pred, [alternatives(x) for x in truth]))
+            for predi, truthi in zip(token2str(dec, dataset.tokenizer), token2str(seq['input_ids'], dataset.tokenizer)):
+                ts = post_process(truthi)
+                if len(ts) > 0:
+                    edit_dists.append(distance(post_process(predi), ts)/len(ts))
+            dec = dec.cpu()
+            tgt_seq = seq['input_ids'][:, 1:]
+            shape_diff = dec.shape[1]-tgt_seq.shape[1]
+            if shape_diff < 0:
+                dec = torch.nn.functional.pad(dec, (0, -shape_diff), "constant", args.pad_token)
+            elif shape_diff > 0:
+                tgt_seq = torch.nn.functional.pad(tgt_seq, (0, shape_diff), "constant", args.pad_token)
+            mask = torch.logical_or(tgt_seq != args.pad_token, dec != args.pad_token)
+            tok_acc = (dec == tgt_seq)[mask].float().mean().item()
+            token_acc.append(tok_acc)
+            pbar.set_description('BLEU: %.3f, ED: %.2e, ACC: %.3f' % (np.mean(bleus), np.mean(edit_dists), np.mean(token_acc)))
+            if num_batches is not None and i >= num_batches:
+                break
+        except:
+            failure_count += 1
+            continue
+
+    if len(bleus) > 0:
+        bleu_score = np.mean(bleus)
+        log[name+'/bleu'] = bleu_score
+    if len(edit_dists) > 0:
+        edit_distance = np.mean(edit_dists)
+        log[name+'/edit_distance'] = edit_distance
+    if len(token_acc) > 0:
+        token_accuracy = np.mean(token_acc)
+        log[name+'/token_acc'] = token_accuracy
+    else:
+        print('\n%s\n%s' % (truth, pred))
+        print('BLEU: %.2f' % bleu_score)
+    return bleu_score, edit_distance, token_accuracy, failure_count, bleus, edit_dists, token_acc
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test model')
     parser.add_argument('--config', default=None, help='path to yaml config file', type=str)
