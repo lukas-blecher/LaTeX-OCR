@@ -1,5 +1,5 @@
-gpu_devices: null #[0,1,2,3,4,5,6,7]
-device: mps
+gpu_devices: 0 #[0,1,2,3,4,5,6,7]
+device: cuda
 backbone_layers:
   - 2
   - 3
@@ -7,10 +7,10 @@ backbone_layers:
 betas:
   - 0.9
   - 0.999
-batchsize: 8
+batchsize: 32
 bos_token: 1
 channels: 1
-data: dataset/multiline/train_dataset.pkl
+data: train_dataset.pkl
 debug: false
 decoder_args:
   attn_on_attn: true
@@ -25,7 +25,7 @@ epochs: 10
 gamma: 0.9995
 heads: 8
 id: null
-load_chkpt: pix2tex/model/checkpoints/multiline/colab_multiline_train_e01_step199.pth
+load_chkpt: weights.pth
 lr: 0.001
 lr_step: 30
 max_height: 192
@@ -35,7 +35,7 @@ micro_batchsize: -1
 min_height: 32
 min_width: 32
 model_path: multiline_checkpoints
-name: local_multiline_pix2text
+name: multiline_pix2text
 num_layers: 4
 num_tokens: 8000
 optimizer: Adam
@@ -43,7 +43,7 @@ output_path: multiline_outputs
 pad: false
 pad_token: 0
 patch_size: 16
-sample_freq: 100
+sample_freq: 200
 save_freq: 5
 scheduler: StepLR
 seed: 42
@@ -53,4 +53,4 @@ test_samples: 5
 testbatchsize: 20
 tokenizer: dataset/tokenizer.json
 valbatches: 100
-valdata: dataset/multiline/val_dataset.pkl
+valdata: val_dataset.pkl
