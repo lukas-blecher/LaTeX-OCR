@@ -1,15 +1,14 @@
-gpu_devices: null #[0,1,2,3,4,5,6,7]
-device: mps
 backbone_layers:
-  - 2
-  - 3
-  - 7
-betas:
-  - 0.9
-  - 0.999
+- 2
+- 3
+- 7
 batchsize: 8
+betas:
+- 0.9
+- 0.999
 bos_token: 1
 channels: 1
+config: multiline_checkpoints/local_multiline_pix2text_round2/config.yaml
 data: dataset/multiline/train_dataset.pkl
 debug: false
 decoder_args:
@@ -18,24 +17,35 @@ decoder_args:
   ff_glu: true
   rel_pos_bias: false
   use_scalenorm: false
+device: mps:0
 dim: 256
 encoder_depth: 4
+encoder_structure: hybrid
 eos_token: 2
+epoch: 0
 epochs: 10
 gamma: 0.9995
+gpu_devices: []
 heads: 8
-id: null
-load_chkpt: pix2tex/model/checkpoints/weights.pth
+id: nc163083
+load_chkpt: multiline_checkpoints/local_multiline_pix2text_round2/local_multiline_pix2text_round2_e01_step99.pth
 lr: 0.001
 lr_step: 30
+max_dimensions:
+- 672
+- 192
 max_height: 192
 max_seq_len: 512
 max_width: 672
 micro_batchsize: -1
+min_dimensions:
+- 32
+- 32
 min_height: 32
 min_width: 32
 model_path: multiline_checkpoints
 name: local_multiline_pix2text_round2
+no_cuda: false
 num_layers: 4
 num_tokens: 8000
 optimizer: Adam
@@ -43,14 +53,15 @@ output_path: multiline_outputs
 pad: false
 pad_token: 0
 patch_size: 16
-sample_freq: 100
+resume: false
+sample_freq: 200
 save_freq: 5
 scheduler: StepLR
 seed: 42
-encoder_structure: hybrid
 temperature: 0.2
 test_samples: 5
 testbatchsize: 20
 tokenizer: dataset/tokenizer.json
 valbatches: 100
 valdata: dataset/multiline/val_dataset.pkl
+wandb: true

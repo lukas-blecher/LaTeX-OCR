@@ -159,3 +159,4 @@ pix2tex/dataset/multiline/val/*.png
 pix2tex/dataset/multiline/test/*.png
 pix2tex/dataset/multiline/*.pkl
 multiline_checkpoints/local_multiline_pix2text/local_multiline_pix2text_e01_step99.pth
+**.pth

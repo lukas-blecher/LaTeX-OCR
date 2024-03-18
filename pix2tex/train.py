@@ -14,6 +14,9 @@ from pix2tex.models import get_model
 # from pix2tex.utils import *
 from pix2tex.utils import in_model_path, parse_args, seed_everything, get_optimizer, get_scheduler, gpu_memory_check
 
+# import os
+# Allow for tokenizer parallelizatino
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def train(args):
     dataloader = Im2LatexDataset().load(args.data)
