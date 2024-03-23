@@ -153,3 +153,5 @@ pix2tex/dataset/handwritten/*
 *.zip
 
 imagenes/**
+**.png
+notebooks/visuals/comparison-mergedexample.png
