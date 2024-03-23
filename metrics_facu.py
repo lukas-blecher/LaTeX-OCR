@@ -80,7 +80,16 @@ def get_bleu_per_seq(model, dataset: Im2LatexDataset, args: Munch, num_batches: 
             for predi, truthi in zip(pred2, truth2):
                 ts = post_process(truthi)
                 if len(ts) > 0:
-                    edit_dist.append(distance(post_process(predi), ts)/len(ts))           
+                    edit_dist.append(distance(post_process(predi), ts)/len(ts))    
+            dec = dec.cpu()
+            tgt_seq = seq['input_ids'][:, 1:]
+            shape_diff = dec.shape[1]-tgt_seq.shape[1]
+            if shape_diff < 0:
+                dec = torch.nn.functional.pad(dec, (0, -shape_diff), "constant", args.pad_token)
+            elif shape_diff > 0:
+                tgt_seq = torch.nn.functional.pad(tgt_seq, (0, shape_diff), "constant", args.pad_token)
+            mask = torch.logical_or(tgt_seq != args.pad_token, dec != args.pad_token)
+            tok_acc = (dec == tgt_seq)[mask].float().mean().item()       
             
             #Busco el nombre de la imagen 
             batch = iter_ds.pairs[iter_ds.i - 1]
@@ -90,12 +99,12 @@ def get_bleu_per_seq(model, dataset: Im2LatexDataset, args: Munch, num_batches: 
                 "Truth":truth2,
                 "predicted":pred2,
                 "Bleu_score": bleu,
-                "Edit dist": np.mean(edit_dist)}
+                "Edit dist": np.mean(edit_dist),
+                "Tok acc" : tok_acc}
+            
             
         except IndexError:
             output[i] = "IndexError"
             
-
-    
     
     return output
