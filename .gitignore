@@ -151,3 +151,5 @@ pix2tex/dataset/handwritten/*
 
 # remove all zip files
 *.zip
+
+imagenes/**
