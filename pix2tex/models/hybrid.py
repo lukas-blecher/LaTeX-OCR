@@ -22,6 +22,12 @@ class CustomVisionTransformer(VisionTransformer):
         h, w = h//self.patch_size, w//self.patch_size
         pos_emb_ind = repeat(torch.arange(h)*(self.width//self.patch_size-w), 'h -> (h w)', w=w)+torch.arange(h*w)
         pos_emb_ind = torch.cat((torch.zeros(1), pos_emb_ind+1), dim=0).long()
+        
+        # cap the pos_emb_ind to avoid an IndexError
+        # replace any values in pos_emb_ind that are greater than the length of the pos_embed
+        # with the maximum index of the pos_embed
+        pos_emb_ind = torch.clamp(pos_emb_ind, 0, self.pos_embed.shape[1]-1)
+        
         x += self.pos_embed[:, pos_emb_ind]
         #x = x + self.pos_embed
         x = self.pos_drop(x)

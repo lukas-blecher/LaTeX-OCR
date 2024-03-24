@@ -62,49 +62,44 @@ def get_bleu_per_seq(model, dataset: Im2LatexDataset, args: Munch, num_batches: 
 # 
     for i, (seq, im) in pbar:
         #image_index = dataset.indices[i]
-        try:
-            if seq is None or im is None:
-                continue
-            
-            #genero prediccion
-            dec = model.generate(im.to(device), temperature=args.get('temperature', .2))
-            pred = detokenize(dec, dataset.tokenizer)
-            truth = detokenize(seq['input_ids'], dataset.tokenizer)
-            #calculo bleu score
-            bleu = metrics.bleu_score(pred, [alternatives(x) for x in truth])
-            #armo la expresion de vuelta
-            pred2 = token2str(dec, dataset.tokenizer)
-            truth2 = token2str(seq['input_ids'], dataset.tokenizer)
-            #post process y edit_dist
-            edit_dist = []
-            for predi, truthi in zip(pred2, truth2):
-                ts = post_process(truthi)
-                if len(ts) > 0:
-                    edit_dist.append(distance(post_process(predi), ts)/len(ts))    
-            dec = dec.cpu()
-            tgt_seq = seq['input_ids'][:, 1:]
-            shape_diff = dec.shape[1]-tgt_seq.shape[1]
-            if shape_diff < 0:
-                dec = torch.nn.functional.pad(dec, (0, -shape_diff), "constant", args.pad_token)
-            elif shape_diff > 0:
-                tgt_seq = torch.nn.functional.pad(tgt_seq, (0, shape_diff), "constant", args.pad_token)
-            mask = torch.logical_or(tgt_seq != args.pad_token, dec != args.pad_token)
-            tok_acc = (dec == tgt_seq)[mask].float().mean().item()       
-            
-            #Busco el nombre de la imagen 
-            batch = iter_ds.pairs[iter_ds.i - 1]
-            _,ims=batch.T
-            label = extraer_numero(ims[0])
-            output[label] = {
-                "Truth":truth2,
-                "predicted":pred2,
-                "Bleu_score": bleu,
-                "Edit dist": np.mean(edit_dist),
-                "Tok acc" : tok_acc}
-            
-            
-        except IndexError:
-            output[i] = "IndexError"
-            
+        if seq is None or im is None:
+            continue
+        
+        #genero prediccion
+        dec = model.generate(im.to(device), temperature=args.get('temperature', .2))
+        pred = detokenize(dec, dataset.tokenizer)
+        truth = detokenize(seq['input_ids'], dataset.tokenizer)
+        #calculo bleu score
+        bleu = metrics.bleu_score(pred, [alternatives(x) for x in truth])
+        #armo la expresion de vuelta
+        pred2 = token2str(dec, dataset.tokenizer)
+        truth2 = token2str(seq['input_ids'], dataset.tokenizer)
+        #post process y edit_dist
+        edit_dist = []
+        for predi, truthi in zip(pred2, truth2):
+            ts = post_process(truthi)
+            if len(ts) > 0:
+                edit_dist.append(distance(post_process(predi), ts)/len(ts))    
+        dec = dec.cpu()
+        tgt_seq = seq['input_ids'][:, 1:]
+        shape_diff = dec.shape[1]-tgt_seq.shape[1]
+        if shape_diff < 0:
+            dec = torch.nn.functional.pad(dec, (0, -shape_diff), "constant", args.pad_token)
+        elif shape_diff > 0:
+            tgt_seq = torch.nn.functional.pad(tgt_seq, (0, shape_diff), "constant", args.pad_token)
+        mask = torch.logical_or(tgt_seq != args.pad_token, dec != args.pad_token)
+        tok_acc = (dec == tgt_seq)[mask].float().mean().item()       
+        
+        #Busco el nombre de la imagen 
+        batch = iter_ds.pairs[iter_ds.i - 1]
+        _,ims=batch.T
+        label = extraer_numero(ims[0])
+        output[label] = {
+            "Truth":truth2,
+            "predicted":pred2,
+            "Bleu_score": bleu,
+            "Edit dist": np.mean(edit_dist),
+            "Tok acc" : tok_acc}
+        
     
     return output

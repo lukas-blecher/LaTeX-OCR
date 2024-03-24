@@ -9,7 +9,7 @@ betas:
 batchsize: 64
 bos_token: 1
 channels: 1
-data: dataset/data/train.pkl
+data: dataset/handwritten/train_hw.pkl
 debug: false
 decoder_args:
   attn_on_attn: true
@@ -24,7 +24,7 @@ epochs: 100
 gamma: 0.9995
 heads: 8
 id: 1
-load_chkpt: pix2tex/model/checkpoints/weights.pth
+load_chkpt: null
 lr: 0.001
 lr_step: 30
 max_height: 192
@@ -33,12 +33,12 @@ max_width: 672
 micro_batchsize: -1
 min_height: 32
 min_width: 32
-model_path: custom_checkpoints
-name: pix2tex
+model_path: hw_checkpoints
+name: handwritten_training-from-scratch
 num_layers: 4
 num_tokens: 8000
 optimizer: Adam
-output_path: custom_outputs
+output_path: hw_outputs
 pad: false
 pad_token: 0
 patch_size: 16
@@ -52,4 +52,4 @@ test_samples: 5
 testbatchsize: 20
 tokenizer: dataset/tokenizer.json
 valbatches: 100
-valdata: dataset/data/val.pkl
+valdata: dataset/handwritten/val_hw.pkl

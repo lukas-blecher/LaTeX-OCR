@@ -1,14 +1,14 @@
-gpu_devices: null #[0,1,2,3,4,5,6,7]
 backbone_layers:
-  - 2
-  - 3
-  - 7
-betas:
-  - 0.9
-  - 0.999
+- 2
+- 3
+- 7
 batchsize: 64
+betas:
+- 0.9
+- 0.999
 bos_token: 1
 channels: 1
+config: pix2tex/model/settings/custom_train.yaml
 data: dataset/data/train.pkl
 debug: false
 decoder_args:
@@ -17,24 +17,35 @@ decoder_args:
   ff_glu: true
   rel_pos_bias: false
   use_scalenorm: false
+device: cpu
 dim: 256
 encoder_depth: 4
+encoder_structure: hybrid
 eos_token: 2
+epoch: 99
 epochs: 100
 gamma: 0.9995
+gpu_devices: []
 heads: 8
-id: 1
+id: nusflekd
 load_chkpt: pix2tex/model/checkpoints/weights.pth
 lr: 0.001
 lr_step: 30
+max_dimensions:
+- 672
+- 192
 max_height: 192
 max_seq_len: 512
 max_width: 672
 micro_batchsize: -1
+min_dimensions:
+- 32
+- 32
 min_height: 32
 min_width: 32
 model_path: custom_checkpoints
 name: pix2tex
+no_cuda: false
 num_layers: 4
 num_tokens: 8000
 optimizer: Adam
@@ -42,14 +53,15 @@ output_path: custom_outputs
 pad: false
 pad_token: 0
 patch_size: 16
+resume: false
 sample_freq: 3000
 save_freq: 50
 scheduler: StepLR
 seed: 42
-encoder_structure: hybrid
 temperature: 0.2
 test_samples: 5
 testbatchsize: 20
 tokenizer: dataset/tokenizer.json
 valbatches: 100
 valdata: dataset/data/val.pkl
+wandb: true

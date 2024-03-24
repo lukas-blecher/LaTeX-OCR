@@ -1,5 +1,5 @@
 import pickle
-import pix2tex as p2t
+# import pix2tex
 from munch import Munch
 import yaml
 from pix2tex import cli as p2t
@@ -26,15 +26,18 @@ multiline_model = p2t.LatexOCR(multiline_config)
 original_model = p2t.LatexOCR()
 # load test set for handwritten files
 # load yaml files to parse configurations
-with open("pix2tex/model/settings/handwritten_training.yaml", 'r') as f:
-    hw_config_yaml = Munch(yaml.safe_load(f))
+with open("multiline_checkpoints/local_multiline_pix2text/config.yaml", 'r') as f:
+    ml_config_yaml = Munch(yaml.safe_load(f))
 
 with open("pix2tex/model/settings/config.yaml", 'r') as f:
     original_config_yaml = Munch(yaml.safe_load(f))
 
+# just in case, set the device to cpu manually
+ml_config_yaml.device = "cpu"
+original_config_yaml.device = "cpu"
+
 # test dataset
 test_dataset = Im2LatexDataset().load("pix2tex/dataset/multiline/test_dataset.pkl")
-
 
 def evaluate_and_pickle(model, dataset, config, fname):
     """
@@ -49,10 +52,10 @@ def evaluate_and_pickle(model, dataset, config, fname):
 
 if __name__ == "__main__":
     # Compute multiprocessing
-    NUM_CORES = 2
+    NUM_CORES = 4
     pool = multiprocessing.Pool(NUM_CORES)
-    args = [(multiline_model.model, test_dataset, multiline_config, "MP-multiline_results"),
-             (original_model.model, test_dataset, original_config, "MP-original_results")]
+    args = [(multiline_model.model, test_dataset, ml_config_yaml, "MP-multiline_results"),
+             (original_model.model, test_dataset, original_config_yaml, "MP-original_results")]
     pool.map(evaluate_and_pickle, args)
 
     pool.close()
