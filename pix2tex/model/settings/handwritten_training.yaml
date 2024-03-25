@@ -25,7 +25,7 @@ epochs: 50
 gamma: 0.9995
 heads: 8
 id: 1
-load_chkpt: null
+load_chkpt: model/checkpoints/weights.pth
 lr: 0.001
 lr_step: 30
 max_height: 192

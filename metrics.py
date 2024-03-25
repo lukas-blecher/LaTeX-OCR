@@ -21,7 +21,22 @@ from tqdm import tqdm
 # DEVICE = "cpu"
 # DATA_PATH = "pix2tex/dataset/handwritten/test.pkl"
 
-def get_model_and_data(config_path, batch_size, temperature, checkpoint_path, device, data_path):
+def get_model_and_data(config_path, checkpoint_path, data_path, batch_size=1, temperature=.2,  device="cpu"):
+    """
+    Get the model and data for evaluation, along with configuration arguments.
+
+    Inputs:
+    config_path (str): path to the configuration file
+    batch_size (int): batch size for evaluation
+    temperature (float): temperature for evaluation
+    checkpoint_path (str): path to the model checkpoint
+    device (str): device to run the model on
+    data_path (str): path to the data
+
+    Returns:
+    Tuple[torch.nn.Module, Im2LatexDataset, Munch]: model, dataset, arguments
+    """
+
     with open(config_path, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -39,10 +54,10 @@ def get_model_and_data(config_path, batch_size, temperature, checkpoint_path, de
     valargs.update(batchsize=args.testbatchsize, keep_smaller_batches=True, test=True)
     dataset.update(**valargs)
 
-    return model, dataset
+    return model, dataset, args
 
 
-def evaluate(model, dataset: Im2LatexDataset, args: Munch, num_batches: int = None, name: str = 'test'):
+def evaluate(model, dataset: Im2LatexDataset, args: Munch, num_batches: int = None):
     """evaluates the model. Returns bleu score on the dataset
 
     Args:
