@@ -250,7 +250,7 @@ if __name__ == '__main__':
         dataset = None
         for images, equations in zip(args.images, args.equations):
             if dataset is None:
-                dataset = Im2LatexDataset(equations, images, args.tokenizer)
+                dataset = Im2LatexDataset(equations, images, args.tokenizer, pad=True)
             else:
                 dataset.combine(Im2LatexDataset(equations, images, args.tokenizer))
         dataset.update(batchsize=1, keep_smaller_batches=True)
