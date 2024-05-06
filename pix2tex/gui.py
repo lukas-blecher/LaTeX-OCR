@@ -117,10 +117,14 @@ class App(QMainWindow):
             self.snip_using_grim()
         elif os.environ.get('SCREENSHOT_TOOL') == "pil":
             self.snipWidget.snip()
+        elif os.environ.get('SCREENSHOT_TOOL') == "spectacle":
+            self.snip_using_spectacle()
         elif which('gnome-screenshot'):
             self.snip_using_gnome_screenshot()
         elif which('grim') and which('slurp'):
             self.snip_using_grim()
+        elif which('spectacle'):
+            self.snip_using_spectacle()
         else:
             self.snipWidget.snip()
 
@@ -140,6 +144,18 @@ class App(QMainWindow):
         except:
             print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
             print("If you don't have gnome-screenshot installed, please install it.")
+            self.returnSnip()
+
+    def snip_using_spectacle(self):
+        try:
+            with tempfile.NamedTemporaryFile() as tmp:
+                subprocess.run(["spectacle", "-n", "-r", "-b", f"-o={tmp.name}"])
+                # -n for no notification, -r for region screenshot, -b for no post-screenshot gui session
+                # Use `tmp.name` instead of `tmp.file` due to compatability issues between Pillow and tempfile
+                self.returnSnip(Image.open(tmp.name))
+        except:
+            print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
+            print("If you don't have spectacle installed, please install it.")
             self.returnSnip()
 
     def snip_using_grim(self):
