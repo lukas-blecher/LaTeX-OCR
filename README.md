@@ -24,11 +24,11 @@ There are three ways to get a prediction from an image.
 
 2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
-    Under linux, it is possible to use the GUI with `gnome-screenshot` (which comes with multiple monitor support) if `gnome-screenshot` was installed beforehand. For Wayland, `grim` and `slurp` will be used when they are both available. Note that `gnome-screenshot` is not compatible with wlroots-based Wayland compositors. Since `gnome-screenshot` will be preferred when available, you may have to set the environment variable `SCREENSHOT_TOOL` to `grim` in this case (other available values are `gnome-screenshot` and `pil`).
+    Under linux, it is possible to use the GUI with `gnome-screenshot` (which comes with multiple monitor support) if `gnome-screenshot` was installed beforehand. For Wayland, `grim` and `slurp` will be used when they are both available. Note that `gnome-screenshot` is not compatible with wlroots-based Wayland compositors. Since `gnome-screenshot` is preferred when available, you may have to set the environment variable `SCREENSHOT_TOOL` to `grim` in this case (other available values are `gnome-screenshot` and `pil`).
 
     ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 
-    If the model is unsure about the what's in the image it might output a different prediction every time you click "Retry". With the `temperature` parameter you can control this behavior (low temperature will produce the same result).
+    If the model is unsure about the content of the image it might output a different prediction every time you click "Retry". With the `temperature` parameter you can control this behavior (low temperature will produce the same result).
 
 3. You can use an API. This has additional dependencies. Install via `pip install -U "pix2tex[api]"` and run
     ```bash
@@ -56,9 +56,9 @@ There are three ways to get a prediction from an image.
     print(model(img))
     ```
 
-The model works best with images of smaller resolution. That's why I added a preprocessing step where another neural network predicts the optimal resolution of the input image. This model will automatically resize the custom image to best resemble the training data and thus increase performance of images found in the wild. Still it's not perfect and might not be able to handle huge images optimally, so don't zoom in all the way before taking a picture. 
+The model works best with images of smaller resolution. That's why I added a preprocessing step where another neural network predicts the optimal resolution of the input image. This model will automatically resize the custom image to best resemble the training data and thus increase performance on images found in the wild. Still it's not perfect and might not be able to handle huge images optimally, so don't zoom in all the way before taking a picture. 
 
-Always double check the result carefully. You can try to redo the prediction with an other resolution if the answer was wrong.
+Always double check the result carefully. You can try to redo the prediction with other resolution if the answer was wrong.
 
 **Want to use the package?**
 
