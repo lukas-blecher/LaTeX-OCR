@@ -174,4 +174,4 @@ if __name__ == '__main__':
         src = r'\begin{equation}\mathcal{ L}\nonumber\end{equation}'
 
     print('Equation is: %s' % src)
-    print(Latex(src).write())
+    print(Latex([src]).write())
