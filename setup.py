@@ -18,7 +18,8 @@ api = [
     'streamlit>=1.8.1',
     'fastapi>=0.75.2',
     'uvicorn[standard]',
-    'python-multipart'
+    'python-multipart',
+    'st_img_pastebutton>=0.0.3',
 ]
 train = [
     'python-Levenshtein>=0.12.2',
