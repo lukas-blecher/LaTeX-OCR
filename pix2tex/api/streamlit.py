@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     source = st.radio(
         "Choose the source of the image",
-        options=["Paste", "Upload"],
+        options=["Upload", "Paste"],
     )
 
     image = None
