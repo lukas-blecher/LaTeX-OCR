@@ -3,22 +3,49 @@ import io
 import subprocess
 import sys
 import os
+import re
 import tempfile
 from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QTimer
+from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QTimer, QEvent
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QVBoxLayout, QWidget, \
-    QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox
+    QPushButton, QTextEdit, QFormLayout, QHBoxLayout, QDoubleSpinBox, QLabel, QRadioButton
 from pynput.mouse import Controller
 
-from PIL import ImageGrab, Image
+from PIL import ImageGrab, Image, ImageEnhance
 import numpy as np
 from screeninfo import get_monitors
 from pix2tex import cli
 from pix2tex.utils import in_model_path
+from latex2sympy2 import latex2sympy
 
 import pix2tex.resources.resources
+
+ACCEPTED_IMAGE_SUFFIX = ['png', 'jpg', 'jpeg']
+
+def to_sympy(latex):
+    normalized = re.sub(r'operatorname\*{(\w+)}', '\g<1>', latex)
+    sympy_expr = latex2sympy(f'${normalized}$')
+    return sympy_expr
+
+
+class WebView(QWebEngineView):
+    def __init__(self, app) -> None:
+        super().__init__()
+        self.setAcceptDrops(True)
+        self._app = app
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().urls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        urls = event.mimeData().urls()
+        self._app.returnFromMimeData(urls)
+
 class App(QMainWindow):
     isProcessing = False
 
@@ -38,16 +65,47 @@ class App(QMainWindow):
         self.width = 500
         self.height = 300
         self.setGeometry(self.left, self.top, self.width, self.height)
+        self.format_type = 'LaTeX-$'
+        self.raw_prediction = ''
 
         # Create LaTeX display
-        self.webView = QWebEngineView()
+        self.webView = WebView(self)
         self.webView.setHtml("")
         self.webView.setMinimumHeight(80)
 
         # Create textbox
         self.textbox = QTextEdit(self)
-        self.textbox.textChanged.connect(self.displayPrediction)
+        # self.textbox.textChanged.connect(self.displayPrediction)
+        self.textbox.textChanged.connect(self.onTextboxChange)
         self.textbox.setMinimumHeight(40)
+        self.format_textbox = QTextEdit(self)
+        # self.textbox.textChanged.connect(self.displayPrediction)
+        self.format_textbox.textChanged.connect(self.onFormatTextboxChange)
+        self.format_textbox.setMinimumHeight(40)
+
+        # format types
+        format_types = QHBoxLayout()
+        self.format_label = QLabel('Format:', self)
+        self.format_type0 = QRadioButton('Raw', self)
+        self.format_type0.toggled.connect(self.onFormatChange)
+        self.format_type1 = QRadioButton('LaTeX-$', self)
+        self.format_type1.setChecked(True)
+        self.format_type1.toggled.connect(self.onFormatChange)
+        self.format_type2 = QRadioButton('LaTeX-$$', self)
+        self.format_type2.toggled.connect(self.onFormatChange)
+        self.format_type3 = QRadioButton('Sympy', self)
+        self.format_type3.toggled.connect(self.onFormatChange)
+        format_types.addWidget(self.format_label)
+        format_types.addWidget(self.format_type0)
+        format_types.addWidget(self.format_type1)
+        format_types.addWidget(self.format_type2)
+        format_types.addWidget(self.format_type3)
+
+        # error output
+        self.error = QTextEdit(self)
+        self.error.setReadOnly(True)
+        self.error.setTextColor(Qt.GlobalColor.red)
+        self.error.setMinimumHeight(12)
 
         # Create temperature text input
         self.tempField = QDoubleSpinBox(self)
@@ -79,6 +137,9 @@ class App(QMainWindow):
         lay = QVBoxLayout(centralWidget)
         lay.addWidget(self.webView, stretch=4)
         lay.addWidget(self.textbox, stretch=2)
+        lay.addLayout(format_types)
+        lay.addWidget(self.format_textbox, stretch=2)
+        lay.addWidget(self.error, stretch=1)
         buttons = QHBoxLayout()
         buttons.addWidget(self.snipButton)
         buttons.addWidget(self.retryButton)
@@ -86,6 +147,8 @@ class App(QMainWindow):
         settings = QFormLayout()
         settings.addRow('Temperature:', self.tempField)
         lay.addLayout(settings)
+
+        self.installEventFilter(self)
 
     def toggleProcessing(self, value=None):
         if value is None:
@@ -107,6 +170,18 @@ class App(QMainWindow):
         self.snipButton.clicked.disconnect()
         self.snipButton.clicked.connect(func)
         self.displayPrediction()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.KeyRelease:
+            if event.key() == Qt.Key.Key_V and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+                clipboard = QApplication.clipboard()
+                img = clipboard.image()
+                if not img.isNull():
+                    self.returnSnip(Image.fromqimage(img))
+                else:
+                    self.returnFromMimeData(clipboard.mimeData().urls())
+
+        return super().eventFilter(obj, event)
 
     @pyqtSlot()
     def onClick(self):
@@ -171,9 +246,36 @@ class App(QMainWindow):
             print("If you don't have slurp and grim installed, please install them.")
             self.returnSnip()
 
+    def returnFromMimeData(self, urls):
+        if not urls or not urls[0]:
+            return
+
+        image_url = urls[0]
+        if image_url and image_url.scheme() == 'file' and image_url.fileName().split('.')[-1] in ACCEPTED_IMAGE_SUFFIX:
+            image_path = image_url.toLocalFile()
+            return self.returnSnip(Image.open(image_path))
+
     def returnSnip(self, img=None):
         self.toggleProcessing(True)
         self.retryButton.setEnabled(False)
+
+        if img:
+            width, height = img.size
+            if width <= 0 or height <= 0:
+                self.toggleProcessing(False)
+                self.retryButton.setEnabled(True)
+                self.show()
+                return
+
+            if width < 100 or height < 100: # too small size will make OCR wrong
+                scale_factor = max(100 / width, 100 / height)
+                new_width = int(width * scale_factor)
+                new_height = int(height * scale_factor)
+                img = img.resize((new_width,new_height), Image.Resampling.LANCZOS)
+                contrast = ImageEnhance.Contrast(img)
+                img = contrast.enhance(1.5)
+                sharpness = ImageEnhance.Sharpness(img)
+                img = sharpness.enhance(1.5)
 
         self.show()
         try:
@@ -193,6 +295,9 @@ class App(QMainWindow):
         success, prediction = result["success"], result["prediction"]
 
         if success:
+            self.raw_prediction = prediction
+            self.textbox.setText(prediction)
+            self.format_textbox.setText(self.formatPrediction(prediction))
             self.displayPrediction(prediction)
             self.retryButton.setEnabled(True)
         else:
@@ -202,15 +307,62 @@ class App(QMainWindow):
             msg.setText("Prediction failed.")
             msg.exec()
 
+    def onFormatChange(self):
+        rb = self.sender()
+
+        if rb.isChecked():
+            self.format_type = rb.text()
+            self.format_textbox.setText(self.formatPrediction(self.raw_prediction))
+
+    def formatPrediction(self, prediction, format_type=None):
+        self.error.setText("")
+        prediction = prediction or self.format_textbox.toPlainText()
+
+        raw = prediction.strip('$')
+        if len(raw) == 0:
+            return ''
+
+        format_type = format_type or self.format_type
+        if format_type == "Raw":
+            formatted = raw
+        elif format_type == "LaTeX-$":
+            formatted = f"${raw}$"
+        elif format_type == "LaTeX-$$":
+            formatted = f"$${raw}$$"
+        elif format_type == "MathJax":
+            formatted = raw
+        elif format_type == "Sympy":
+            try:
+                formatted = str(to_sympy(raw))
+            except Exception as e:
+                print(e)
+                formatted = raw
+                self.error.setText("Failed to parse Sympy expr.")
+        else:
+            return raw
+
+        return formatted
+
+    def onTextboxChange(self):
+        text = self.textbox.toPlainText()
+        new_raw_prediction = self.formatPrediction(text, "Raw")
+        if new_raw_prediction != self.raw_prediction:
+            self.raw_prediction = new_raw_prediction
+            self.format_textbox.setText(self.formatPrediction(self.raw_prediction))
+            self.displayPrediction()
+
+    def onFormatTextboxChange(self):
+        text = self.format_textbox.toPlainText()
+        clipboard = QApplication.clipboard()
+        clipboard.setText(text)
+
     def displayPrediction(self, prediction=None):
         if self.isProcessing:
             pageSource = """<center>
             <img src="qrc:/icons/processing-icon-anim.svg" width="50", height="50">
             </center>"""
         else:
-            if prediction is not None:
-                self.textbox.setText("${equation}$".format(equation=prediction))
-            else:
+            if prediction is None:
                 prediction = self.textbox.toPlainText().strip('$')
             pageSource = """
             <html>
