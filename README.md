@@ -24,7 +24,7 @@ There are three ways to get a prediction from an image.
 
 2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
 
-    Under linux, it is possible to use the GUI with `gnome-screenshot` (which comes with multiple monitor support) if `gnome-screenshot` was installed beforehand. For Wayland, `grim` and `slurp` will be used when they are both available. Note that `gnome-screenshot` is not compatible with wlroots-based Wayland compositors. Since `gnome-screenshot` will be preferred when available, you may have to set the environment variable `SCREENSHOT_TOOL` to `grim` in this case (other available values are `gnome-screenshot` and `pil`).
+    Under linux, it is possible to use the GUI with `gnome-screenshot` (which comes with multiple monitor support). For other Wayland compositers, `grim` and `slurp` will be used for wlroots-based Wayland compositers and `spectacle` for KDE Plasma. Note that `gnome-screenshot` is not compatible with wlroots or Qt based compositers. Since `gnome-screenshot` will be preferred when available, you may have to set the environment variable `SCREENSHOT_TOOL` to `grim` or `spectacle` in these cases (other available values are `gnome-screenshot` and `pil`).
 
     ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 
