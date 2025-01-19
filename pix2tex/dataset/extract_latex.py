@@ -2,7 +2,6 @@ import argparse
 import html
 import os
 import re
-import numpy as np
 from typing import List
 
 MIN_CHARS = 1
@@ -33,8 +32,8 @@ def check_brackets(s):
                 continue
             else:
                 a.append(-1)
-    b = np.cumsum(a)
-    if len(b) > 1 and b[-1] != 0:
+    b = sum(a)
+    if len(a) > 1 and b != 0:
         raise ValueError(s)
     surrounding = s[-1] == '}' and surrounding
     if not surrounding:
