@@ -53,3 +53,5 @@ testbatchsize: 20
 tokenizer: dataset/tokenizer.json
 valbatches: 100
 valdata: dataset/data/val.pkl
+num_beams: 3
+length_penalty: 0.7

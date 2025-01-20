@@ -4,7 +4,7 @@ import torch.nn as nn
 from . import hybrid
 from . import vit
 from . import transformer
-
+from munch import Munch
 
 class Model(nn.Module):
     def __init__(self, encoder, decoder, args):
@@ -19,8 +19,10 @@ class Model(nn.Module):
         if output_device is None:
             output_device = device_ids[0]
         replicas = nn.parallel.replicate(self, device_ids)
-        inputs = nn.parallel.scatter(x, device_ids)  # Slices tensors into approximately equal chunks and distributes them across given GPUs.
-        kwargs = nn.parallel.scatter(kwargs, device_ids)  # Duplicates references to objects that are not tensors.
+        # Slices tensors into approximately equal chunks and distributes them across given GPUs.
+        inputs = nn.parallel.scatter(x, device_ids)
+        # Duplicates references to objects that are not tensors.
+        kwargs = nn.parallel.scatter(kwargs, device_ids)
         replicas = replicas[:len(inputs)]
         kwargs = kwargs[:len(inputs)]
         outputs = nn.parallel.parallel_apply(replicas, inputs, kwargs)
@@ -32,9 +34,13 @@ class Model(nn.Module):
         return out
 
     @torch.no_grad()
-    def generate(self, x: torch.Tensor, temperature: float = 0.25):
-        return self.decoder.generate((torch.LongTensor([self.args.bos_token]*len(x))[:, None]).to(x.device), self.args.max_seq_len,
-                                     eos_token=self.args.eos_token, context=self.encoder(x), temperature=temperature)
+    def generate(self, x: torch.Tensor, temperature: float = 0.25, **kwargs):
+        args = Munch(self.args)
+        args.update(kwargs)
+        args.temperature = temperature
+        # return self.decoder.beam_generate((torch.LongTensor([self.args.bos_token]*len(x))[:, None]).to(x.device), context=self.encoder(x), seq_len=self.args.max_seq_len, **args)
+        return self.decoder.generate((torch.LongTensor([self.args.bos_token]*len(x))[:, None]).to(x.device), context=self.encoder(x), seq_len=self.args.max_seq_len, **args)
+
 
 
 def get_model(args):
@@ -43,7 +49,8 @@ def get_model(args):
     elif args.encoder_structure.lower() == 'hybrid':
         encoder = hybrid.get_encoder(args)
     else:
-        raise NotImplementedError('Encoder structure "%s" not supported.' % args.encoder_structure)
+        raise NotImplementedError(
+            'Encoder structure "%s" not supported.' % args.encoder_structure)
     decoder = transformer.get_decoder(args)
     encoder.to(args.device)
     decoder.to(args.device)

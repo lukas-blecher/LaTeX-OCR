@@ -65,3 +65,7 @@ pad: False
 pad_token: 0
 bos_token: 1
 eos_token: 2
+
+#beam search
+num_beams: 3
+length_penalty: 0.7
