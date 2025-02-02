@@ -1,0 +1,12 @@
+{
+    "ID":"D2D2C23BFF4D411DB66FEFF79D6C2A6H",   
+    "ActionKeyword":"ocr",                    
+    "Name":"LatexOCR",                        
+    "Description":"Convert image into latex code",
+    "Author":"Zeqiang Lai",                    
+    "Version":"1.0.0",                       
+    "Language":"python",                       
+    "Website":"http://www.getwox.com",         //插件网站或者个人网站
+    "IcoPath": "Images\\app.png",              
+    "ExecuteFileName":"main.py"
+  }
