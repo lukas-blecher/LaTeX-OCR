@@ -25,7 +25,7 @@ import pix2tex.resources.resources
 ACCEPTED_IMAGE_SUFFIX = ['png', 'jpg', 'jpeg']
 
 def to_sympy(latex):
-    normalized = re.sub(r'operatorname\*{(\w+)}', '\g<1>', latex)
+    normalized = re.sub(r'operatorname\*{(\w+)}', r'\g<1>', latex)
     sympy_expr = latex2sympy(f'${normalized}$')
     return sympy_expr
 
