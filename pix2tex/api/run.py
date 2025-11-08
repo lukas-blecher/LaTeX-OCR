@@ -8,7 +8,7 @@ def start_api(path='.'):
 
 
 def start_frontend(path='.'):
-    subprocess.call(['streamlit', 'run', 'streamlit.py'], cwd=path)
+    subprocess.call(['streamlit', 'run', 'streamlit_api.py'], cwd=path)
 
 
 if __name__ == '__main__':
