@@ -9,7 +9,9 @@ The goal of this project is to create a learning based system that takes an imag
 ## Using the model
 To run the model you need Python 3.7+
 
-If you don't have PyTorch installed. Follow their instructions [here](https://pytorch.org/get-started/locally/).
+If you don't have PyTorch installed, follow their instructions [here](https://pytorch.org/get-started/locally/).
+
+Install the Python development package for your distribution (e.g. `dnf install python3-devel`): you will need this for installing the next package!
 
 Install the package `pix2tex`: 
 
