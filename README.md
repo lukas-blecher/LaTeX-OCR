@@ -7,7 +7,10 @@ The goal of this project is to create a learning based system that takes an imag
 ![header](https://user-images.githubusercontent.com/55287601/109183599-69431f00-778e-11eb-9809-d42b9451e018.png)
 
 ## Using the model
-To run the model you need Python 3.7+
+
+Use Python 3.12 to create the virtual environment.
+~~You may also want to run `pip install antlr4-python3-runtime==4.9.2` to make sure the `latexocr` program works correctly (https://github.com/lukas-blecher/LaTeX-OCR/issues/415#issuecomment-2788779679)~~.
+If you encounter any problems be sure to check out the known issues below, most, while they are currently awaiting a fix, can be solved with ease :).
 
 If you don't have PyTorch installed. Follow their instructions [here](https://pytorch.org/get-started/locally/).
 
@@ -17,20 +20,26 @@ Install the package `pix2tex`:
 pip install "pix2tex[gui]"
 ```
 
+
+
 Model checkpoints will be downloaded automatically.
 
 There are three ways to get a prediction from an image. 
 1. You can use the command line tool by calling `pix2tex`. Here you can parse already existing images from the disk and images in your clipboard.
 
-2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr`. From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
+2. Thanks to [@katie-lim](https://github.com/katie-lim), you can use a nice user interface as a quick way to get the model prediction. Just call the GUI with `latexocr` (you may need to install `qt6-qtwebengine-devel` and `python3-pyqt6-webengine
+`). From here you can take a screenshot and the predicted latex code is rendered using [MathJax](https://www.mathjax.org/) and copied to your clipboard.
+
 
     Under linux, it is possible to use the GUI with `gnome-screenshot` (which comes with multiple monitor support). For other Wayland compositers, `grim` and `slurp` will be used for wlroots-based Wayland compositers and `spectacle` for KDE Plasma. Note that `gnome-screenshot` is not compatible with wlroots or Qt based compositers. Since `gnome-screenshot` will be preferred when available, you may have to set the environment variable `SCREENSHOT_TOOL` to `grim` or `spectacle` in these cases (other available values are `gnome-screenshot` and `pil`).
+
+For example, to set it to `spectacle`, use `export SCREENSHOT_TOOL=spectacle` before running `latexocr` command.
 
     ![demo](https://user-images.githubusercontent.com/55287601/117812740-77b7b780-b262-11eb-81f6-fc19766ae2ae.gif)
 
     If the model is unsure about the what's in the image it might output a different prediction every time you click "Retry". With the `temperature` parameter you can control this behavior (low temperature will produce the same result).
 
-3. You can use an API. This has additional dependencies. Install via `pip install -U "pix2tex[api]"` and run
+4. You can use an API. This has additional dependencies. Install via `pip install -U "pix2tex[api]"` and run
     ```bash
     python -m pix2tex.api.run
     ```
@@ -46,7 +55,7 @@ There are three ways to get a prediction from an image.
     ```
     and navigate to http://localhost:8501/
 
-4. Use from within Python
+5. Use from within Python
     ```python
     from PIL import Image
     from pix2tex.cli import LatexOCR
@@ -66,6 +75,9 @@ I'm trying to compile a documentation right now.
 
 Visit here: https://pix2tex.readthedocs.io/ 
 
+### Known Issues
+
+- "ModuleNotFoundError: No module named 'typing.io'; 'typing' is not a package" -> https://github.com/lukas-blecher/LaTeX-OCR/issues/415
 
 ## Training the model [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lukas-blecher/LaTeX-OCR/blob/main/notebooks/LaTeX_OCR_training.ipynb)
 
