@@ -63,4 +63,5 @@ def get_decoder(args):
                 heads=args.heads,
                 **args.decoder_args
             )),
-        pad_value=args.pad_token)
+        pad_value=args.pad_token,
+        ignore_index=args.pad_token)
