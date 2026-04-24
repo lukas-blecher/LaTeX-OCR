@@ -1,0 +1,16 @@
+name: Trigger AI Code Review
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  call-gemini:
+    if: github.event.label.name == 'ai-review'
+    uses: Vtex-AI-Code-Review-Experiment/review-workflow/.github/workflows/gemini-template.yml@main
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

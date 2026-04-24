@@ -32,7 +32,7 @@ def train(args):
 
     if args.load_chkpt is not None:
         model.load_state_dict(torch.load(args.load_chkpt, map_location=device))
-
+    
     def save_models(e, step=0):
         torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d_step%02d.pth' % (args.name, e+1, step)))
         yaml.dump(dict(args), open(os.path.join(out_path, 'config.yaml'), 'w+'))
@@ -67,7 +67,10 @@ def train(args):
                     bleu_score, edit_distance, token_accuracy = evaluate(model, valdataloader, args, num_batches=int(args.valbatches*e/args.epochs), name='val')
                     if bleu_score > max_bleu and token_accuracy > max_token_acc:
                         max_bleu, max_token_acc = bleu_score, token_accuracy
-                        save_models(e, step=i)
+                        
+                        torch.save(model.state_dict(), os.path.join(out_path, '%s_e%02d_step%02d.pth' % (args.name, e+1, len(dataloader))))
+                        yaml.dump(dict(args), open(os.path.join(out_path, 'config.yaml'), 'w+'))
+                        
             if (e+1) % args.save_freq == 0:
                 save_models(e, step=len(dataloader))
             if args.wandb:
@@ -86,7 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', help='DEBUG')
     parser.add_argument('--resume', help='path to checkpoint folder', action='store_true')
     parsed_args = parser.parse_args()
-    if parsed_args.config is None:
+    if parsed_args.config is not None:
         with in_model_path():
             parsed_args.config = os.path.realpath('settings/debug.yaml')
     with open(parsed_args.config, 'r') as f:

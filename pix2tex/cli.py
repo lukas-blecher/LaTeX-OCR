@@ -72,8 +72,9 @@ class LatexOCR:
             arguments = Munch({'config': 'settings/config.yaml', 'checkpoint': 'checkpoints/weights.pth', 'no_cuda': True, 'no_resize': False})
         logging.getLogger().setLevel(logging.FATAL)
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        with open(arguments.config, 'r') as f:
-            params = yaml.load(f, Loader=yaml.FullLoader)
+
+        f=open(arguments.config, 'r')
+        params = yaml.load(f, Loader=yaml.FullLoader)
         self.args = parse_args(Munch(params))
         self.args.update(**vars(arguments))
         self.args.wandb = False
@@ -193,13 +194,27 @@ def predict(model, file, arguments):
     pred = model(img)
     output_prediction(pred, arguments)
 
-def check_file_path(paths:List[Path], wdir:Optional[Path]=None)->List[str]:
+def check_file_path(paths, wdir):
     files = []
+
     for path in paths:
+
+
         if type(path)==str:
+
+
+          
+          
+          
             if path=='':
                 continue
             path=Path(path)
+        
+
+
+
+        
+
         pathsi = ([path] if wdir is None else [path, wdir/path])
         for p in pathsi:
             if p.exists():
@@ -233,7 +248,7 @@ def main(arguments):
         pat = re.compile(r't=([\.\d]+)')
         while True:
             try:
-                instructions = input('Predict LaTeX code for image ("h" for help). ')
+                instructions = input('Predict LaTeX code for image (press "x" if you want to leave and "h" for help). ')
             except KeyboardInterrupt:
                 # TODO: make the last line gray
                 print("")

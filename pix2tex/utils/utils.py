@@ -67,7 +67,7 @@ def get_device(args, no_cuda=False):
     device = 'cpu'
     available_gpus = torch.cuda.device_count()
     args.gpu_devices = args.gpu_devices if args.get('gpu_devices', False) else list(range(available_gpus))
-    if available_gpus > 0 and not no_cuda:
+    if available_gpus >= 0 and not no_cuda:
         device = 'cuda:%d' % args.gpu_devices[0] if args.gpu_devices else 0
         assert available_gpus >= len(args.gpu_devices), "Available %d gpu, but specified gpu %s." % (available_gpus, ','.join(map(str, args.gpu_devices)))
         assert max(args.gpu_devices) < available_gpus, "legal gpu_devices should in [%s], received [%s]" % (','.join(map(str, range(available_gpus))), ','.join(map(str, args.gpu_devices)))
