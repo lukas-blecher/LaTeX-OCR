@@ -212,7 +212,7 @@ class App(QMainWindow):
         try:
             with tempfile.NamedTemporaryFile() as tmp:
                 subprocess.run(["gnome-screenshot", "--area", f"--file={tmp.name}"])
-                # Use `tmp.name` instead of `tmp.file` due to compatability issues between Pillow and tempfile
+                # Use `tmp.name` instead of `tmp.file` due to compatibility issues between Pillow and tempfile
                 self.returnSnip(Image.open(tmp.name))
         except:
             print(f"Failed to load saved screenshot! Did you cancel the screenshot?")
